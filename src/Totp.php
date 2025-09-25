@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -146,11 +146,11 @@ class Totp implements TotpContract
     /**
      * Fetch the renderer being used to generate one-time passwords from HMACs.
      *
-     * @return string The name of the passcode renderer.
+     * @return Renderer The passcode renderer.
      */
-    public function renderer(): string
+    public function renderer(): Renderer
     {
-        return $this->renderer->name();
+        return $this->renderer;
     }
 
 

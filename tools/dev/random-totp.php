@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -28,6 +28,9 @@ require_once(__DIR__ . "/../bootstrap.php");
 
 use DateTime;
 use Equit\Totp\Factory;
+use Equit\Totp\Types\Digits;
+use Equit\Totp\Types\Secret;
+use Equit\Totp\Types\TimeStep;
 use ReflectionMethod;
 use function Equit\Totp\Tools\toPhpHexString;
 
@@ -56,11 +59,10 @@ if (isset($argv[1]) && "--help" === $argv[1]) {
 }
 
 $totp = Factory::integer(
-    digits: 6,
-    secret: Factory::randomSecret(),
-    timeStep: 10 * mt_rand(1, 6),                                  // random time-step, 10, 20, 30 40, 50 or 60 seconds
+    digits: new Digits(6),
+    timeStep: new TimeStep(10 * mt_rand(1, 6)),                                  // random time-step, 10, 20, 30 40, 50 or 60 seconds
     referenceTime: mt_rand(0, time() - (60 * 60 * 24 * 365 * 20))  // reference time is a random time up to 20 years ago
-);
+)->totp(Factory::randomSecret());
 
 // "current" time is some point in time between the reference time and actual current time
 $currentTime = mt_rand($totp->referenceTimestamp(), time());
@@ -87,7 +89,7 @@ $totp->renderer()->withDigits(8);
 echo "OTP (8)        : {$totp->passwordAt($currentTime)}\n\n";
 
 // OTP details at -1 time step
-$currentTime -= $totp->timeStep();
+$currentTime -= $totp->timeStep()->seconds();
 echo "Counter - 1     : " . $totp->counterAt($currentTime) . " - " . toPhpHexString($counterBytesAt($currentTime)) . "\n";
 echo "HMAC - 1        : " . toPhpHexString($totp->hmacAt($currentTime)) . "\n";
 $totp->renderer()->withDigits(6);
@@ -98,7 +100,7 @@ $totp->renderer()->withDigits(8);
 echo "OTP - 1 (8)     : {$totp->passwordAt($currentTime)}\n\n";
 
 // OTP details at +1 time step
-$currentTime += (2 * $totp->timeStep());
+$currentTime += (2 * $totp->timeStep()->seconds());
 echo "Counter + 1     : " . $totp->counterAt($currentTime) . " - " . toPhpHexString($counterBytesAt($currentTime)) . "\n";
 echo "HMAC + 1        : " . toPhpHexString($totp->hmacAt($currentTime)) . "\n";
 $totp->renderer()->withDigits(6);

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -22,6 +22,7 @@ namespace Equit\TotpTests\Renderers;
 
 use Equit\Totp\Exceptions\InvalidDigitsException;
 use Equit\Totp\Renderers\Integer;
+use Equit\Totp\Types\Digits;
 use Equit\TotpTests\Framework\TestCase;
 
 /**
@@ -64,10 +65,10 @@ class IntegerTest extends TestCase
 			$this->expectException($exceptionClass);
 		}
 
-		$renderer = new Integer($digits);
+		$renderer = new Integer(new Digits($digits));
 
 		if (!isset($exceptionClass)) {
-			$this->assertSame($digits, $renderer->digits());
+			$this->assertSame($digits, $renderer->digits()->digits());
 		}
 	}
 
@@ -236,7 +237,7 @@ class IntegerTest extends TestCase
 	 */
 	public function testRender(int $digits, string $hmac, string $expectedPassword)
 	{
-		$renderer = new Integer($digits);
+		$renderer = new Integer(new Digits($digits));
 		$actualPassword = $renderer->render($hmac);
 		$this->assertSame($digits, strlen($actualPassword), "{$digits}-digit renderer produced a password of " . strlen($actualPassword) . " digits.");
 		$this->assertStringContainsOnly("0123456789", $actualPassword, "Renderer produced a non-decimal password.");

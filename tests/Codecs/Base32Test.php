@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -111,11 +111,11 @@ class Base32Test extends TestCase
         $base32Data = $base32->encoded();
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        $rawProperty = new ReflectionProperty($base32, "m_rawData");
+        $rawProperty = new ReflectionProperty($base32, "rawData");
         $rawProperty->setAccessible(true);
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        $encodedProperty = new ReflectionProperty($base32, "m_encodedData");
+        $encodedProperty = new ReflectionProperty($base32, "encodedData");
         $encodedProperty->setAccessible(true);
 
         $base32->__destruct();

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -25,6 +25,7 @@ use Equit\Totp\Exceptions\UrlGenerator\UnsupportedRendererException;
 use Equit\Totp\Renderers\EightDigits;
 use Equit\Totp\Renderers\Integer;
 use Equit\Totp\Renderers\SixDigits;
+use Equit\Totp\Types\Digits;
 use Equit\TotpTests\Framework\TestCase;
 use Exception;
 use TypeError;
@@ -43,6 +44,11 @@ class UnsupportedRendererExceptionTest extends TestCase
     {
         return new class implements Renderer
         {
+            public function name(): string
+            {
+                return "fizzbuzz renderer";
+            }
+
             public function render(string $hmac): string
             {
                 return "fizzbuzz";
@@ -108,7 +114,7 @@ class UnsupportedRendererExceptionTest extends TestCase
     {
         /** @noinspection PhpUnhandledExceptionInspection Integer renderer constructor guaranteed not to throw here. */
         return [
-            [new Integer(7),],
+            [new Integer(new Digits(7)),],
             [new SixDigits(),],
             [new EightDigits(),],
             [self::createUnsupportedRenderer(),],
@@ -138,7 +144,7 @@ class UnsupportedRendererExceptionTest extends TestCase
     {
         /** @noinspection PhpUnhandledExceptionInspection Renderer constructor guaranteed not to throw here */
         return [
-            [new Integer(7), Integer::class,],
+            [new Integer(new Digits(7)), Integer::class,],
             [new SixDigits(), SixDigits::class,],
             [new EightDigits(), EightDigits::class,],
         ];

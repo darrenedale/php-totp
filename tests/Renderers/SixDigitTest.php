@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -34,7 +34,7 @@ class SixDigitTest extends TestCase
 	public function testConstructor()
 	{
 		$renderer = new SixDigits();
-		$this->assertSame($renderer->digits(), 6, "SixDigits renderer must return 6 from digits() at all times.");
+		$this->assertSame($renderer->digits()->digits(), 6, "SixDigits renderer must return 6 from digits() at all times.");
 	}
 
 	/**

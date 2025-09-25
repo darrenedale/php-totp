@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -26,6 +26,8 @@ use Equit\Totp\Exceptions\UrlGenerator\InvalidUserException;
 use Equit\Totp\Exceptions\UrlGenerator\UnsupportedReferenceTimeException;
 use Equit\Totp\Exceptions\UrlGenerator\UnsupportedRendererException;
 use Equit\Totp\Renderers\Integer;
+use Equit\Totp\Types\HashAlgorithm;
+use Equit\Totp\Types\TimeStep;
 
 /**
  * Generate provisioning URLs for services that have OTP 2FA.
@@ -179,7 +181,7 @@ class UrlGenerator
      *
      * @param string $user The user.
      *
-     * @throws \Equit\Totp\Exceptions\UrlGenerator\InvalidUserException If the provided user is empty.
+     * @throws InvalidUserException If the provided user is empty.
      */
     public function setUser(string $user): void
     {
@@ -296,17 +298,17 @@ class UrlGenerator
     /**
      * Generate the provisioning URL for a given TOTP.
      *
-     * @param Factory $totp The TOTP for which to generate the provisioning URL.
+     * @param Totp $totp The TOTP for which to generate the provisioning URL.
      *
      * @return string The URL.
-     * @throws \Equit\Totp\Exceptions\UrlGenerator\UnsupportedRendererException if the Totp's renderer is not an
+     * @throws UnsupportedRendererException if the Totp's renderer is not an
      *     Integer renderer.
-     * @throws \Equit\Totp\Exceptions\UrlGenerator\InvalidUserException if no user has been set in the generator.
-     * @throws \Equit\Totp\Exceptions\UrlGenerator\UnsupportedReferenceTimeException if the provided Totp's reference time is not 0.
+     * @throws InvalidUserException if no user has been set in the generator.
+     * @throws UnsupportedReferenceTimeException if the provided Totp's reference time is not 0.
      */
-    public function urlFor(Factory $totp): string
+    public function urlFor(Totp $totp): string
     {
-        if (empty($this->user())) {
+        if ("" === $this->user()) {
             throw new InvalidUserException($this->user(), "It is not possible to generate a URL with an empty user.");
         }
 
@@ -332,17 +334,15 @@ class UrlGenerator
             $url .= "&issuer=" . urlencode($this->issuer());
         }
 
-        /** @noinspection PhpPossiblePolymorphicInvocationInspection digits() is only called after checking we have on
-         * instance of IntegerRenderer */
         if (true === $this->includesDigits() || (is_null($this->includesDigits()) && $totp->renderer() instanceof IntegerRenderer && Integer::DefaultDigits !== $totp->renderer()->digits())) {
             $url .= "&digits={$totp->renderer()->digits()}";
         }
 
-        if (true === $this->includesAlgorithm() || (is_null($this->includesAlgorithm()) && Factory::DefaultAlgorithm !== $totp->hashAlgorithm())) {
-            $url .= "&algorithm=" . strtoupper($totp->hashAlgorithm());
+        if (true === $this->includesAlgorithm() || (is_null($this->includesAlgorithm()) && HashAlgorithm::DefaultAlgorithm !== $totp->hashAlgorithm()->algorithm())) {
+            $url .= "&algorithm=" . strtoupper($totp->hashAlgorithm()->algorithm());
         }
 
-        if (true === $this->includesPeriod() || (is_null($this->includesPeriod()) && TimeStep::DefaultTimeStep !== $totp->timeStep())) {
+        if (true === $this->includesPeriod() || (is_null($this->includesPeriod()) && TimeStep::DefaultTimeStep !== $totp->timeStep()->seconds())) {
             $url .= "&period={$totp->timeStep()}";
         }
 
@@ -447,7 +447,7 @@ class UrlGenerator
      * @param array $args The arguments provided in the call.
      *
      * @return $this
-     * @throws \Equit\Totp\Exceptions\UrlGenerator\InvalidUserException if for() is called with an empty user.
+     * @throws InvalidUserException if for() is called with an empty user.
      */
     public function __call(string $method, array $args): self
     {
@@ -519,7 +519,7 @@ class UrlGenerator
      * @param array $args The arguments provided in the call.
      *
      * @return static
-     * @throws \Equit\Totp\Exceptions\UrlGenerator\InvalidUserException if for() is called with an empty user.
+     * @throws InvalidUserException if for() is called with an empty user.
      */
     public static function __callStatic(string $method, array $args): static
     {

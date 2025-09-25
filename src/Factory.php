@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -214,11 +214,11 @@ class Factory implements TotpFactoryContract
     /**
      * Fetch the renderer being used to generate one-time passwords from HMACs.
      *
-     * @return string The renderer's name.
+     * @return Renderer The renderer.
      */
-    public function renderer(): string
+    public function renderer(): Renderer
     {
-        return $this->renderer->name();
+        return $this->renderer;
     }
 
     /**
@@ -306,7 +306,6 @@ class Factory implements TotpFactoryContract
      *
      * @param Secret $secret
      * @return Totp
-     * @throws InvalidTimeStepException
      */
     public function totp(Secret $secret): Totp
     {

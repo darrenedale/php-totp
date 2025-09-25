@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,7 +18,7 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Tests;
+namespace Equit\TotpTests;
 
 use DateTime;
 use DateTimeZone;
@@ -31,6 +31,8 @@ use Equit\Totp\Exceptions\InvalidVerificationWindowException;
 use Equit\Totp\Renderers\EightDigits;
 use Equit\Totp\Renderers\Integer;
 use Equit\Totp\Renderers\SixDigits;
+use Equit\Totp\Types\Digits;
+use Equit\Totp\Types\HashAlgorithm;
 use Equit\TotpTests\Framework\TestCase;
 use Equit\Totp\Factory;
 use Equit\Totp\Types\Secret;
@@ -836,16 +838,16 @@ class TotpTest extends TestCase
         }, self::rfcTestData());
 
         // invalid secrets
-        yield ["", 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,];
-        yield ["password-passwo", 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,];
-        yield [self::randomInvalidSecret(1), 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,];
-        yield [self::randomInvalidSecret(15), 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,];
+        yield ["", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
+        yield ["password-passwo", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
+        yield [self::randomInvalidSecret(1), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
+        yield [self::randomInvalidSecret(15), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
 
         // invalid time steps
-        yield [self::randomValidSecret(20), 0, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,];
-        yield [self::randomValidSecret(20), -1, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,];
-        yield [self::randomValidSecret(20), -50, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,];
-        yield [self::randomValidSecret(20), PHP_INT_MIN, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,];
+        yield [self::randomValidSecret(20), 0, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
+        yield [self::randomValidSecret(20), -1, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
+        yield [self::randomValidSecret(20), -50, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
+        yield [self::randomValidSecret(20), PHP_INT_MIN, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
 
         // invalid algorithms
         yield [self::randomValidSecret(20), 30, 0, "", [], InvalidHashAlgorithmException::class,];
@@ -879,9 +881,9 @@ class TotpTest extends TestCase
                 10 * mt_rand(1, 360),
                 mt_rand(0, time() - (20 * 365 * 24 * 60 * 60)),
                 match (mt_rand(0, 2)) {
-                    0 => Factory::Sha1Algorithm,
-                    1 => Factory::Sha256Algorithm,
-                    2 => Factory::Sha512Algorithm,
+                    0 => HashAlgorithm::Sha1Algorithm,
+                    1 => HashAlgorithm::Sha256Algorithm,
+                    2 => HashAlgorithm::Sha512Algorithm,
                 },
             ];
         }
@@ -904,14 +906,14 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp::sixDigits() should only throw expected test exceptions.
      * DateTime constructor and Totp::password() should not throw with test data.
      */
-    public function testSixDigits(string $secret, int $timeStep = TimeStep::DefaultTimeStep, int|DateTime $referenceTime = Factory::DefaultReferenceTime, string $hashAlgorithm = Factory::DefaultAlgorithm, array $expectations = [], string $exceptionClass = null): void
+    public function testSixDigits(string $secret, int $timeStep = TimeStep::DefaultTimeStep, int|DateTime $referenceTime = Factory::DefaultReferenceTime, string $hashAlgorithm = HashAlgorithm::DefaultAlgorithm, array $expectations = [], string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
             $this->expectException($exceptionClass);
         }
 
         /** @noinspection PhpUnhandledExceptionInspection Only throws if we're expecting a test exception */
-        $totp = Factory::sixDigits(secret: $secret, timeStep: $timeStep, referenceTime: $referenceTime, hashAlgorithm: $hashAlgorithm);
+        $totp = Factory::sixDigits(timeStep: $timeStep, referenceTime: $referenceTime, hashAlgorithm: $hashAlgorithm)->totp(Secret::fromRaw($secret));
         $this->assertEquals($secret, $totp->secret(), "Secret in Totp object does not match expected secret.");
         $this->assertEquals($timeStep, $totp->timeStep(), "TimeStep in Totp object does not match expected time step.");
         $this->assertEquals($hashAlgorithm, $totp->hashAlgorithm(), "Hash algorithm in Totp object does not match expected algorithm.");
@@ -978,16 +980,16 @@ class TotpTest extends TestCase
         }, self::rfcTestData());
 
         // invalid secrets
-        yield ["", 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,];
-        yield ["password-passwo", 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,];
-        yield [self::randomInvalidSecret(1), 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,];
-        yield [self::randomInvalidSecret(15), 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,];
+        yield ["", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
+        yield ["password-passwo", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
+        yield [self::randomInvalidSecret(1), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
+        yield [self::randomInvalidSecret(15), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
 
         // invalid time steps
-        yield [self::randomValidSecret(20), 0, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,];
-        yield [self::randomValidSecret(20), -1, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,];
-        yield [self::randomValidSecret(20), -50, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,];
-        yield [self::randomValidSecret(20), PHP_INT_MIN, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,];
+        yield [self::randomValidSecret(20), 0, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
+        yield [self::randomValidSecret(20), -1, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
+        yield [self::randomValidSecret(20), -50, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
+        yield [self::randomValidSecret(20), PHP_INT_MIN, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
 
         // invalid algorithms
         yield [self::randomValidSecret(20), 30, 0, "", [], InvalidHashAlgorithmException::class,];
@@ -1021,9 +1023,9 @@ class TotpTest extends TestCase
                 10 * mt_rand(1, 360),
                 mt_rand(0, time() - (20 * 365 * 24 * 60 * 60)),
                 match (mt_rand(0, 2)) {
-                    0 => Factory::Sha1Algorithm,
-                    1 => Factory::Sha256Algorithm,
-                    2 => Factory::Sha512Algorithm,
+                    0 => HashAlgorithm::Sha1Algorithm,
+                    1 => HashAlgorithm::Sha256Algorithm,
+                    2 => HashAlgorithm::Sha512Algorithm,
                 },
             ];
         }
@@ -1045,14 +1047,14 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp::eightDigits() should only throw expected test exceptions.
      * DateTime constructor and Totp::password() should not throw with test data.
      */
-    public function testEightDigits(string $secret, int $timeStep = TimeStep::DefaultTimeStep, int|DateTime $referenceTime = Factory::DefaultReferenceTime, string $hashAlgorithm = Factory::DefaultAlgorithm, array $expectations = [], string $exceptionClass = null): void
+    public function testEightDigits(string $secret, int $timeStep = TimeStep::DefaultTimeStep, int|DateTime $referenceTime = Factory::DefaultReferenceTime, string $hashAlgorithm = HashAlgorithm::DefaultAlgorithm, array $expectations = [], string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
             $this->expectException($exceptionClass);
         }
 
         /** @noinspection PhpUnhandledExceptionInspection Only throws if we're expecting a test exception */
-        $totp = Factory::eightDigits(secret: $secret, timeStep: $timeStep, referenceTime: $referenceTime, hashAlgorithm: $hashAlgorithm);
+        $totp = Factory::eightDigits(timeStep: $timeStep, referenceTime: $referenceTime, hashAlgorithm: $hashAlgorithm)->secret(Secret::fromRaw($secret));
         $this->assertEquals($secret, $totp->secret(), "Secret in Totp object does not match expected secret.");
         $this->assertEquals($timeStep, $totp->timeStep(), "Time step in Totp object does not match expected time step.");
         $this->assertEquals($hashAlgorithm, $totp->hashAlgorithm(), "Hash algorithm in Totp object does not match expected algorithm.");
@@ -1132,54 +1134,54 @@ class TotpTest extends TestCase
 
         // invalid digits
         yield from [
-            [null, "", 30, 0, Factory::Sha1Algorithm, [], TypeError::class,],
-            [true, "", 30, 0, Factory::Sha1Algorithm, [], TypeError::class,],
-            [false, "", 30, 0, Factory::Sha1Algorithm, [], TypeError::class,],
-            ["6", "", 30, 0, Factory::Sha1Algorithm, [], TypeError::class,],
-            [self::createStringable("6"), "", 30, 0, Factory::Sha1Algorithm, [], TypeError::class,],
-            [6.115, "", 30, 0, Factory::Sha1Algorithm, [], TypeError::class,],
-            [[6], "", 30, 0, Factory::Sha1Algorithm, [], TypeError::class,],
-            [(object)["digits" => 6,], self::randomInvalidSecret(15), 30, 0, Factory::Sha1Algorithm, [], TypeError::class,],
+            [null, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
+            [true, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
+            [false, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
+            ["6", "", 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
+            [self::createStringable("6"), "", 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
+            [6.115, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
+            [[6], "", 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
+            [(object)["digits" => 6,], self::randomInvalidSecret(15), 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
         ];
 
         // invalid secrets
         yield from [
-            [6, "", 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [7, "", 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [8, "", 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [9, "", 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [6, "password-passwo", 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [7, "password-passwo", 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [8, "password-passwo", 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [9, "password-passwo", 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [6, self::randomInvalidSecret(1), 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [7, self::randomInvalidSecret(1), 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [8, self::randomInvalidSecret(1), 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [9, self::randomInvalidSecret(1), 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [6, self::randomInvalidSecret(15), 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [7, self::randomInvalidSecret(15), 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [8, self::randomInvalidSecret(15), 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
-            [9, self::randomInvalidSecret(15), 30, 0, Factory::Sha1Algorithm, [], InvalidSecretException::class,],
+            [6, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [7, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [8, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [9, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [6, "password-passwo", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [7, "password-passwo", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [8, "password-passwo", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [9, "password-passwo", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [6, self::randomInvalidSecret(1), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [7, self::randomInvalidSecret(1), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [8, self::randomInvalidSecret(1), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [9, self::randomInvalidSecret(1), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [6, self::randomInvalidSecret(15), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [7, self::randomInvalidSecret(15), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [8, self::randomInvalidSecret(15), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
+            [9, self::randomInvalidSecret(15), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
         ];
 
         // invalid time steps
         yield from [
-            [6, self::randomValidSecret(20), 0, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [7, self::randomValidSecret(20), 0, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [8, self::randomValidSecret(20), 0, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [9, self::randomValidSecret(20), 0, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [6, self::randomValidSecret(20), -1, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [7, self::randomValidSecret(20), -1, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [8, self::randomValidSecret(20), -1, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [9, self::randomValidSecret(20), -1, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [6, self::randomValidSecret(20), -50, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [7, self::randomValidSecret(20), -50, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [8, self::randomValidSecret(20), -50, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [9, self::randomValidSecret(20), -50, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [6, self::randomValidSecret(20), PHP_INT_MIN, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [7, self::randomValidSecret(20), PHP_INT_MIN, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [8, self::randomValidSecret(20), PHP_INT_MIN, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [9, self::randomValidSecret(20), PHP_INT_MIN, 0, Factory::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [6, self::randomValidSecret(20), 0, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [7, self::randomValidSecret(20), 0, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [8, self::randomValidSecret(20), 0, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [9, self::randomValidSecret(20), 0, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [6, self::randomValidSecret(20), -1, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [7, self::randomValidSecret(20), -1, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [8, self::randomValidSecret(20), -1, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [9, self::randomValidSecret(20), -1, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [6, self::randomValidSecret(20), -50, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [7, self::randomValidSecret(20), -50, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [8, self::randomValidSecret(20), -50, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [9, self::randomValidSecret(20), -50, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [6, self::randomValidSecret(20), PHP_INT_MIN, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [7, self::randomValidSecret(20), PHP_INT_MIN, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [8, self::randomValidSecret(20), PHP_INT_MIN, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
+            [9, self::randomValidSecret(20), PHP_INT_MIN, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
         ];
 
         // invalid algorithms
@@ -1286,9 +1288,9 @@ class TotpTest extends TestCase
                 10 * mt_rand(1, 360),
                 mt_rand(0, time() - (20 * 365 * 24 * 60 * 60)),
                 match (mt_rand(0, 2)) {
-                    0 => Factory::Sha1Algorithm,
-                    1 => Factory::Sha256Algorithm,
-                    2 => Factory::Sha512Algorithm,
+                    0 => HashAlgorithm::Sha1Algorithm,
+                    1 => HashAlgorithm::Sha256Algorithm,
+                    2 => HashAlgorithm::Sha512Algorithm,
                 },
             ];
         }
@@ -1311,14 +1313,14 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp::integer() should only throw expected test exceptions. DateTime
      * constructor and Totp::password() should not throw with test data.
      */
-    public function testInteger(mixed $digits, string $secret, int $timeStep = TimeStep::DefaultTimeStep, int|DateTime $referenceTime = Factory::DefaultReferenceTime, string $hashAlgorithm = Factory::DefaultAlgorithm, array $expectations = [], string $exceptionClass = null): void
+    public function testInteger(mixed $digits, string $secret, int $timeStep = TimeStep::DefaultTimeStep, int|DateTime $referenceTime = Factory::DefaultReferenceTime, string $hashAlgorithm = HashAlgorithm::DefaultAlgorithm, array $expectations = [], string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
             $this->expectException($exceptionClass);
         }
 
         /** @noinspection PhpUnhandledExceptionInspection Only throws if we're expecting a test exception */
-        $totp = Factory::integer(digits: $digits, secret: $secret, timeStep: $timeStep, referenceTime: $referenceTime, hashAlgorithm: $hashAlgorithm);
+        $totp = Factory::integer(digits: $digits, timeStep: new TimeStep($timeStep), referenceTime: $referenceTime, hashAlgorithm: new HashAlgorithm($hashAlgorithm))->totp(Secret::fromRaw($secret));
         $this->assertEquals($secret, $totp->secret(), "Secret in Totp object does not match expected secret.");
         $this->assertEquals($timeStep, $totp->timeStep(), "Time step in Totp object does not match expected time step.");
         $this->assertEquals($hashAlgorithm, $totp->hashAlgorithm(), "Hash algorithm in Totp object does not match expected algorithm.");
@@ -1527,9 +1529,9 @@ class TotpTest extends TestCase
     public function dataForTestSetHashAlgorithm(): array
     {
         return [
-            "typicalSha1" => [Factory::Sha1Algorithm,],
-            "typicalSha256" => [Factory::Sha256Algorithm,],
-            "typicalSha512" => [Factory::Sha512Algorithm,],
+            "typicalSha1" => [HashAlgorithm::Sha1Algorithm,],
+            "typicalSha256" => [HashAlgorithm::Sha256Algorithm,],
+            "typicalSha512" => [HashAlgorithm::Sha512Algorithm,],
             "invalidStringMD5Upper" => ["MD5", InvalidHashAlgorithmException::class,],
             "invalidStringMD5Lower" => ["md5", InvalidHashAlgorithmException::class,],
             "invalidEmptyString" => ["", InvalidHashAlgorithmException::class,],
@@ -1568,7 +1570,7 @@ class TotpTest extends TestCase
             "invalidStringableSha1" => [self::createStringable("Sha1"), TypeError::class,],
             "invalidStringableSha256" => [self::createStringable("Sha256"), TypeError::class,],
             "invalidStringableSha512" => [self::createStringable("Sha512"), TypeError::class,],
-            "invalidArray" => [[Factory::Sha1Algorithm,], TypeError::class,],
+            "invalidArray" => [[HashAlgorithm::Sha1Algorithm,], TypeError::class,],
         ];
     }
 
@@ -1602,9 +1604,9 @@ class TotpTest extends TestCase
     public function dataForTestHashAlgorithm(): array
     {
         return [
-            "typicalSha1" => [Factory::Sha1Algorithm,],
-            "typicalSha256" => [Factory::Sha256Algorithm,],
-            "typicalSha512" => [Factory::Sha512Algorithm,],
+            "typicalSha1" => [HashAlgorithm::Sha1Algorithm,],
+            "typicalSha256" => [HashAlgorithm::Sha256Algorithm,],
+            "typicalSha512" => [HashAlgorithm::Sha512Algorithm,],
         ];
     }
 
@@ -1622,7 +1624,7 @@ class TotpTest extends TestCase
     public function testHashAlgorithm(string $algorithm): void
     {
         $totp = self::createTotp();
-        $this->assertSame(Factory::Sha1Algorithm, $totp->hashAlgorithm(), "The default hash algorithm was expected to be " . Factory::Sha1Algorithm . " but {$totp->hashAlgorithm()} was reported.");
+        $this->assertSame(HashAlgorithm::Sha1Algorithm, $totp->hashAlgorithm(), "The default hash algorithm was expected to be " . HashAlgorithm::Sha1Algorithm . " but {$totp->hashAlgorithm()} was reported.");
         /** @noinspection PhpUnhandledExceptionInspection setHashAlgorithm() shouldn't throw with test data. */
         $totp->withHashAlgorithm($algorithm);
         $this->assertSame($algorithm, $totp->hashAlgorithm(), "The hash algorithm was expected to be {$algorithm} but {$totp->hashAlgorithm()} was reported.");
@@ -2003,6 +2005,11 @@ class TotpTest extends TestCase
             "integer10Digits" => [new Integer(10),],
             "anonymousClass" => [new class implements Renderer
             {
+                public function name(): string
+                {
+                    return "insecure renderer";
+                }
+
                 public function render(string $hmac): string
                 {
                     return "insecure";
@@ -2060,6 +2067,11 @@ class TotpTest extends TestCase
             "integer10Digits" => [new Integer(10),],
             "anonymousClass" => [new class implements Renderer
             {
+                public function name(): string
+                {
+                    return "insecure renderer";
+                }
+
                 public function render(string $hmac): string
                 {
                     return "insecure";
@@ -2163,11 +2175,11 @@ class TotpTest extends TestCase
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with test data. */
         return [
             "sha1-6digit-1970" => [],
-            "sha256-6digit-1970" => [null, Factory::Sha256Algorithm,],
-            "sha512-6digit-1970" => [null, Factory::Sha512Algorithm,],
-            "sha1-6digit-1974" => [null, Factory::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha256-6digit-1974" => [null, Factory::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha512-6digit-1974" => [null, Factory::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha256-6digit-1970" => [null, HashAlgorithm::Sha256Algorithm,],
+            "sha512-6digit-1970" => [null, HashAlgorithm::Sha512Algorithm,],
+            "sha1-6digit-1974" => [null, HashAlgorithm::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha256-6digit-1974" => [null, HashAlgorithm::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha512-6digit-1974" => [null, HashAlgorithm::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
         ];
     }
 
@@ -2181,7 +2193,7 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp constructor, Totp::counter() and Totp::counterAt() should not
      * throw with test data.
      */
-    public function testCounter(string $secret = null, string $algorithm = Factory::Sha1Algorithm, int|DateTime $referenceTime = 0): void
+    public function testCounter(string $secret = null, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
         // The logic behind this test is this: counter() can't return a pre-known value because it produces a value that
         // is dependent on an external factor - the current system time. So we use counterAt() as our source of
@@ -2195,7 +2207,7 @@ class TotpTest extends TestCase
         // Note that while debugging, if you put a breakpoint on the call to Totp::counterBytes() you are more likely
         // to trigger a repeat of the loop
         /** @noinspection PhpUnhandledExceptionInspection Totp constructor should not throw with test data. */
-        $totp = new Factory(secret: $secret, referenceTime: $referenceTime, hashAlgorithm: $algorithm);
+        $totp = (new Factory(referenceTime: $referenceTime, hashAlgorithm: new HashAlgorithm($algorithm)))->totp(Secret::fromRaw($secret));
 
         // unless you've set a breakpoint we should traverse this loop no more than twice
         do {
@@ -2284,11 +2296,11 @@ class TotpTest extends TestCase
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor shouldn't throw with test data. */
         return [
             "sha1-6digit-1970" => [],
-            "sha256-6digit-1970" => [null, Factory::Sha256Algorithm,],
-            "sha512-6digit-1970" => [null, Factory::Sha512Algorithm,],
-            "sha1-6digit-1974" => [null, Factory::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha256-6digit-1974" => [null, Factory::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha512-6digit-1974" => [null, Factory::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha256-6digit-1970" => [null, HashAlgorithm::Sha256Algorithm,],
+            "sha512-6digit-1970" => [null, HashAlgorithm::Sha512Algorithm,],
+            "sha1-6digit-1974" => [null, HashAlgorithm::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha256-6digit-1974" => [null, HashAlgorithm::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha512-6digit-1974" => [null, HashAlgorithm::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
         ];
     }
 
@@ -2301,7 +2313,7 @@ class TotpTest extends TestCase
      *
      * @noinspection PhpDocMissingThrowsInspection Totp constructor should not throw with test data.
      */
-    public function testCounterBytes(string $secret = null, string $algorithm = Factory::Sha1Algorithm, int|DateTime $referenceTime = 0): void
+    public function testCounterBytes(string $secret = null, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
         // The logic behind this test is this: counterBytes() can't return a pre-known value because it produces a
         // 64-bit value that is dependent on an external factor - the current system time. So we use counterBytesAt() as
@@ -2315,7 +2327,7 @@ class TotpTest extends TestCase
         // Note that while debugging, if you put a breakpoint on the call to Totp::counterBytes() you are more likely
         // to trigger a repeat of the loop
         /** @noinspection PhpUnhandledExceptionInspection Totp constructor should not throw with test data. */
-        $totp = new Factory(secret: $secret, referenceTime: $referenceTime, hashAlgorithm: $algorithm);
+        $totp = (new Factory(referenceTime: $referenceTime, hashAlgorithm: $algorithm))->totp(Secret::fromRaw($secret));
 
         $counterBytes = new ReflectionMethod(Factory::class, "counterBytes");
         $counterBytes->setAccessible(true);
@@ -2349,21 +2361,21 @@ class TotpTest extends TestCase
             "sha1-6digit-1970" => [],
             "sha1-7digit-1970" => [null, 7,],
             "sha1-8digit-1970" => [null, 8,],
-            "sha256-6digit-1970" => [null, 6, Factory::Sha256Algorithm,],
-            "sha256-7digit-1970" => [null, 7, Factory::Sha256Algorithm,],
-            "sha256-8digit-1970" => [null, 8, Factory::Sha256Algorithm,],
-            "sha512-6digit-1970" => [null, 6, Factory::Sha512Algorithm,],
-            "sha512-7digit-1970" => [null, 7, Factory::Sha512Algorithm,],
-            "sha512-8digit-1970" => [null, 8, Factory::Sha512Algorithm,],
-            "sha1-6digit-1974" => [null, 6, Factory::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha1-7digit-1974" => [null, 7, Factory::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha1-8digit-1974" => [null, 8, Factory::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha256-6digit-1974" => [null, 6, Factory::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha256-7digit-1974" => [null, 7, Factory::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha256-8digit-1974" => [null, 8, Factory::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha512-6digit-1974" => [null, 6, Factory::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha512-7digit-1974" => [null, 7, Factory::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha512-8digit-1974" => [null, 8, Factory::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha256-6digit-1970" => [null, 6, HashAlgorithm::Sha256Algorithm,],
+            "sha256-7digit-1970" => [null, 7, HashAlgorithm::Sha256Algorithm,],
+            "sha256-8digit-1970" => [null, 8, HashAlgorithm::Sha256Algorithm,],
+            "sha512-6digit-1970" => [null, 6, HashAlgorithm::Sha512Algorithm,],
+            "sha512-7digit-1970" => [null, 7, HashAlgorithm::Sha512Algorithm,],
+            "sha512-8digit-1970" => [null, 8, HashAlgorithm::Sha512Algorithm,],
+            "sha1-6digit-1974" => [null, 6, HashAlgorithm::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha1-7digit-1974" => [null, 7, HashAlgorithm::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha1-8digit-1974" => [null, 8, HashAlgorithm::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha256-6digit-1974" => [null, 6, HashAlgorithm::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha256-7digit-1974" => [null, 7, HashAlgorithm::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha256-8digit-1974" => [null, 8, HashAlgorithm::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha512-6digit-1974" => [null, 6, HashAlgorithm::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha512-7digit-1974" => [null, 7, HashAlgorithm::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha512-8digit-1974" => [null, 8, HashAlgorithm::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
         ];
     }
 
@@ -2380,7 +2392,7 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp constructor, hmac() and hmacAt() should not throw with
      * test data.
      */
-    public function testHmac(string $secret = null, int $digits = 6, string $algorithm = Factory::Sha1Algorithm, int|DateTime $referenceTime = 0): void
+    public function testHmac(string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
         // The logic behind this test is this: password() can't return a pre-known value because it produces a
         // password dependent on an external factor - the current system time. So we use passwordAt() as our source of
@@ -2394,7 +2406,7 @@ class TotpTest extends TestCase
         // Note that while debugging, if you put a breakpoint on the call to Totp::password() you are more likely
         // to trigger a repeat of the loop
         /** @noinspection PhpUnhandledExceptionInspection Totp constructor should not throw with test data. */
-        $totp = new Factory(secret: $secret, renderer: new Integer($digits), referenceTime: $referenceTime, hashAlgorithm: $algorithm);
+        $totp = (new Factory(renderer: new Integer(new Digits($digits)), referenceTime: $referenceTime, hashAlgorithm: new HashAlgorithm($algorithm)))->totp(Secret::fromRaw($secret));
 
         // unless you've set a breakpoint we should traverse this loop no more than twice
         do {
@@ -2426,9 +2438,9 @@ class TotpTest extends TestCase
         );
 
         // test for times before TOTP reference time
-        yield [self::randomValidSecret(20), 120, 1, "", Factory::Sha1Algorithm, InvalidTimeException::class,];
-        yield [self::randomValidSecret(32), 120, 1, "", Factory::Sha256Algorithm, InvalidTimeException::class,];
-        yield [self::randomValidSecret(64), 120, 1, "", Factory::Sha512Algorithm, InvalidTimeException::class,];
+        yield [self::randomValidSecret(20), 120, 1, "", HashAlgorithm::Sha1Algorithm, InvalidTimeException::class,];
+        yield [self::randomValidSecret(32), 120, 1, "", HashAlgorithm::Sha256Algorithm, InvalidTimeException::class,];
+        yield [self::randomValidSecret(64), 120, 1, "", HashAlgorithm::Sha512Algorithm, InvalidTimeException::class,];
     }
 
     /**
@@ -2448,14 +2460,14 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp::hmacAt() shouldn't throw unless we're expecting a test
      *     exception.
      */
-    public function testHmacAt(string $secret, int|DateTime $referenceTime, int|DateTime $currentTime, string $hmac, ?string $algorithm = Factory::Sha1Algorithm, ?string $exceptionClass = null): void
+    public function testHmacAt(string $secret, int|DateTime $referenceTime, int|DateTime $currentTime, string $hmac, ?string $algorithm = HashAlgorithm::Sha1Algorithm, ?string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
             $this->expectException($exceptionClass);
         }
 
         /** @noinspection PhpUnhandledExceptionInspection Constructor should not throw with test data. */
-        $totp = new Factory(secret: $secret, timeStep: 30, referenceTime: $referenceTime, hashAlgorithm: $algorithm);
+        $totp = (new Factory(timeStep: new TimeStep(30), referenceTime: $referenceTime, hashAlgorithm: new HashAlgorithm($algorithm)))->totp(Secret::fromRaw($secret));
         /** @noinspection PhpUnhandledExceptionInspection Totp::hmacAt() shouldn't throw unless we're expecting a test exception. */
         $this->assertSame(
             $hmac,
@@ -2480,21 +2492,21 @@ class TotpTest extends TestCase
             "sha1-6digit-1970" => [],
             "sha1-7digit-1970" => [null, 7,],
             "sha1-8digit-1970" => [null, 8,],
-            "sha256-6digit-1970" => [null, 6, Factory::Sha256Algorithm,],
-            "sha256-7digit-1970" => [null, 7, Factory::Sha256Algorithm,],
-            "sha256-8digit-1970" => [null, 8, Factory::Sha256Algorithm,],
-            "sha512-6digit-1970" => [null, 6, Factory::Sha512Algorithm,],
-            "sha512-7digit-1970" => [null, 7, Factory::Sha512Algorithm,],
-            "sha512-8digit-1970" => [null, 8, Factory::Sha512Algorithm,],
-            "sha1-6digit-1974" => [null, 6, Factory::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha1-7digit-1974" => [null, 7, Factory::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha1-8digit-1974" => [null, 8, Factory::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha256-6digit-1974" => [null, 6, Factory::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha256-7digit-1974" => [null, 7, Factory::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha256-8digit-1974" => [null, 8, Factory::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha512-6digit-1974" => [null, 6, Factory::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha512-7digit-1974" => [null, 7, Factory::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
-            "sha512-8digit-1974" => [null, 8, Factory::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha256-6digit-1970" => [null, 6, HashAlgorithm::Sha256Algorithm,],
+            "sha256-7digit-1970" => [null, 7, HashAlgorithm::Sha256Algorithm,],
+            "sha256-8digit-1970" => [null, 8, HashAlgorithm::Sha256Algorithm,],
+            "sha512-6digit-1970" => [null, 6, HashAlgorithm::Sha512Algorithm,],
+            "sha512-7digit-1970" => [null, 7, HashAlgorithm::Sha512Algorithm,],
+            "sha512-8digit-1970" => [null, 8, HashAlgorithm::Sha512Algorithm,],
+            "sha1-6digit-1974" => [null, 6, HashAlgorithm::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha1-7digit-1974" => [null, 7, HashAlgorithm::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha1-8digit-1974" => [null, 8, HashAlgorithm::Sha1Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha256-6digit-1974" => [null, 6, HashAlgorithm::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha256-7digit-1974" => [null, 7, HashAlgorithm::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha256-8digit-1974" => [null, 8, HashAlgorithm::Sha256Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha512-6digit-1974" => [null, 6, HashAlgorithm::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha512-7digit-1974" => [null, 7, HashAlgorithm::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
+            "sha512-8digit-1974" => [null, 8, HashAlgorithm::Sha512Algorithm, (new DateTime("1974-04-23 00:00:00", new DateTimeZone("UTC"))),],
         ];
     }
 
@@ -2509,7 +2521,7 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp constructor and Integer renderer constructor should not throw
      * with test data. Totp::password() and Totp::passwordAt() should not throw with test data.
      */
-    public function testPassword(string $secret = null, int $digits = 6, string $algorithm = Factory::Sha1Algorithm, int|DateTime $referenceTime = 0): void
+    public function testPassword(string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
         // The logic behind this test is this: password() can't return a pre-known value because it produces a
         // password dependent on an external factor - the current system time. So we use passwordAt() as our source of
@@ -2525,7 +2537,7 @@ class TotpTest extends TestCase
         /** @noinspection PhpUnhandledExceptionInspection Totp constructor and Integer renderer constructor should not
          * throw with test data.
          */
-        $totp = new Factory(secret: $secret, renderer: new Integer($digits), referenceTime: $referenceTime, hashAlgorithm: $algorithm);
+        $totp = (new Factory(renderer: new Integer(new Digits($digits)), referenceTime: $referenceTime, hashAlgorithm: new HashAlgorithm($algorithm)))->totp(Secret::fromRaw($secret));
 
         // unless you've set a breakpoint we should traverse this loop no more than twice
         do {
@@ -2557,9 +2569,9 @@ class TotpTest extends TestCase
         );
 
         // test for times before TOTP reference time
-        yield [self::randomValidSecret(20), 120, 1, "", Factory::Sha1Algorithm, InvalidTimeException::class,];
-        yield [self::randomValidSecret(32), 120, 1, "", Factory::Sha256Algorithm, InvalidTimeException::class,];
-        yield [self::randomValidSecret(64), 120, 1, "", Factory::Sha512Algorithm, InvalidTimeException::class,];
+        yield [self::randomValidSecret(20), 120, 1, "", HashAlgorithm::Sha1Algorithm, InvalidTimeException::class,];
+        yield [self::randomValidSecret(32), 120, 1, "", HashAlgorithm::Sha256Algorithm, InvalidTimeException::class,];
+        yield [self::randomValidSecret(64), 120, 1, "", HashAlgorithm::Sha512Algorithm, InvalidTimeException::class,];
     }
 
     /**
@@ -2579,7 +2591,7 @@ class TotpTest extends TestCase
      * constructor and setDigits() won't throw with known valid $digits used here. Totp::passwordAt() should only throw
      * expected test exceptions
      */
-    public function testPasswordAt(string $secret, int|DateTime $referenceTime, int|DateTime $currentTime, string $password, ?string $algorithm = Factory::Sha1Algorithm, ?string $exceptionClass = null): void
+    public function testPasswordAt(string $secret, int|DateTime $referenceTime, int|DateTime $currentTime, string $password, ?string $algorithm = HashAlgorithm::Sha1Algorithm, ?string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
             $this->expectException($exceptionClass);
@@ -2588,7 +2600,7 @@ class TotpTest extends TestCase
         /** @noinspection PhpUnhandledExceptionInspection 8 is a known valid value for $digits. */
         $renderer = new Integer(8);
         /** @noinspection PhpUnhandledExceptionInspection Constructor should not throw with test data. */
-        $totp = new Factory(secret: $secret, renderer: $renderer, timeStep: 30, referenceTime: $referenceTime, hashAlgorithm: $algorithm);
+        $totp = (new Factory(renderer: $renderer, timeStep: new TimeStep(30), referenceTime: $referenceTime, hashAlgorithm: $algorithm))->totp(Secret::fromRaw($secret));
 
         for ($digits = 8; $digits >= 6; --$digits) {
             /** @noinspection PhpUnhandledExceptionInspection this is a known valid value for $digits. */
@@ -2622,9 +2634,9 @@ class TotpTest extends TestCase
                 self::randomValidSecret(64),
                 mt_rand(6, 8),
                 match (mt_rand(0, 2)) {
-                    0 => Factory::Sha1Algorithm,
-                    1 => Factory::Sha256Algorithm,
-                    2 => Factory::Sha512Algorithm,
+                    0 => HashAlgorithm::Sha1Algorithm,
+                    1 => HashAlgorithm::Sha256Algorithm,
+                    2 => HashAlgorithm::Sha512Algorithm,
                 },
                 mt_rand(0, time() - 20 * 365 * 24 * 60 * 60),
             ];
@@ -2642,7 +2654,7 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp constructor, Integer renderer constructor,
      * Totp::password() and Totp::verify() shouldn't throw with test data.
      */
-    public function testVerify(string $secret = null, int $digits = 6, string $algorithm = Factory::Sha1Algorithm, int|DateTime $referenceTime = 0): void
+    public function testVerify(string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
         // The logic behind this test is this: verify() can't return a pre-known value because it is dependent on an
         // external factor - the current system time. So we fetch the current password, which we know should pass
@@ -2659,7 +2671,7 @@ class TotpTest extends TestCase
         /** @noinspection PhpUnhandledExceptionInspection Totp constructor shouldn't throw with test data. Integer
          * renderer constructor shouldn't throw with test data.
          */
-        $totp = new Factory(secret: $secret, renderer: new Integer($digits), referenceTime: $referenceTime, hashAlgorithm: $algorithm);
+        $totp = (new Factory(renderer: new Integer(new Digits($digits)), referenceTime: $referenceTime, hashAlgorithm: new HashAlgorithm($algorithm)))->totp(Secret::fromRaw($secret));
 
         // unless you've set a breakpoint we should traverse this loop no more than twice
         do {
@@ -2719,126 +2731,126 @@ class TotpTest extends TestCase
         }
 
         yield from [
-            "emptyPassword6digitsSha1" => [["secret" => self::randomValidSecret(20), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "", false,],
-            "emptyPassword6digitsSha256" => [["secret" => self::randomValidSecret(32), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "", false,],
-            "emptyPassword6digitsSha512" => [["secret" => self::randomValidSecret(64), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "", false,],
+            "emptyPassword6digitsSha1" => [["secret" => self::randomValidSecret(20), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "", false,],
+            "emptyPassword6digitsSha256" => [["secret" => self::randomValidSecret(32), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "", false,],
+            "emptyPassword6digitsSha512" => [["secret" => self::randomValidSecret(64), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "", false,],
 
-            "emptyPassword7digitsSha1" => [["secret" => self::randomValidSecret(20), "digits" => 7, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "", false,],
-            "emptyPassword7digitsSha256" => [["secret" => self::randomValidSecret(32), "digits" => 7, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "", false,],
-            "emptyPassword7digitsSha512" => [["secret" => self::randomValidSecret(64), "digits" => 7, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "", false,],
+            "emptyPassword7digitsSha1" => [["secret" => self::randomValidSecret(20), "digits" => 7, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "", false,],
+            "emptyPassword7digitsSha256" => [["secret" => self::randomValidSecret(32), "digits" => 7, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "", false,],
+            "emptyPassword7digitsSha512" => [["secret" => self::randomValidSecret(64), "digits" => 7, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "", false,],
 
-            "emptyPassword8digitsSha1" => [["secret" => self::randomValidSecret(20), "digits" => 8, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "", false,],
-            "emptyPassword8digitsSha256" => [["secret" => self::randomValidSecret(32), "digits" => 8, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "", false,],
-            "emptyPassword8digitsSha512" => [["secret" => self::randomValidSecret(64), "digits" => 8, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "", false,],
+            "emptyPassword8digitsSha1" => [["secret" => self::randomValidSecret(20), "digits" => 8, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "", false,],
+            "emptyPassword8digitsSha256" => [["secret" => self::randomValidSecret(32), "digits" => 8, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "", false,],
+            "emptyPassword8digitsSha512" => [["secret" => self::randomValidSecret(64), "digits" => 8, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "", false,],
 
-            "alphaPassword6digitsSha1" => [["secret" => self::randomValidSecret(20), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "ABCDEF", false,],
-            "alphaPassword6digitsSha256" => [["secret" => self::randomValidSecret(32), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "ABCDEF", false,],
-            "alphaPassword6digitsSha512" => [["secret" => self::randomValidSecret(64), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "ABCDEF", false,],
+            "alphaPassword6digitsSha1" => [["secret" => self::randomValidSecret(20), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "ABCDEF", false,],
+            "alphaPassword6digitsSha256" => [["secret" => self::randomValidSecret(32), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "ABCDEF", false,],
+            "alphaPassword6digitsSha512" => [["secret" => self::randomValidSecret(64), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "ABCDEF", false,],
 
-            "alphaPassword7digitsSha1" => [["secret" => self::randomValidSecret(20), "digits" => 7, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "ABCDEFG", false,],
-            "alphaPassword7digitsSha256" => [["secret" => self::randomValidSecret(32), "digits" => 7, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "ABCDEFG", false,],
-            "alphaPassword7digitsSha512" => [["secret" => self::randomValidSecret(64), "digits" => 7, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "ABCDEFG", false,],
+            "alphaPassword7digitsSha1" => [["secret" => self::randomValidSecret(20), "digits" => 7, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "ABCDEFG", false,],
+            "alphaPassword7digitsSha256" => [["secret" => self::randomValidSecret(32), "digits" => 7, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "ABCDEFG", false,],
+            "alphaPassword7digitsSha512" => [["secret" => self::randomValidSecret(64), "digits" => 7, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "ABCDEFG", false,],
 
-            "alphaPassword8digitsSha1" => [["secret" => self::randomValidSecret(20), "digits" => 8, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "ABCDEFGH", false,],
-            "alphaPassword8digitsSha256" => [["secret" => self::randomValidSecret(32), "digits" => 8, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "ABCDEFGH", false,],
-            "alphaPassword8digitsSha512" => [["secret" => self::randomValidSecret(64), "digits" => 8, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "ABCDEFGH", false,],
+            "alphaPassword8digitsSha1" => [["secret" => self::randomValidSecret(20), "digits" => 8, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "ABCDEFGH", false,],
+            "alphaPassword8digitsSha256" => [["secret" => self::randomValidSecret(32), "digits" => 8, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "ABCDEFGH", false,],
+            "alphaPassword8digitsSha512" => [["secret" => self::randomValidSecret(64), "digits" => 8, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "ABCDEFGH", false,],
 
             // RFC data with one digit in the password changed by 1
-            "numericPassword6digitsSha1Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "287081", false,],
-            "numericPassword6digitsSha256Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "247375", false,],
-            "numericPassword6digitsSha512Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "342146", false,],
+            "numericPassword6digitsSha1Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "287081", false,],
+            "numericPassword6digitsSha256Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "247375", false,],
+            "numericPassword6digitsSha512Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "342146", false,],
 
-            "numericPassword6digitsSha1Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "287072", false,],
-            "numericPassword6digitsSha256Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "247364", false,],
-            "numericPassword6digitsSha512Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "342137", false,],
+            "numericPassword6digitsSha1Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "287072", false,],
+            "numericPassword6digitsSha256Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "247364", false,],
+            "numericPassword6digitsSha512Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "342137", false,],
 
-            "numericPassword6digitsSha1Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "287182", false,],
-            "numericPassword6digitsSha256Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "247474", false,],
-            "numericPassword6digitsSha512Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "342247", false,],
+            "numericPassword6digitsSha1Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "287182", false,],
+            "numericPassword6digitsSha256Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "247474", false,],
+            "numericPassword6digitsSha512Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "342247", false,],
 
-            "numericPassword6digitsSha1Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "288082", false,],
-            "numericPassword6digitsSha256Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "248374", false,],
-            "numericPassword6digitsSha512Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "343147", false,],
+            "numericPassword6digitsSha1Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "288082", false,],
+            "numericPassword6digitsSha256Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "248374", false,],
+            "numericPassword6digitsSha512Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "343147", false,],
 
-            "numericPassword6digitsSha1Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "277082", false,],
-            "numericPassword6digitsSha256Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "237374", false,],
-            "numericPassword6digitsSha512Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "332147", false,],
+            "numericPassword6digitsSha1Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "277082", false,],
+            "numericPassword6digitsSha256Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "237374", false,],
+            "numericPassword6digitsSha512Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "332147", false,],
 
-            "numericPassword6digitsSha1Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "187082", false,],
-            "numericPassword6digitsSha256Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "147374", false,],
-            "numericPassword6digitsSha512Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "242147", false,],
+            "numericPassword6digitsSha1Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "187082", false,],
+            "numericPassword6digitsSha256Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "147374", false,],
+            "numericPassword6digitsSha512Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "242147", false,],
 
-            "numericPassword7digitsSha1Digit7Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "4287083", false,],
-            "numericPassword7digitsSha256Digit7Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "2247375", false,],
-            "numericPassword7digitsSha512Digit7Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "9342146", false,],
+            "numericPassword7digitsSha1Digit7Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "4287083", false,],
+            "numericPassword7digitsSha256Digit7Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "2247375", false,],
+            "numericPassword7digitsSha512Digit7Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "9342146", false,],
 
-            "numericPassword7digitsSha1Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "4287092", false,],
-            "numericPassword7digitsSha256Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "2247384", false,],
-            "numericPassword7digitsSha512Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "9342157", false,],
+            "numericPassword7digitsSha1Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "4287092", false,],
+            "numericPassword7digitsSha256Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "2247384", false,],
+            "numericPassword7digitsSha512Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "9342157", false,],
 
-            "numericPassword7digitsSha1Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "4287182", false,],
-            "numericPassword7digitsSha256Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "2247274", false,],
-            "numericPassword7digitsSha512Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "9342047", false,],
+            "numericPassword7digitsSha1Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "4287182", false,],
+            "numericPassword7digitsSha256Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "2247274", false,],
+            "numericPassword7digitsSha512Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "9342047", false,],
 
-            "numericPassword7digitsSha1Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "4288082", false,],
-            "numericPassword7digitsSha256Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "2248374", false,],
-            "numericPassword7digitsSha512Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "9343147", false,],
+            "numericPassword7digitsSha1Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "4288082", false,],
+            "numericPassword7digitsSha256Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "2248374", false,],
+            "numericPassword7digitsSha512Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "9343147", false,],
 
-            "numericPassword7digitsSha1Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "4297082", false,],
-            "numericPassword7digitsSha256Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "2257374", false,],
-            "numericPassword7digitsSha512Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "9352147", false,],
+            "numericPassword7digitsSha1Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "4297082", false,],
+            "numericPassword7digitsSha256Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "2257374", false,],
+            "numericPassword7digitsSha512Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "9352147", false,],
 
-            "numericPassword7digitsSha1Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "4187082", false,],
-            "numericPassword7digitsSha256Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "2147374", false,],
-            "numericPassword7digitsSha512Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "9242147", false,],
+            "numericPassword7digitsSha1Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "4187082", false,],
+            "numericPassword7digitsSha256Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "2147374", false,],
+            "numericPassword7digitsSha512Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "9242147", false,],
 
-            "numericPassword7digitsSha1Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "3287082", false,],
-            "numericPassword7digitsSha256Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "1247374", false,],
-            "numericPassword7digitsSha512Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "8342147", false,],
+            "numericPassword7digitsSha1Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "3287082", false,],
+            "numericPassword7digitsSha256Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "1247374", false,],
+            "numericPassword7digitsSha512Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "8342147", false,],
 
-            "numericPassword8digitsSha1Digit8Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "94287083", false,],
-            "numericPassword8digitsSha256Digit8Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "32247375", false,],
-            "numericPassword8digitsSha512Digit8Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "69342148", false,],
+            "numericPassword8digitsSha1Digit8Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "94287083", false,],
+            "numericPassword8digitsSha256Digit8Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "32247375", false,],
+            "numericPassword8digitsSha512Digit8Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "69342148", false,],
 
-            "numericPassword8digitsSha1Digit7Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "94287092", false,],
-            "numericPassword8digitsSha256Digit7Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "32247384", false,],
-            "numericPassword8digitsSha512Digit7Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "69342157", false,],
+            "numericPassword8digitsSha1Digit7Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "94287092", false,],
+            "numericPassword8digitsSha256Digit7Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "32247384", false,],
+            "numericPassword8digitsSha512Digit7Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "69342157", false,],
 
-            "numericPassword8digitsSha1Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "94287182", false,],
-            "numericPassword8digitsSha256Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "32247474", false,],
-            "numericPassword8digitsSha512Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "69342247", false,],
+            "numericPassword8digitsSha1Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "94287182", false,],
+            "numericPassword8digitsSha256Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "32247474", false,],
+            "numericPassword8digitsSha512Digit6Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "69342247", false,],
 
-            "numericPassword8digitsSha1Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "94286082", false,],
-            "numericPassword8digitsSha256Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "32246374", false,],
-            "numericPassword8digitsSha512Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "69343147", false,],
+            "numericPassword8digitsSha1Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "94286082", false,],
+            "numericPassword8digitsSha256Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "32246374", false,],
+            "numericPassword8digitsSha512Digit5Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "69343147", false,],
 
-            "numericPassword8digitsSha1Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "94297082", false,],
-            "numericPassword8digitsSha256Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "32257374", false,],
-            "numericPassword8digitsSha512Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "69352147", false,],
+            "numericPassword8digitsSha1Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "94297082", false,],
+            "numericPassword8digitsSha256Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "32257374", false,],
+            "numericPassword8digitsSha512Digit4Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "69352147", false,],
 
-            "numericPassword8digitsSha1Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "94387082", false,],
-            "numericPassword8digitsSha256Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "32347374", false,],
-            "numericPassword8digitsSha512Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "69242147", false,],
+            "numericPassword8digitsSha1Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "94387082", false,],
+            "numericPassword8digitsSha256Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "32347374", false,],
+            "numericPassword8digitsSha512Digit3Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "69242147", false,],
 
-            "numericPassword8digitsSha1Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "95287082", false,],
-            "numericPassword8digitsSha256Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "31247374", false,],
-            "numericPassword8digitsSha512Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "68342147", false,],
+            "numericPassword8digitsSha1Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "95287082", false,],
+            "numericPassword8digitsSha256Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "31247374", false,],
+            "numericPassword8digitsSha512Digit2Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "68342147", false,],
 
-            "numericPassword8digitsSha1Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "2287082", false,],
-            "numericPassword8digitsSha256Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 0, "0247374", false,],
-            "numericPassword8digitsSha512Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha512Algorithm,], 59, 0, "7342147", false,],
+            "numericPassword8digitsSha1Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "2287082", false,],
+            "numericPassword8digitsSha256Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 0, "0247374", false,],
+            "numericPassword8digitsSha512Digit1Wrong" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,], 59, 0, "7342147", false,],
 
             // time specified as DateTime
-            "currentTimeAsDateTime01" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], new DateTime("@59", new DateTimeZone("UTC")), 0, "287082", true,],
-            "currentTimeAsDateTime02" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], new DateTime("@59", new DateTimeZone("UTC")), 0, "287072", false,],
+            "currentTimeAsDateTime01" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], new DateTime("@59", new DateTimeZone("UTC")), 0, "287082", true,],
+            "currentTimeAsDateTime02" => [["secret" => "12345678901234567890", "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], new DateTime("@59", new DateTimeZone("UTC")), 0, "287072", false,],
 
             // invalid window
-            "invalidWindowMinus1" => [["secret" => self::randomValidSecret(20), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, -1, "", false, InvalidVerificationWindowException::class,],
-            "invalidWindowBeyondReferenceTime" => [["secret" => self::randomValidSecret(32), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => Factory::Sha256Algorithm,], 59, 2, "", false, InvalidVerificationWindowException::class,],
+            "invalidWindowMinus1" => [["secret" => self::randomValidSecret(20), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, -1, "", false, InvalidVerificationWindowException::class,],
+            "invalidWindowBeyondReferenceTime" => [["secret" => self::randomValidSecret(32), "digits" => 6, "referenceTime" => 0, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha256Algorithm,], 59, 2, "", false, InvalidVerificationWindowException::class,],
 
             // invalid "current" time
-            "invalidTime" => [["secret" => self::randomValidSecret(20), "digits" => 6, "referenceTime" => 240, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 59, 0, "", false, InvalidTimeException::class,],
-            "marginallyInvalidTime" => [["secret" => self::randomValidSecret(20), "digits" => 6, "referenceTime" => 240, "time-step" => 30, "hashAlgorithm" => Factory::Sha1Algorithm,], 239, 0, "", false, InvalidTimeException::class,],
+            "invalidTime" => [["secret" => self::randomValidSecret(20), "digits" => 6, "referenceTime" => 240, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 59, 0, "", false, InvalidTimeException::class,],
+            "marginallyInvalidTime" => [["secret" => self::randomValidSecret(20), "digits" => 6, "referenceTime" => 240, "time-step" => 30, "hashAlgorithm" => HashAlgorithm::Sha1Algorithm,], 239, 0, "", false, InvalidTimeException::class,],
         ];
     }
 
@@ -2862,7 +2874,7 @@ class TotpTest extends TestCase
         }
 
         /** @noinspection PhpUnhandledExceptionInspection Totp::integer() shouldn't throw with test data. */
-        $totp = Factory::integer(digits: $totpSpec["digits"], secret: $totpSpec["secret"], timeStep: $totpSpec["time-step"], referenceTime: $totpSpec["referenceTime"], hashAlgorithm: $totpSpec["hashAlgorithm"]);
+        $totp = Factory::integer(digits: $totpSpec["digits"], timeStep: $totpSpec["time-step"], referenceTime: $totpSpec["referenceTime"], hashAlgorithm: $totpSpec["hashAlgorithm"])->totp(Secret::fromRaw($totpSpec["secret"]));
 
         /** @noinspection PhpUnhandledExceptionInspection Totp::verifyAt() won't throw unless we're expecting a test
          * exception.
@@ -2891,7 +2903,7 @@ class TotpTest extends TestCase
     {
         // NOTE can't test case where randomSecret() throws because we can't force random_bytes() to throw
         for ($idx = 0; $idx < 100; ++$idx) {
-            $this->assertGreaterThanOrEqual(64, strlen(Factory::randomSecret()), "randomSecret() did not return a sufficiently large byte sequence.");
+            $this->assertGreaterThanOrEqual(64, strlen(Factory::randomSecret()->raw()), "randomSecret() did not return a sufficiently large byte sequence.");
         }
     }
 }

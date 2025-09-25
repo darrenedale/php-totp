@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -56,7 +56,7 @@ class Integer implements IntegerRenderer
     /** @return Digits The number of digits in rendered passwords. */
     public function digits(): Digits
     {
-        return $this->digits();
+        return $this->digitCount;
     }
 
     /**

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,7 +18,7 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Tests;
+namespace Equit\TotpTests;
 
 use BadMethodCallException;
 use Equit\Totp\Codecs\Base32;
@@ -27,6 +27,10 @@ use Equit\Totp\Exceptions\UrlGenerator\InvalidUserException;
 use Equit\Totp\Exceptions\UrlGenerator\UnsupportedReferenceTimeException;
 use Equit\Totp\Exceptions\UrlGenerator\UnsupportedRendererException;
 use Equit\Totp\Factory;
+use Equit\Totp\Types\Digits;
+use Equit\Totp\Types\HashAlgorithm;
+use Equit\Totp\Types\Secret;
+use Equit\Totp\Types\TimeStep;
 use Equit\TotpTests\Framework\Exceptions\InvalidOtpUrlException;
 use Equit\TotpTests\Framework\TestCase;
 use Equit\Totp\UrlGenerator;
@@ -87,7 +91,7 @@ class UrlGeneratorTest extends TestCase
      *
      * @return array[]
      */
-    public function dataForTestHasIssuer(): array
+    public static function dataForTestHasIssuer(): array
     {
         return [
             "typical" => ["Equit", true,],
@@ -108,7 +112,7 @@ class UrlGeneratorTest extends TestCase
     {
         $generator = new UrlGenerator();
         $generator->setIssuer($issuer);
-        $this->assertEquals($expected,$generator->hasIssuer(), "UrlGenerator did not correctly report that it " . ($expected ? "has" : "does not have") . " an issuer.");
+        self::assertEquals($expected,$generator->hasIssuer(), "UrlGenerator did not correctly report that it " . ($expected ? "has" : "does not have") . " an issuer.");
     }
 
     /**
@@ -116,7 +120,7 @@ class UrlGeneratorTest extends TestCase
      *
      * @return Generator
      */
-    public function dataForTestIssuer(): Generator
+    public static function dataForTestIssuer(): Generator
     {
         yield from [
             "typical" => ["Equit",],
@@ -141,7 +145,7 @@ class UrlGeneratorTest extends TestCase
     {
         $generator = new UrlGenerator();
         $generator->setIssuer($issuer);
-        $this->assertEquals($issuer, $generator->issuer(), "UrlGenerator did not correctly report the issuer.");
+        self::assertEquals($issuer, $generator->issuer(), "UrlGenerator did not correctly report the issuer.");
     }
 
     /**
@@ -149,7 +153,7 @@ class UrlGeneratorTest extends TestCase
      *
      * @return Generator
      */
-    public function dataForTestSetIssuer(): Generator
+    public static function dataForTestSetIssuer(): Generator
     {
         yield from [
             "typical" => ["Equit",],
@@ -182,7 +186,7 @@ class UrlGeneratorTest extends TestCase
 
         $generator = new UrlGenerator();
         $generator->setIssuer($issuer);
-        $this->assertEquals($issuer, $generator->issuer(), "UrlGenerator did not correctly set the issuer.");
+        self::assertEquals($issuer, $generator->issuer(), "UrlGenerator did not correctly set the issuer.");
     }
 
     /**
@@ -190,7 +194,7 @@ class UrlGeneratorTest extends TestCase
      *
      * @return Generator
      */
-    public function dataForTestUser(): Generator
+    public static function dataForTestUser(): Generator
     {
         yield from [
             "typical" => ["darren",],
@@ -210,7 +214,7 @@ class UrlGeneratorTest extends TestCase
     {
         $generator = new UrlGenerator();
         $generator->setUser($user);
-        $this->assertEquals($user, $generator->user(), "UrlGenerator did not correctly report the user.");
+        self::assertEquals($user, $generator->user(), "UrlGenerator did not correctly report the user.");
     }
 
     /**
@@ -218,7 +222,7 @@ class UrlGeneratorTest extends TestCase
      *
      * @return Generator
      */
-    public function dataForTestSetUser(): Generator
+    public static function dataForTestSetUser(): Generator
     {
         yield from [
             "typical" => ["darren",],
@@ -251,7 +255,7 @@ class UrlGeneratorTest extends TestCase
 
         $generator = new UrlGenerator();
         $generator->setUser($user);
-        $this->assertEquals($user, $generator->user(), "UrlGenerator did not correctly set the user.");
+        self::assertEquals($user, $generator->user(), "UrlGenerator did not correctly set the user.");
     }
 
     /**
@@ -259,7 +263,7 @@ class UrlGeneratorTest extends TestCase
      *
      * @return Generator The test data.
      */
-    public function dataForTestUrlFor(): Generator
+    public static function dataForTestUrlFor(): Generator
     {
         yield from [
             "typicalIssuerAndUser" => [
@@ -368,7 +372,7 @@ class UrlGeneratorTest extends TestCase
                 ],
                 [
                     "secret" => "password-password",
-                    "hashAlgorithm" => Factory::Sha512Algorithm,
+                    "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,
                 ],
                 "otpauth://totp/arthur.dent/?secret=OBQXG43XN5ZGILLQMFZXG53POJSA====&algorithm=SHA512",
             ],
@@ -389,7 +393,7 @@ class UrlGeneratorTest extends TestCase
                 ],
                 [
                     "secret" => "password-password",
-                    "hashAlgorithm" => Factory::Sha512Algorithm,
+                    "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,
                 ],
                 "otpauth://totp/arthur.dent/?secret=OBQXG43XN5ZGILLQMFZXG53POJSA====&algorithm=SHA512",
             ],
@@ -467,6 +471,11 @@ class UrlGeneratorTest extends TestCase
                     "secret" => "password-password",
                     "renderer" => new class implements Renderer
                     {
+                        public function name(): string
+                        {
+                            return "Spong Renderer";
+                        }
+
                         public function render(string $hmac): string
                         {
                             return "spong";
@@ -531,19 +540,25 @@ class UrlGeneratorTest extends TestCase
         }
 
         if (isset($totpConfig["renderer"])) {
-            $totp = new Factory(secret: $totpConfig["secret"], timeStep: $totpConfig["time-step"] ?? TimeStep::DefaultTimeStep, referenceTime: $totpConfig["referenceTime"] ?? 0, hashAlgorithm: $totpConfig["hashAlgorithm"] ?? Factory::DefaultAlgorithm);
+            $totp = new Factory(timeStep: $totpConfig["time-step"] ?? TimeStep::DefaultTimeStep, referenceTime: $totpConfig["referenceTime"] ?? 0, hashAlgorithm: $totpConfig["hashAlgorithm"] ?? HashAlgorithm::DefaultAlgorithm);
 
-            if (is_string($totpConfig["renderer"])) {
-                $totp->withRenderer(new $totpConfig["renderer"]());
-            } else if (is_callable($totpConfig["renderer"])) {
-                $totp->withRenderer($totpConfig["renderer"]());
-            } else if ($totpConfig["renderer"] instanceof Renderer) {
-                $totp->withRenderer($totpConfig["renderer"]);
-            } else {
-                throw new InvalidArgumentException("The renderer provided in the TOTP config is not valid.");
-            }
+            $totp = match (true) {
+                is_string($totpConfig["renderer"]) =>
+                    $totp->withRenderer(new $totpConfig["renderer"]()),
+                is_callable($totpConfig["renderer"]) =>
+                    $totp->withRenderer($totpConfig["renderer"]()),
+                $totpConfig["renderer"] instanceof Renderer =>
+                    $totp->withRenderer($totpConfig["renderer"]),
+                default =>
+                    throw new InvalidArgumentException("The renderer provided in the TOTP config is not valid."),
+            };
         } else {
-            $totp = Factory::integer(digits: $totpConfig["digits"] ?? 6, secret: $totpConfig["secret"], timeStep: $totpConfig["time-step"] ?? TimeStep::DefaultTimeStep, referenceTime: $totpConfig["referenceTime"] ?? 0, hashAlgorithm: $totpConfig["hashAlgorithm"] ?? Factory::DefaultAlgorithm);
+            $totp = Factory::integer(
+                digits: new Digits($totpConfig["digits"] ?? 6),
+                timeStep: new TimeStep($totpConfig["time-step"] ?? TimeStep::DefaultTimeStep),
+                referenceTime: $totpConfig["referenceTime"] ?? 0,
+                hashAlgorithm: new HashAlgorithm($totpConfig["hashAlgorithm"] ?? HashAlgorithm::DefaultAlgorithm),
+            )->totp(Secret::fromRaw($totpConfig["secret"]));
         }
 
         if ($urlConfig["withDigits"] ?? false) {
@@ -570,7 +585,7 @@ class UrlGeneratorTest extends TestCase
     public function testProtocol(): void
     {
         $generator = new UrlGenerator();
-        $this->assertEquals("otpauth", $generator->protocol());
+        self::assertEquals("otpauth", $generator->protocol());
     }
 
     /**
@@ -579,7 +594,7 @@ class UrlGeneratorTest extends TestCase
     public function testAuthenticationType(): void
     {
         $generator = new UrlGenerator();
-        $this->assertEquals("totp", $generator->authenticationType());
+        self::assertEquals("totp", $generator->authenticationType());
     }
 
     /**
@@ -637,7 +652,7 @@ class UrlGeneratorTest extends TestCase
      *
      * @return array
      */
-    public function dataForTestOptionSwitchMethods(): array
+    public static function dataForTestOptionSwitchMethods(): array
     {
         return [
             "typicalTrue" => [true,],
@@ -675,7 +690,7 @@ class UrlGeneratorTest extends TestCase
 
         $generator = new UrlGenerator();
         $generator->setIncludePeriod($include);
-        $this->assertEquals($include, $generator->includesPeriod(), "includesPeriod() did not report the correct state.");
+        self::assertEquals($include, $generator->includesPeriod(), "includesPeriod() did not report the correct state.");
     }
 
     /**
@@ -695,7 +710,7 @@ class UrlGeneratorTest extends TestCase
 
         $generator = new UrlGenerator();
         $generator->setIncludeDigits($include);
-        $this->assertEquals($include, $generator->includesDigits(), "includesPeriod() did not report the correct state.");
+        self::assertEquals($include, $generator->includesDigits(), "includesPeriod() did not report the correct state.");
     }
 
     /**
@@ -715,7 +730,7 @@ class UrlGeneratorTest extends TestCase
 
         $generator = new UrlGenerator();
         $generator->setIncludeAlgorithm($include);
-        $this->assertEquals($include, $generator->includesAlgorithm(), "includesPeriod() did not report the correct state.");
+        self::assertEquals($include, $generator->includesAlgorithm(), "includesPeriod() did not report the correct state.");
     }
 
     /**
@@ -723,7 +738,7 @@ class UrlGeneratorTest extends TestCase
      *
      * @return \Generator
      */
-    public function dataForFluentBadMethodCallTests(): Generator
+    public static function dataForFluentBadMethodCallTests(): Generator
     {
         yield from [
             // these are all likely confusions of actual static methods provided
@@ -799,7 +814,7 @@ class UrlGeneratorTest extends TestCase
 
         $generator = UrlGenerator::for($user);
         $this->assertInstanceOf(UrlGenerator::class, $generator, "UrlGenerator::for() did not return an UrlGenerator.");
-        $this->assertEquals($user, $generator->user(), "The created generator did not report the expected user.");
+        self::assertEquals($user, $generator->user(), "The created generator did not report the expected user.");
     }
 
     /**
@@ -818,7 +833,7 @@ class UrlGeneratorTest extends TestCase
 
         $generator = UrlGenerator::from("Equit")->for($user);
         $this->assertInstanceOf(UrlGenerator::class, $generator, "UrlGenerator::for() did not return an UrlGenerator.");
-        $this->assertEquals($user, $generator->user(), "The created generator did not report the expected user.");
+        self::assertEquals($user, $generator->user(), "The created generator did not report the expected user.");
     }
 
     /**

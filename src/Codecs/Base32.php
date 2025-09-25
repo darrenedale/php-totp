@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -52,7 +52,7 @@ class Base32 implements Codec
      * @warn Due to the decode-on-read feature, the member will be null after the encoded data has been set until
      * decode() is called.
      */
-    private ?string $m_rawData;
+    private ?string $rawData;
 
     /**
      * @var string|null The raw data.
@@ -60,7 +60,7 @@ class Base32 implements Codec
      * @warn |Due to the encode-on-read feature, the member will be null after the raw data has been set until encode()
      * is called.
      */
-    private ?string $m_encodedData;
+    private ?string $encodedData;
 
     /**
      * Initialise a new Base32 codec, optionally with some specified raw data.
@@ -69,8 +69,8 @@ class Base32 implements Codec
      */
     public function __construct(string $rawData = "")
     {
-        $this->m_rawData     = $rawData;
-        $this->m_encodedData = null;
+        $this->rawData     = $rawData;
+        $this->encodedData = null;
     }
 
     /**
@@ -80,8 +80,8 @@ class Base32 implements Codec
      */
     public function setRaw(string $data): void
     {
-        $this->m_rawData = $data;
-        $this->m_encodedData = null;
+        $this->rawData = $data;
+        $this->encodedData = null;
     }
 
     /**
@@ -127,8 +127,8 @@ class Base32 implements Codec
             throw new InvalidBase32DataException($base32, "Invalid base32 character found at position {$validLength}.");
         }
 
-        $this->m_encodedData = $base32;
-        $this->m_rawData = null;
+        $this->encodedData = $base32;
+        $this->rawData = null;
     }
 
     /**
@@ -138,11 +138,11 @@ class Base32 implements Codec
      */
     public function raw(): string
     {
-        if (!isset($this->m_rawData)) {
+        if (!isset($this->rawData)) {
             $this->decodeBase32Data();
         }
 
-        return $this->m_rawData;
+        return $this->rawData;
     }
 
     /**
@@ -152,11 +152,11 @@ class Base32 implements Codec
      */
     public function encoded(): string
     {
-        if (!isset($this->m_encodedData)) {
+        if (!isset($this->encodedData)) {
             $this->encodeRawData();
         }
 
-        return $this->m_encodedData;
+        return $this->encodedData;
     }
 
     /**
@@ -193,8 +193,8 @@ class Base32 implements Codec
      */
     protected function decodeBase32Data(): void
     {
-        $byteSequence = strtoupper($this->m_encodedData);
-        $this->m_rawData = "";
+        $byteSequence = strtoupper($this->encodedData);
+        $this->rawData = "";
 
         // tolerate badly terminated encoded strings by padding with = to appropriate len
         $len = strlen($byteSequence);
@@ -240,7 +240,7 @@ class Base32 implements Codec
                 . chr(($out >> 16) & 0xff)
                 . chr(($out >> 8) & 0xff)
                 . chr($out & 0xff);
-            $this->m_rawData .= substr($outBytes, 0, $outByteCount);
+            $this->rawData .= substr($outBytes, 0, $outByteCount);
         }
     }
 
@@ -252,8 +252,8 @@ class Base32 implements Codec
      */
     protected function encodeRawData(): void
     {
-        $this->m_encodedData = "";
-        $len = strlen($this->m_rawData);
+        $this->encodedData = "";
+        $len = strlen($this->rawData);
 
         if (0 == $len) {
             return;
@@ -263,7 +263,7 @@ class Base32 implements Codec
 
         if ($paddedLen !== $len) {
             // temporarily pad so that we've a multiple of 5 characters to encode
-            $this->m_rawData .= str_repeat("\0", $paddedLen - $len);
+            $this->rawData .= str_repeat("\0", $paddedLen - $len);
         }
 
         $pos = 0;
@@ -271,11 +271,11 @@ class Base32 implements Codec
         while ($pos < $paddedLen) {
             // 5 chars of raw convert to 8 chars of base32. the 40 bits of the 5 chars are read in 5-bit chunks,
             // each of which is the index of a base32 character in Dictionary
-            $bits = 0x00 | (ord($this->m_rawData[$pos]) << 32)
-                | (ord($this->m_rawData[$pos + 1]) << 24)
-                | (ord($this->m_rawData[$pos + 2]) << 16)
-                | (ord($this->m_rawData[$pos + 3]) << 8)
-                | (ord($this->m_rawData[$pos + 4]));
+            $bits = 0x00 | (ord($this->rawData[$pos]) << 32)
+                | (ord($this->rawData[$pos + 1]) << 24)
+                | (ord($this->rawData[$pos + 2]) << 16)
+                | (ord($this->rawData[$pos + 3]) << 8)
+                | (ord($this->rawData[$pos + 4]));
 
             // the bit pattern contains the groups of 5 bits that form the dictionary lookup indices from left to
             // right:
@@ -295,7 +295,7 @@ class Base32 implements Codec
             $mask = 0x1f << $shift;
 
             while (0 !== $mask) {
-                $this->m_encodedData .= self::Dictionary[($bits & $mask) >> $shift];
+                $this->encodedData .= self::Dictionary[($bits & $mask) >> $shift];
                 $mask >>= 5;
                 $shift -= 5;
             }
@@ -315,8 +315,8 @@ class Base32 implements Codec
 
         // undo the temporary padding of the raw data and pad the encoded data
         if (0 != $encodedPadding) {
-            $this->m_encodedData = substr($this->m_encodedData, 0, -$encodedPadding) . str_repeat("=", $encodedPadding);
-            $this->m_rawData = substr($this->m_rawData, 0, $len);
+            $this->encodedData = substr($this->encodedData, 0, -$encodedPadding) . str_repeat("=", $encodedPadding);
+            $this->rawData = substr($this->rawData, 0, $len);
         }
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,7 +18,7 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Tests;
+namespace Equit\TotpTests;
 
 use Generator;
 use TypeError;

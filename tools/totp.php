@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -34,6 +34,9 @@ use Equit\Totp\Factory;
 use Equit\Totp\Renderers\EightDigits;
 use Equit\Totp\Renderers\SixDigits;
 use Equit\Totp\Renderers\Steam;
+use Equit\Totp\Types\HashAlgorithm;
+use Equit\Totp\Types\Secret;
+use Equit\Totp\Types\TimeStep;
 use Exception;
 use Throwable;
 use function Equit\Totp\Tools\toPhpHexString;
@@ -107,7 +110,7 @@ class Options
     public int $timeStep = TimeStep::DefaultTimeStep;           // The TOTP time step
     public ?int $totpTime = null;                           // The time at which to calculate the TOTP
     public ?string $secret = null;                          // The raw TOTP secret
-    public string $algorithm = Factory::DefaultAlgorithm;      // The TOTP hash algorithm
+    public string $algorithm = HashAlgorithm::DefaultAlgorithm;      // The TOTP hash algorithm
     public string $renderer = SixDigits::class;             // The class of the TOTP renderer
     public bool $explain = false;                           // Flag indicating whether to explain all steps
 
@@ -222,17 +225,17 @@ class Options
 
                 case "--sha1":
                 case "--SHA1":
-                    $options->algorithm = Factory::Sha1Algorithm;
+                    $options->algorithm = HashAlgorithm::Sha1Algorithm;
                     break;
 
                 case "--sha256":
                 case "--SHA256":
-                    $options->algorithm = Factory::Sha256Algorithm;
+                    $options->algorithm = HashAlgorithm::Sha256Algorithm;
                     break;
 
                 case "--sha512":
                 case "--SHA512":
-                    $options->algorithm = Factory::Sha512Algorithm;
+                    $options->algorithm = HashAlgorithm::Sha512Algorithm;
                     break;
 
                 case "--steam":
@@ -259,7 +262,7 @@ class Options
         // fill in the blanks for those options that the user has not supplied, and for which we use late population
         if (!isset($options->secret)) {
             try {
-                $options->secret = Factory::randomSecret();
+                $options->secret = Factory::randomSecret()->raw();
             }
             catch (SecureRandomDataUnavailableException $err) {
                 throw new Exception("It has not been possible to generate cryptographically-secure random secrets - you must provide a secret using the command-line options.", ErrCannotGenerateRandomSecret, $err);
@@ -493,7 +496,12 @@ EOT;
              * - InvalidHashAlgorithmException
              * - SecureRandomDataUnavailableException
              */
-            $totp = new Factory(secret: $options->secret, renderer: new $options->renderer, timeStep: $options->timeStep, referenceTime: $options->referenceTime, hashAlgorithm: $options->algorithm);
+            $totp = (new Factory(
+                renderer: new $options->renderer,
+                timeStep: new TimeStep($options->timeStep),
+                referenceTime: $options->referenceTime,
+                hashAlgorithm: new HashAlgorithm($options->algorithm),
+            ))->totp(Secret::fromRaw($options->secret));
         }
         catch (InvalidSecretException $err) {
             fputs(STDERR, "The provided secret is not valid: {$err->getMessage()}\n");
@@ -504,7 +512,7 @@ EOT;
             echo "Secret         : '" . toPhpHexString($options->secret) . "'\n";
             echo "Secret (base32): '" . Base32::encode($options->secret) . "'\n";
             echo "Secret (base64): '" . base64::encode($options->secret) . "'\n";
-            echo "Reference Time : {$totp->referenceTimestamp()} - {$totp->referenceDateTime()->format("Y-m-d H:i:s")} UTC\n";
+            echo "Reference Time : {$totp->referenceTimestamp()} - {$totp->referenceTime()->format("Y-m-d H:i:s")} UTC\n";
             echo "Time step      : {$totp->timeStep()} seconds\n";
             /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with Unix timestamp. */
             echo "TOTP time      : {$options->totpTime} - " . (new DateTime("@{$options->totpTime}", new DateTimeZone("UTC")))->format("Y-m-d H:i:s") . "\n";

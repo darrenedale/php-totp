@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright 2024 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -111,11 +111,11 @@ class Base64Test extends TestCase
         $base64Data = $base64->encoded();
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        $rawProperty = new ReflectionProperty($base64, "m_rawData");
+        $rawProperty = new ReflectionProperty($base64, "rawData");
         $rawProperty->setAccessible(true);
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        $encodedProperty = new ReflectionProperty($base64, "m_encodedData");
+        $encodedProperty = new ReflectionProperty($base64, "encodedData");
         $encodedProperty->setAccessible(true);
 
         $base64->__destruct();
