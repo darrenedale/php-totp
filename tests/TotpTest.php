@@ -22,6 +22,7 @@ namespace Equit\TotpTests;
 
 use DateTime;
 use DateTimeZone;
+use Equit\Totp\Contracts\IntegerRenderer;
 use Equit\Totp\Contracts\Renderer;
 use Equit\Totp\Exceptions\InvalidHashAlgorithmException;
 use Equit\Totp\Exceptions\InvalidSecretException;
@@ -31,14 +32,17 @@ use Equit\Totp\Exceptions\InvalidVerificationWindowException;
 use Equit\Totp\Renderers\EightDigits;
 use Equit\Totp\Renderers\Integer;
 use Equit\Totp\Renderers\SixDigits;
+use Equit\Totp\Totp;
 use Equit\Totp\Types\Digits;
 use Equit\Totp\Types\HashAlgorithm;
 use Equit\TotpTests\Framework\TestCase;
 use Equit\Totp\Factory;
 use Equit\Totp\Types\Secret;
 use Equit\Totp\Types\TimeStep;
+use Equit\XRay\XRay;
 use Generator;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use ReflectionException;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -58,14 +62,16 @@ class TotpTest extends TestCase
      */
     protected const TestSecret = "hNDl963Ns6a1gp9d5aZ6";
 
-    /**
-     * Helper to create a "vanilla" Totp test instance.
-     *
-     * @return \Equit\Totp\Factory
-     */
-    protected static function createTotp(): Factory
+    /** Create a default Totp instance, optionally customised according to the arguments. */
+    private static function createTotp(string $secret = self::TestSecret, ?Renderer $renderer = null, int|DateTime $referenceTime = 0, int $timeStep = 30, string $hashAlgorithm = HashAlgorithm::DefaultAlgorithm): Totp
     {
-        return new Factory(self::TestSecret);
+        return new Totp(
+            Secret::fromRaw($secret),
+            $renderer ?? new SixDigits(),
+            new TimeStep($timeStep),
+            $referenceTime,
+            new HashAlgorithm($hashAlgorithm),
+        );
     }
 
     /**
@@ -488,295 +494,12 @@ class TotpTest extends TestCase
     }
 
     /**
-     * Helper to provide some test data for testConstructor.
-     *
-     * This method provides 100 datasets each with a random valid secret.
-     *
-     * @return Generator.
-     * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
-     */
-    protected function randomSecretTestDataForTestConstructor(): Generator
-    {
-        // 100 x random secrets
-        for ($idx = 0; $idx < 100; ++$idx) {
-            $secret = self::randomValidSecret();
-
-            yield sprintf("%s%02d", "randomValidSecret", $idx) => [
-                [$secret,],
-                [
-                    "secret" => $secret,
-                ],
-            ];
-        }
-    }
-
-    /**
-     * Helper to provide some test data for testConstructor.
-     *
-     * This method provides test data focused on examining the limits of valid Totp secrets.
-     *
-     * @return array The test datasets.
-     * @throws \Exception if randomValidSecret() or randomInvalidSecret() are unable to provide cryptographically-
-     * secure data.
-     */
-    protected function specificSecretTestDataForTestConstructor(): array
-    {
-        return [
-            "invalidShortSecret" => [
-                ["too short",],
-                [],
-                InvalidSecretException::class,
-            ],
-            "invalidMarginallyShortSecret" => [
-                [self::randomInvalidSecret(15),],
-                [],
-                InvalidSecretException::class,
-            ],
-            "shortestValidSecret" => [
-                [$secret = self::randomValidSecret(16),],
-                [
-                    "secret" => $secret,
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * Helper to provide some test data for testConstructor.
-     *
-     * This method yields 100 datasets with random valid time steps then 100 datasets with random invalid time steps.
-     *
-     * @return \Generator
-     * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
-     */
-    protected function randomTimeStepTestDataForTestConstructor(): Generator
-    {
-        // 100 x random valid time steps between 1s and 1h
-        for ($idx = 0; $idx < 100; ++$idx) {
-            $timeStep = mt_rand(1, 3600);
-
-            yield [
-                [self::randomValidSecret(16), null, $timeStep,],
-                [
-                    "timeStep" => $timeStep,
-                ],
-            ];
-        }
-
-        // 100 x random invalid time steps
-        for ($idx = 0; $idx < 100; ++$idx) {
-            yield [
-                [self::randomValidSecret(16), null, mt_rand(PHP_INT_MIN, 0),],
-                [],
-                InvalidTimeStepException::class,
-            ];
-        }
-    }
-
-    /**
-     * Helper to provide some test data for testConstructor.
-     *
-     * This method provides test data focused on examining the limits of valid Totp time steps.
-     *
-     * @return array The test datasets.
-     * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
-     */
-    protected function specificTimeStepTestDataForTestConstructor(): array
-    {
-        return [
-            "shortestValidTimeStep" => [
-                [self::randomValidSecret(16), null, 1,],
-                [
-                    "timeStep" => 1,
-                ],
-            ],
-
-            "closestInvalidTimeStep" => [
-                [self::randomValidSecret(16), null, 0,],
-                [],
-                InvalidTimeStepException::class,
-            ],
-        ];
-    }
-
-    /**
-     * Helper to provide some test data for testConstructor.
-     *
-     * Yields 100 datasets each with a valid secret and time step
-     *
-     * @return \Generator
-     * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
-     */
-    protected function randomSecretAndTimeStepTestDataForTestConstructor(): Generator
-    {
-        // 100 x specified secret and time step
-        for ($idx = 0; $idx < 100; ++$idx) {
-            // random secret
-            $secret = self::randomValidSecret();
-            // random time step up to 1 hour, on a 10-second boundary
-            $timeStep = 10 * mt_rand(1, 360);
-
-            yield "validSecretAndTimeStep" . sprintf("%02d", $idx) => [
-                [$secret, null, $timeStep],
-                [
-                    "secret" => $secret,
-                    "timeStep" => $timeStep,
-                ],
-            ];
-        }
-    }
-
-    /**
-     * Helper to provide some test data for testConstructor.
-     *
-     * Yields 100 datasets each with a valid secret, time step and reference timestamp, then 100 datasets each with a
-     * valid secret, time step and reference DateTime.
-     *
-     * @return \Generator
-     * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
-     */
-    protected function randomSecretTimeStepAndReferenceTimeTestDataForTestConstructor(): Generator
-    {
-        // 100 x specified secret, time step and reference time as timestamp
-        for ($idx = 0; $idx < 100; ++$idx) {
-            // random secret
-            $secret = self::randomValidSecret();
-            // random time step up to 1 hour, on a 10-second boundary
-            $timeStep           = 10 * mt_rand(1, 360);
-            $referenceTimestamp = mt_rand(0, time());
-
-            yield "validSecretTimeStepAndTimestamp" . sprintf("%02d", $idx) => [
-                [$secret, null, $timeStep, $referenceTimestamp],
-                [
-                    "secret" => $secret,
-                    "timeStep" => $timeStep,
-                    "referenceTimestamp" => $referenceTimestamp,
-                ],
-            ];
-        }
-
-        // 100 x specified secret, time step and reference time as DateTime
-        for ($idx = 0; $idx < 100; ++$idx) {
-            // random secret
-            $secret = self::randomValidSecret();
-            // random time step up to 1 hour, on a 10-second boundary
-            $timeStep      = 10 * mt_rand(1, 360);
-            $referenceTime = new DateTime("@" . mt_rand(0, time()));
-
-            yield "validSecretTimeStepAndDateTime" . sprintf("%02d", $idx) => [
-                [$secret, null, $timeStep, $referenceTime],
-                [
-                    "secret" => $secret,
-                    "timeStep" => $timeStep,
-                    "referenceTime" => $referenceTime,
-                ],
-            ];
-        }
-    }
-
-    /**
-     * Helper to provide some test data for testConstructor.
-     *
-     * Provides datasets to test specific scenarios for the reference time provided to the constructor.
-     *
-     * @return array
-     * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
-     */
-    protected function specificReferenceTimeTestDataForTestConstructor(): array
-    {
-        return [
-            "nullReferenceTime" => [
-                [self::randomValidSecret(20), null, 30, null,],
-                [],
-                TypeError::class,
-            ],
-            "stringReferenceTimeNow" => [
-                [self::randomValidSecret(20), null, 30, "now",],
-                [],
-                TypeError::class,
-            ],
-            "stringReferenceTimeInt" => [
-                [self::randomValidSecret(20), null, 30, "0",],
-                [],
-                TypeError::class,
-            ],
-            "stringReferenceTimeDateString" => [
-                [self::randomValidSecret(20), null, 30, "1970-01-01 00:00:00",],
-                [],
-                TypeError::class,
-            ],
-            "objectReferenceTime" => [
-                [self::randomValidSecret(20), null, 30, new class
-                {
-                },],
-                [],
-                TypeError::class,
-            ],
-            "arrayReferenceTime" => [
-                [self::randomValidSecret(20), null, 30, [0],],
-                [],
-                TypeError::class,
-            ],
-        ];
-    }
-
-    /**
-     * Data provider for the constructor test.
-     *
-     * @return \Generator
-     * @throws \Exception if self::randomValidSecret() is unable to generate cryptographically-secure random data.
-     */
-    public function dataForTestConstructor(): Generator
-    {
-        yield from $this->randomSecretTestDataForTestConstructor();
-        yield from $this->specificSecretTestDataForTestConstructor();
-        yield from $this->randomTimeStepTestDataForTestConstructor();
-        yield from $this->specificTimeStepTestDataForTestConstructor();
-        yield from $this->specificReferenceTimeTestDataForTestConstructor();
-        yield from $this->randomSecretAndTimeStepTestDataForTestConstructor();
-        yield from $this->randomSecretTimeStepAndReferenceTimeTestDataForTestConstructor();
-    }
-
-    /**
-     * @dataProvider dataForTestConstructor
-     *
-     * @param array $args The arguments to pass to the constructor.
-     * @param array $expectations An array whose keys are methods on the Totp instance to call and whose values are
-     * either the expected return value, or an array containing the arguments for the method call and its expected
-     * return value.
-     * @param string|null $exceptionClass The exception that is expected from the constructor call, if any.
-     *
-     * @noinspection PhpDocMissingThrowsInspection Totp constructor should only throw expected test exceptions.
-     */
-    public function testConstructor(array $args, array $expectations, ?string $exceptionClass = null): void
-    {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        /** @noinspection PhpUnhandledExceptionInspection Totp constructor should only throw expected test exceptions. */
-        $totp = new Factory(...$args);
-
-        foreach ($expectations as $method => $expected) {
-            if (is_array($expected)) {
-                $args     = $expected["args"];
-                $expected = $expected["expected"];
-            } else {
-                $args = [];
-            }
-
-            $actual = $totp->$method(...$args);
-            $this->assertEquals($expected, $actual, "Return value from {$method}() not as expected.");
-        }
-    }
-
-    /**
      * Test data for testDestructor().
      *
      * @return \Generator
      * @throws \Exception if self::randomValidSecret() is unable to generate cryptographically-secure random data.
      */
-    public function dataForTestDestructor(): Generator
+    public static function dataForTestDestructor(): Generator
     {
         yield "typicalAsciiSecret" => ["password-password"];
         yield "nullBytes16Secret" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"];
@@ -801,807 +524,146 @@ class TotpTest extends TestCase
     public function testDestructor(string $secret): void
     {
         /** @noinspection PhpUnhandledExceptionInspection */
-        $totp = new Factory($secret);
+        $totp = (new Factory())->totp(Secret::fromRaw($secret));
 
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $secretProperty = new ReflectionProperty($totp, "m_secret");
-        $secretProperty->setAccessible(true);
         $totp->__destruct();
-        $this->assertAllCharactersHaveChanged($secret, $secretProperty->getValue($totp), "The secret was not overwritten with random data.");
+        self::assertAllCharactersHaveChanged($secret, (new XRay($totp))->secret, "The secret was not overwritten with random data.");
     }
 
-    /**
-     * Test data for testSixDigits().
-     *
-     * @return Generator The RFC test data mapped to the correct structure for the test arguments.
-     * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
-     */
-    public function dataForTestSixDigits(): Generator
-    {
-        yield from array_map(function (array $testData): array {
-            return [
-                $testData["secret"]["raw"],
-                $testData["time-step"],
-                $testData["referenceTimestamp"],
-                $testData["algorithm"],
-                [
-                    "passwordAt" => [
-                        "args" => [$testData["timestamp"]],
-                        "value" => $testData["passwords"]["6"],
-                    ],
-                    "counterBytesAt" => [
-                        "args" => [$testData["timestamp"]],
-                        "value" => $testData["counterBytes"],
-                    ],
-                ],
-            ];
-        }, self::rfcTestData());
-
-        // invalid secrets
-        yield ["", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
-        yield ["password-passwo", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
-        yield [self::randomInvalidSecret(1), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
-        yield [self::randomInvalidSecret(15), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
-
-        // invalid time steps
-        yield [self::randomValidSecret(20), 0, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
-        yield [self::randomValidSecret(20), -1, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
-        yield [self::randomValidSecret(20), -50, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
-        yield [self::randomValidSecret(20), PHP_INT_MIN, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
-
-        // invalid algorithms
-        yield [self::randomValidSecret(20), 30, 0, "", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "foobar", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "md5", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "SHA1", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "Sha1", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "sHa1", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "sHA1", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "shA1", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "SHa1", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "SHA256", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "Sha256", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "sHa256", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "shA256", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "SHa256", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "sHA256", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "ShA256", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "SHA512", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "Sha512", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "sHa512", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "shA512", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "SHa512", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "sHA512", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "ShA512", [], InvalidHashAlgorithmException::class,];
-
-        // 100 random valid combinations
-        for ($idx = 0; $idx < 100; ++$idx) {
-            yield [
-                self::randomValidSecret(64),
-                10 * mt_rand(1, 360),
-                mt_rand(0, time() - (20 * 365 * 24 * 60 * 60)),
-                match (mt_rand(0, 2)) {
-                    0 => HashAlgorithm::Sha1Algorithm,
-                    1 => HashAlgorithm::Sha256Algorithm,
-                    2 => HashAlgorithm::Sha512Algorithm,
-                },
-            ];
-        }
-    }
-
-    /**
-     * Test for Totp::sixDigits() factory method.
-     *
-     * @dataProvider dataForTestSixDigits
-     *
-     * @param string $secret The secret for the Totp.
-     * @param int $timeStep The time step for the Totp.
-     * @param int|\DateTime $referenceTime The reference time for the Totp.
-     * @param string $hashAlgorithm The hash algorithm for the Totp.
-     * @param array $expectations An array of expected return values from method calls. Each expectation is keyed with
-     * the method name, and has a tuple of "args" and "value" as its value. The args element is an array of arguments to
-     * provide in the method call; the value element is the expected return value.
-     * @param string|null $exceptionClass
-     *
-     * @noinspection PhpDocMissingThrowsInspection Totp::sixDigits() should only throw expected test exceptions.
-     * DateTime constructor and Totp::password() should not throw with test data.
-     */
-    public function testSixDigits(string $secret, int $timeStep = TimeStep::DefaultTimeStep, int|DateTime $referenceTime = Factory::DefaultReferenceTime, string $hashAlgorithm = HashAlgorithm::DefaultAlgorithm, array $expectations = [], string $exceptionClass = null): void
-    {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        /** @noinspection PhpUnhandledExceptionInspection Only throws if we're expecting a test exception */
-        $totp = Factory::sixDigits(timeStep: $timeStep, referenceTime: $referenceTime, hashAlgorithm: $hashAlgorithm)->totp(Secret::fromRaw($secret));
-        $this->assertEquals($secret, $totp->secret(), "Secret in Totp object does not match expected secret.");
-        $this->assertEquals($timeStep, $totp->timeStep(), "TimeStep in Totp object does not match expected time step.");
-        $this->assertEquals($hashAlgorithm, $totp->hashAlgorithm(), "Hash algorithm in Totp object does not match expected algorithm.");
-
-        if ($referenceTime instanceof DateTime) {
-            $referenceTimestamp = $referenceTime->getTimestamp();
-        } else {
-            $referenceTimestamp = $referenceTime;
-            /** @noinspection PhpUnhandledExceptionInspection Constructor doesn't throw with timestamp. */
-            $referenceTime = new DateTime("@{$referenceTime}", new DateTimeZone("UTC"));
-        }
-
-        $this->assertInstanceOf(SixDigits::class, $totp->renderer(), "The Totp does not have the expected renderer type.");
-        /** @noinspection PhpPossiblePolymorphicInvocationInspection Guaranteed to be an instance of IntegerRenderer */
-        $this->assertEquals(6, $totp->renderer()->digits(), "The Totp renderer does not use the expected number of digits.");
-        $this->assertEquals($referenceTime, $totp->referenceTime(), "Reference DateTime in Totp object does not match expected DateTime.");
-        $this->assertEquals($referenceTimestamp, $totp->referenceTimestamp(), "Reference timestamp in Totp object does not match expected timestamp.");
-
-        /** @noinspection PhpUnhandledExceptionInspection password should not throw with test data. */
-        $password = $totp->password();
-        $this->assertEquals(6, strlen($password), "Password from Totp object is not 6 digits.");
-        $this->assertStringContainsOnly("0123456789", $password, "Password contains some invalid content.");
-
-        foreach ($expectations as $methodName => $details) {
-            try {
-                $method = new ReflectionMethod($totp, $methodName);
-                $method->setAccessible(true);
-                $method   = $method->getClosure($totp);
-                $expected = $details["value"];
-                $actual   = $method(...$details["args"]);
-                $this->assertEquals($expected, $actual, "Expected return value from {$methodName} not found.");
-            }
-            catch (ReflectionException) {
-                $this->fail("Invalid method name in expectations given to testSixDigitTotp().");
-            }
-        }
-    }
-
-    /**
-     * Test data for testEightDigits().
-     *
-     * @return Generator The RFC test data mapped to the correct arrangement for the test arguments.
-     * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
-     */
-    public function dataForTestEightDigits(): Generator
-    {
-        yield from array_map(function (array $testData): array {
-            return [
-                $testData["secret"]["raw"],
-                $testData["time-step"],
-                $testData["referenceTimestamp"],
-                $testData["algorithm"],
-                [
-                    "passwordAt" => [
-                        "args" => [$testData["timestamp"]],
-                        "value" => $testData["passwords"]["8"],
-                    ],
-                    "counterBytesAt" => [
-                        "args" => [$testData["timestamp"]],
-                        "value" => $testData["counterBytes"],
-                    ],
-                ],
-            ];
-        }, self::rfcTestData());
-
-        // invalid secrets
-        yield ["", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
-        yield ["password-passwo", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
-        yield [self::randomInvalidSecret(1), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
-        yield [self::randomInvalidSecret(15), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,];
-
-        // invalid time steps
-        yield [self::randomValidSecret(20), 0, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
-        yield [self::randomValidSecret(20), -1, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
-        yield [self::randomValidSecret(20), -50, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
-        yield [self::randomValidSecret(20), PHP_INT_MIN, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,];
-
-        // invalid algorithms
-        yield [self::randomValidSecret(20), 30, 0, "", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "foobar", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "md5", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "SHA1", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "Sha1", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "sHa1", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "sHA1", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "shA1", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "SHa1", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "SHA256", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "Sha256", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "sHa256", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "shA256", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "SHa256", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "sHA256", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "ShA256", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "SHA512", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "Sha512", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "sHa512", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "shA512", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "SHa512", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "sHA512", [], InvalidHashAlgorithmException::class,];
-        yield [self::randomValidSecret(20), 30, 0, "ShA512", [], InvalidHashAlgorithmException::class,];
-
-        // 100 random valid combinations
-        for ($idx = 0; $idx < 100; ++$idx) {
-            yield [
-                self::randomValidSecret(64),
-                10 * mt_rand(1, 360),
-                mt_rand(0, time() - (20 * 365 * 24 * 60 * 60)),
-                match (mt_rand(0, 2)) {
-                    0 => HashAlgorithm::Sha1Algorithm,
-                    1 => HashAlgorithm::Sha256Algorithm,
-                    2 => HashAlgorithm::Sha512Algorithm,
-                },
-            ];
-        }
-    }
-
-    /**
-     * Test for Totp::eightDigits() factory method.
-     *
-     * @dataProvider dataForTestEightDigits
-     *
-     * @param string $secret The secret for the Totp.
-     * @param int $timeStep The time step for the Totp.
-     * @param int|\DateTime $referenceTime The reference time for the Totp.
-     * @param string $hashAlgorithm The hash algorithm for the Totp.
-     * @param array $expectations An array of expected return values from method calls. Each expectation is keyed with
-     * the method name, and has a tuple of "args" and "value" as its value. The args element is an array of arguments to
-     * provide in the method call; the value element is the expected return value.
-     *
-     * @noinspection PhpDocMissingThrowsInspection Totp::eightDigits() should only throw expected test exceptions.
-     * DateTime constructor and Totp::password() should not throw with test data.
-     */
-    public function testEightDigits(string $secret, int $timeStep = TimeStep::DefaultTimeStep, int|DateTime $referenceTime = Factory::DefaultReferenceTime, string $hashAlgorithm = HashAlgorithm::DefaultAlgorithm, array $expectations = [], string $exceptionClass = null): void
-    {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        /** @noinspection PhpUnhandledExceptionInspection Only throws if we're expecting a test exception */
-        $totp = Factory::eightDigits(timeStep: $timeStep, referenceTime: $referenceTime, hashAlgorithm: $hashAlgorithm)->secret(Secret::fromRaw($secret));
-        $this->assertEquals($secret, $totp->secret(), "Secret in Totp object does not match expected secret.");
-        $this->assertEquals($timeStep, $totp->timeStep(), "Time step in Totp object does not match expected time step.");
-        $this->assertEquals($hashAlgorithm, $totp->hashAlgorithm(), "Hash algorithm in Totp object does not match expected algorithm.");
-
-        if ($referenceTime instanceof DateTime) {
-            $referenceTimestamp = $referenceTime->getTimestamp();
-        } else {
-            $referenceTimestamp = $referenceTime;
-            /** @noinspection PhpUnhandledExceptionInspection Constructor doesn't throw with timestamp. */
-            $referenceTime = new DateTime("@{$referenceTime}", new DateTimeZone("UTC"));
-        }
-
-        $this->assertInstanceOf(EightDigits::class, $totp->renderer(), "The Totp does not have the expected renderer type.");
-        /** @noinspection PhpPossiblePolymorphicInvocationInspection Guaranteed to be an instance of IntegerRenderer */
-        $this->assertEquals(8, $totp->renderer()->digits(), "The Totp renderer does not use the expected number of digits.");
-        $this->assertEquals($referenceTime, $totp->referenceTime(), "Reference DateTime in Totp object does not match expected DateTime.");
-        $this->assertEquals($referenceTimestamp, $totp->referenceTimestamp(), "Reference timestamp in Totp object does not match expected timestamp.");
-
-        /** @noinspection PhpUnhandledExceptionInspection password() should not throw with test data. */
-        $password = $totp->password();
-        $this->assertEquals(8, strlen($password), "Password from Totp object is not 8 digits.");
-        $this->assertStringContainsOnly("0123456789", $password, "Password contains some invalid content.");
-
-        foreach ($expectations as $methodName => $details) {
-            try {
-                $method = new ReflectionMethod($totp, $methodName);
-                $method->setAccessible(true);
-                $method   = $method->getClosure($totp);
-                $expected = $details["value"];
-                $actual   = $method(...$details["args"]);
-                $this->assertEquals($expected, $actual, "Expected return value from {$methodName} not found.");
-            }
-            catch (ReflectionException) {
-                $this->fail("Invalid method name in expectations given to testSixDigitTotp().");
-            }
-        }
-    }
-
-    /**
-     * Test data for testInteger().
-     *
-     * The test data consists of the RFC test data mapped to the correct structure for the test arguments, plus some
-     * data to test specific scenarios, plus 100 random valid datasets.
-     *
-     * @return Generator The test data.
-     * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
-     */
-    public function dataForTestInteger(): Generator
-    {
-        $digits = 8;
-
-        $extractTestData = function (array $testData) use (&$digits): array {
-            return [
-                $digits,
-                $testData["secret"]["raw"],
-                $testData["time-step"],
-                $testData["referenceTimestamp"],
-                $testData["algorithm"],
-                [
-                    "passwordAt" => [
-                        "args" => [$testData["timestamp"]],
-                        "value" => $testData["passwords"]["{$digits}"],
-                    ],
-                    "counterBytesAt" => [
-                        "args" => [$testData["timestamp"]],
-                        "value" => $testData["counterBytes"],
-                    ],
-                ],
-            ];
-        };
-
-        yield from array_values(array_map($extractTestData, self::rfcTestData()));
-        $digits = 7;
-        yield from array_values(array_map($extractTestData, self::rfcTestData()));
-        $digits = 6;
-        yield from array_values(array_map($extractTestData, self::rfcTestData()));
-
-        // invalid digits
-        yield from [
-            [null, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
-            [true, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
-            [false, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
-            ["6", "", 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
-            [self::createStringable("6"), "", 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
-            [6.115, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
-            [[6], "", 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
-            [(object)["digits" => 6,], self::randomInvalidSecret(15), 30, 0, HashAlgorithm::Sha1Algorithm, [], TypeError::class,],
-        ];
-
-        // invalid secrets
-        yield from [
-            [6, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [7, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [8, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [9, "", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [6, "password-passwo", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [7, "password-passwo", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [8, "password-passwo", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [9, "password-passwo", 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [6, self::randomInvalidSecret(1), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [7, self::randomInvalidSecret(1), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [8, self::randomInvalidSecret(1), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [9, self::randomInvalidSecret(1), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [6, self::randomInvalidSecret(15), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [7, self::randomInvalidSecret(15), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [8, self::randomInvalidSecret(15), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-            [9, self::randomInvalidSecret(15), 30, 0, HashAlgorithm::Sha1Algorithm, [], InvalidSecretException::class,],
-        ];
-
-        // invalid time steps
-        yield from [
-            [6, self::randomValidSecret(20), 0, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [7, self::randomValidSecret(20), 0, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [8, self::randomValidSecret(20), 0, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [9, self::randomValidSecret(20), 0, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [6, self::randomValidSecret(20), -1, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [7, self::randomValidSecret(20), -1, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [8, self::randomValidSecret(20), -1, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [9, self::randomValidSecret(20), -1, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [6, self::randomValidSecret(20), -50, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [7, self::randomValidSecret(20), -50, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [8, self::randomValidSecret(20), -50, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [9, self::randomValidSecret(20), -50, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [6, self::randomValidSecret(20), PHP_INT_MIN, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [7, self::randomValidSecret(20), PHP_INT_MIN, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [8, self::randomValidSecret(20), PHP_INT_MIN, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-            [9, self::randomValidSecret(20), PHP_INT_MIN, 0, HashAlgorithm::Sha1Algorithm, [], InvalidTimeStepException::class,],
-        ];
-
-        // invalid algorithms
-        yield from [
-            [6, self::randomValidSecret(20), 30, 0, "", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "foobar", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "foobar", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "foobar", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "foobar", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "md5", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "md5", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "md5", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "md5", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "SHA1", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "SHA1", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "SHA1", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "SHA1", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "Sha1", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "Sha1", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "Sha1", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "Sha1", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "sHa1", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "sHa1", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "sHa1", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "sHa1", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "sHA1", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "sHA1", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "sHA1", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "sHA1", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "shA1", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "shA1", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "shA1", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "shA1", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "SHa1", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "SHa1", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "SHa1", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "SHa1", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "SHA256", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "SHA256", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "SHA256", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "SHA256", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "Sha256", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "Sha256", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "Sha256", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "Sha256", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "sHa256", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "sHa256", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "sHa256", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "sHa256", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "shA256", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "shA256", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "shA256", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "shA256", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "SHa256", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "SHa256", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "SHa256", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "SHa256", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "sHA256", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "sHA256", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "sHA256", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "sHA256", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "ShA256", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "ShA256", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "ShA256", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "ShA256", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "SHA512", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "SHA512", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "SHA512", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "SHA512", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "Sha512", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "Sha512", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "Sha512", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "Sha512", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "sHa512", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "sHa512", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "sHa512", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "sHa512", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "shA512", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "shA512", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "shA512", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "shA512", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "SHa512", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "SHa512", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "SHa512", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "SHa512", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "sHA512", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "sHA512", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "sHA512", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "sHA512", [], InvalidHashAlgorithmException::class,],
-            [6, self::randomValidSecret(20), 30, 0, "ShA512", [], InvalidHashAlgorithmException::class,],
-            [7, self::randomValidSecret(20), 30, 0, "ShA512", [], InvalidHashAlgorithmException::class,],
-            [8, self::randomValidSecret(20), 30, 0, "ShA512", [], InvalidHashAlgorithmException::class,],
-            [9, self::randomValidSecret(20), 30, 0, "ShA512", [], InvalidHashAlgorithmException::class,],
-        ];
-
-        // 100 random valid combinations
-        for ($idx = 0; $idx < 100; ++$idx) {
-            yield [
-                mt_rand(6, 9),
-                self::randomValidSecret(64),
-                10 * mt_rand(1, 360),
-                mt_rand(0, time() - (20 * 365 * 24 * 60 * 60)),
-                match (mt_rand(0, 2)) {
-                    0 => HashAlgorithm::Sha1Algorithm,
-                    1 => HashAlgorithm::Sha256Algorithm,
-                    2 => HashAlgorithm::Sha512Algorithm,
-                },
-            ];
-        }
-    }
-
-    /**
-     * Test for Totp::eightDigits() factory method.
-     *
-     * @dataProvider dataForTestInteger
-     *
-     * @param mixed $digits The number of digits in generated passwords.
-     * @param string $secret The secret for the Totp.
-     * @param int $timeStep The time step for the Totp.
-     * @param int|\DateTime $referenceTime The reference time for the Totp.
-     * @param string $hashAlgorithm The hash algorithm for the Totp.
-     * @param array $expectations An array of expected return values from method calls. Each expectation is keyed with
-     * the method name, and has a tuple of "args" and "value" as its value. The args element is an array of arguments to
-     * provide in the method call; the value element is the expected return value.
-     *
-     * @noinspection PhpDocMissingThrowsInspection Totp::integer() should only throw expected test exceptions. DateTime
-     * constructor and Totp::password() should not throw with test data.
-     */
-    public function testInteger(mixed $digits, string $secret, int $timeStep = TimeStep::DefaultTimeStep, int|DateTime $referenceTime = Factory::DefaultReferenceTime, string $hashAlgorithm = HashAlgorithm::DefaultAlgorithm, array $expectations = [], string $exceptionClass = null): void
-    {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        /** @noinspection PhpUnhandledExceptionInspection Only throws if we're expecting a test exception */
-        $totp = Factory::integer(digits: $digits, timeStep: new TimeStep($timeStep), referenceTime: $referenceTime, hashAlgorithm: new HashAlgorithm($hashAlgorithm))->totp(Secret::fromRaw($secret));
-        $this->assertEquals($secret, $totp->secret(), "Secret in Totp object does not match expected secret.");
-        $this->assertEquals($timeStep, $totp->timeStep(), "Time step in Totp object does not match expected time step.");
-        $this->assertEquals($hashAlgorithm, $totp->hashAlgorithm(), "Hash algorithm in Totp object does not match expected algorithm.");
-
-        if ($referenceTime instanceof DateTime) {
-            $referenceTimestamp = $referenceTime->getTimestamp();
-        } else {
-            $referenceTimestamp = $referenceTime;
-            /** @noinspection PhpUnhandledExceptionInspection Constructor doesn't throw with timestamp. */
-            $referenceTime = new DateTime("@{$referenceTime}", new DateTimeZone("UTC"));
-        }
-
-        $this->assertInstanceOf(Integer::class, $totp->renderer(), "The Totp does not have the expected renderer type.");
-        /** @noinspection PhpPossiblePolymorphicInvocationInspection Guaranteed to be an instance of IntegerRenderer */
-        $this->assertEquals($digits, $totp->renderer()->digits(), "The Totp renderer does not use the expected number of digits.");
-        $this->assertEquals($referenceTime, $totp->referenceTime(), "Reference DateTime in Totp object does not match expected DateTime.");
-        $this->assertEquals($referenceTimestamp, $totp->referenceTimestamp(), "Reference timestamp in Totp object does not match expected timestamp.");
-
-        /** @noinspection PhpUnhandledExceptionInspection password() should not throw with test data. */
-        $password = $totp->password();
-        $this->assertEquals($digits, strlen($password), "Password from Totp object is not {$digits} digits.");
-        $this->assertStringContainsOnly("0123456789", $password, "Password contains some invalid content.");
-
-        foreach ($expectations as $methodName => $details) {
-            try {
-                $method = new ReflectionMethod($totp, $methodName);
-                $method->setAccessible(true);
-                $method   = $method->getClosure($totp);
-                $expected = $details["value"];
-                $actual   = $method(...$details["args"]);
-                $this->assertEquals($expected, $actual, "Expected return value from {$methodName} not found.");
-            }
-            catch (ReflectionException) {
-                $this->fail("Invalid method name in expectations given to testSixDigitTotp().");
-            }
-        }
-    }
-
-    /**
-     * Data provider for testSetBase32Secret().
-     *
-     * @return array The test data.
-     */
-    public function dataForTestSetBase32Secret(): array
-    {
-        return [
-            "typicalPlainText" => ["OBQXG43XN5ZGILLQMFZXG53POJSA====", "password-password",],
-            "typicalBinary" => ["CVYNPLS6RDRTYW2JY6U46JPTD7N2Z645", "\x15\x70\xd7\xae\x5e\x88\xe3\x3c\x5b\x49\xc7\xa9\xcf\x25\xf3\x1f\xdb\xac\xfb\x9d",],
-            "invalidEmpty" => ["", null, InvalidSecretException::class,],
-            "invalidTooShort" => ["OBQXG43XN5ZGI===", null, InvalidSecretException::class,],
-            "invalidWrongTypeNull" => [null, null, TypeError::class,],
-            "invalidWrongTypeStringable" => [self::createStringable("OBQXG43XN5ZGILLQMFZXG53POJSA===="), null, TypeError::class,],
-        ];
-    }
-
-    /**
-     * @dataProvider dataForTestSetBase32Secret
-     *
-     * @param mixed $base32 The base32-encoded secret to set.
-     * @param string|null $raw The raw secret expected.
-     * @param string|null $exceptionClass The class name of the exception expected to be thrown, if any.
-     *
-     * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() should only throw expected test exceptions.
-     * TotpSecret::fromBase32() shouldn't throw with test data.
-     */
-    public function testSetBase32Secret(mixed $base32, string|null $raw, ?string $exceptionClass = null): void
-    {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        $totp = self::createTotp();
-
-        /** @noinspection PhpUnhandledExceptionInspection setSecret() should only throw expected test exceptions.
-         * fromBase32() shouldn't throw with test data.
-         */
-        $totp->setSecret(Secret::fromBase32($base32));
-        $this->assertSame($base32, $totp->base32Secret());
-
-        if (isset($raw)) {
-            $this->assertSame($raw, $totp->secret());
-        }
-    }
-
-    /**
-     * Data provider for testSetBase32Secret().
-     *
-     * @return array The test data.
-     */
-    public function dataForTestSetBase64Secret(): array
-    {
-        return [
-            "typicalPlainText" => ["cGFzc3dvcmQtcGFzc3dvcmQ=", "password-password",],
-            "typicalBinary" => ["FXDXrl6I4zxbScepzyXzH9us+50=", "\x15\x70\xd7\xae\x5e\x88\xe3\x3c\x5b\x49\xc7\xa9\xcf\x25\xf3\x1f\xdb\xac\xfb\x9d",],
-            "invalidEmpty" => ["", null, InvalidSecretException::class,],
-            "invalidTooShort" => ["cGFzc3dvcmQ=", null, InvalidSecretException::class,],
-            "invalidWrongTypeNull" => [null, null, TypeError::class,],
-            "invalidWrongTypeStringable" => [self::createStringable("cGFzc3dvcmQtcGFzc3dvcmQ="), null, TypeError::class,],
-        ];
-    }
-
-    /**
-     * @dataProvider dataForTestSetBase64Secret
-     *
-     * @param mixed $base64 The base64-encoded secret to set.
-     * @param string|null $raw The raw secret expected.
-     * @param string|null $exceptionClass The class name of the exception expected to be thrown, if any.
-     *
-     * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() should only throw expected test exceptions.
-     * TotpSecret::fromBase64() shouldn't throw with test data.
-     */
-    public function testSetBase64Secret(mixed $base64, string|null $raw, ?string $exceptionClass = null): void
-    {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        $totp = self::createTotp();
-
-        /** @noinspection PhpUnhandledExceptionInspection setSecret() should only throw expected test exceptions.
-         * fromBase64() shouldn't throw with test data.
-         */
-        $totp->setSecret(Secret::fromBase64($base64));
-        $this->assertSame($base64, $totp->base64Secret());
-
-        if (isset($raw)) {
-            $this->assertSame($raw, $totp->secret());
-        }
-    }
-
-    /**
-     * Test data for testBase32Secret().
-     *
-     * @return array The test data.
-     */
-    public function dataForTestBase32Secret(): array
-    {
-        return [
-            "typicalPlainText" => ["password-password", "OBQXG43XN5ZGILLQMFZXG53POJSA====",],
-            "typicalBinary" => ["\x15\x70\xd7\xae\x5e\x88\xe3\x3c\x5b\x49\xc7\xa9\xcf\x25\xf3\x1f\xdb\xac\xfb\x9d", "CVYNPLS6RDRTYW2JY6U46JPTD7N2Z645",],
-            "extremeBinaryZeroes" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",],
-            "extremeBinaryOnes" => ["\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff", "77777777777777777777777777777777",],
-            "extremeLongBinary" => [
-                "\x4d\x51\xa7\x96\x6f\x8f\xf6\xcb\x19\xb5\x61\x2f\xe8\x77\xa8\x78\x26\xb7\xcc\x92\x09\xa0\xe0\x6c\x1a\x8e\x99\x30\x61\x1c\xfc\x18\xd4\x9e\xae\x78\x0c\xc0\x5e\x73\x0c\xd5\x55\x25\x5b\x39\x2a\xd9\x64\x95\xf5\x36\xa5\xe8\x64\x06\xf0\x73\x58\xfc\xfa\x27\xd5\x15\xe5\xa9\x62\xce\x0c\x04\x1e\xa6\xbd\xbc\xde\x61\xb5\x95\xca\x42\x94\xb5\x1b\x1e\xe3\x8c\xde\x14\xb2\x8a\x00\x10\xd4\x96\xa8\xd0\x33\xf6\x7e\x85\xc4\x3e\x94\x5c\xe2\xe5\x6a\x24\x5a\x5e\x27\x2c\xd0\xed\xb0\x33\xe4\x4e\x1a\xcc",
-                "JVI2PFTPR73MWGNVMEX6Q55IPATLPTESBGQOA3A2R2MTAYI47QMNJHVOPAGMAXTTBTKVKJK3HEVNSZEV6U3KL2DEA3YHGWH47IT5KFPFVFRM4DAED2TL3PG6MG2ZLSSCSS2RWHXDRTPBJMUKAAINJFVI2AZ7M7UFYQ7JIXHC4VVCIWS6E4WNB3NQGPSE4GWM",
-            ],
-        ];
-    }
-
-    /**
-     * @dataProvider dataForTestBase32Secret
-     *
-     * @param string $raw The raw secret.
-     * @param string $base32 The expected Base32 for the raw secret.
-     *
-     * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() shouldn't throw with test data.
-     */
-    public function testBase32Secret(string $raw, string $base32): void
-    {
-        $totp = self::createTotp();
-        /** @noinspection PhpUnhandledExceptionInspection setSecret() shouldn't throw with test data. */
-        $totp->setSecret($raw);
-        $this->assertSame($base32, $totp->base32Secret(), "The base32 of the raw secret '" . self::hexOf($raw) . "' did not match the expected string.");
-    }
-
-    /**
-     * Test data for testBase64Secret().
-     *
-     * @return array The test data.
-     */
-    public function dataForTestBase64Secret(): array
-    {
-        return [
-            "typicalPlainText" => ["password-password", "cGFzc3dvcmQtcGFzc3dvcmQ=",],
-            "typicalBinary" => ["\x15\x70\xd7\xae\x5e\x88\xe3\x3c\x5b\x49\xc7\xa9\xcf\x25\xf3\x1f\xdb\xac\xfb\x9d", "FXDXrl6I4zxbScepzyXzH9us+50=",],
-            "extremeBinaryZeroes" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",],
-            "extremeBinaryOnes" => ["\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff", "//////////////////////////8=",],
-            "extremeLongBinary" => [
-                "\x4d\x51\xa7\x96\x6f\x8f\xf6\xcb\x19\xb5\x61\x2f\xe8\x77\xa8\x78\x26\xb7\xcc\x92\x09\xa0\xe0\x6c\x1a\x8e\x99\x30\x61\x1c\xfc\x18\xd4\x9e\xae\x78\x0c\xc0\x5e\x73\x0c\xd5\x55\x25\x5b\x39\x2a\xd9\x64\x95\xf5\x36\xa5\xe8\x64\x06\xf0\x73\x58\xfc\xfa\x27\xd5\x15\xe5\xa9\x62\xce\x0c\x04\x1e\xa6\xbd\xbc\xde\x61\xb5\x95\xca\x42\x94\xb5\x1b\x1e\xe3\x8c\xde\x14\xb2\x8a\x00\x10\xd4\x96\xa8\xd0\x33\xf6\x7e\x85\xc4\x3e\x94\x5c\xe2\xe5\x6a\x24\x5a\x5e\x27\x2c\xd0\xed\xb0\x33\xe4\x4e\x1a\xcc",
-                "TVGnlm+P9ssZtWEv6HeoeCa3zJIJoOBsGo6ZMGEc/BjUnq54DMBecwzVVSVbOSrZZJX1NqXoZAbwc1j8+ifVFeWpYs4MBB6mvbzeYbWVykKUtRse44zeFLKKABDUlqjQM/Z+hcQ+lFzi5WokWl4nLNDtsDPkThrM",
-            ],
-        ];
-    }
-
-    /**
-     * @dataProvider dataForTestBase64Secret
-     *
-     * @param string $raw The raw secret.
-     * @param string $base64 The expected Base64 for the raw secret.
-     *
-     * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() shouldn't throw with test data.
-     */
-    public function testBase64Secret(string $raw, string $base64): void
-    {
-        $totp = self::createTotp();
-        /** @noinspection PhpUnhandledExceptionInspection setSecret() shouldn't throw with test data. */
-        $totp->setSecret($raw);
-        $this->assertSame($base64, $totp->base64Secret(), "The base64 of the raw secret '" . self::hexOf($raw) . "' did not match the expected string.");
-    }
-
-    /**
-     * Data provider for testSetHashAlgorithm().
-     *
-     * @return array The test data.
-     */
-    public function dataForTestSetHashAlgorithm(): array
-    {
-        return [
-            "typicalSha1" => [HashAlgorithm::Sha1Algorithm,],
-            "typicalSha256" => [HashAlgorithm::Sha256Algorithm,],
-            "typicalSha512" => [HashAlgorithm::Sha512Algorithm,],
-            "invalidStringMD5Upper" => ["MD5", InvalidHashAlgorithmException::class,],
-            "invalidStringMD5Lower" => ["md5", InvalidHashAlgorithmException::class,],
-            "invalidEmptyString" => ["", InvalidHashAlgorithmException::class,],
-            "invalidNonsenseString" => ["foobarfizzbuzz", InvalidHashAlgorithmException::class,],
-            "invalidEmpty" => ["", InvalidHashAlgorithmException::class,],
-            "invalidSHA1-1" => ["SHA1", InvalidHashAlgorithmException::class,],
-            "invalidSHA1-2" => ["Sha1", InvalidHashAlgorithmException::class,],
-            "invalidSHA1-3" => ["sHa1", InvalidHashAlgorithmException::class,],
-            "invalidSHA1-4" => ["shA1", InvalidHashAlgorithmException::class,],
-            "invalidSHA1-5" => ["ShA1", InvalidHashAlgorithmException::class,],
-            "invalidSHA1-6" => ["sHA1", InvalidHashAlgorithmException::class,],
-            "invalidSHA1-7" => ["ShA1", InvalidHashAlgorithmException::class,],
-            "invalidSHA256-1" => ["SHA256", InvalidHashAlgorithmException::class,],
-            "invalidSHA256-2" => ["Sha256", InvalidHashAlgorithmException::class,],
-            "invalidSHA256-3" => ["sHa256", InvalidHashAlgorithmException::class,],
-            "invalidSHA256-4" => ["shA256", InvalidHashAlgorithmException::class,],
-            "invalidSHA256-5" => ["ShA256", InvalidHashAlgorithmException::class,],
-            "invalidSHA256-6" => ["sHA256", InvalidHashAlgorithmException::class,],
-            "invalidSHA256-7" => ["ShA256", InvalidHashAlgorithmException::class,],
-            "invalidSHA512-1" => ["SHA512", InvalidHashAlgorithmException::class,],
-            "invalidSHA512-2" => ["Sha512", InvalidHashAlgorithmException::class,],
-            "invalidSHA512-3" => ["sHa512", InvalidHashAlgorithmException::class,],
-            "invalidSHA512-4" => ["shA512", InvalidHashAlgorithmException::class,],
-            "invalidSHA512-5" => ["ShA512", InvalidHashAlgorithmException::class,],
-            "invalidSHA512-6" => ["sHA512", InvalidHashAlgorithmException::class,],
-            "invalidSHA512-7" => ["ShA512", InvalidHashAlgorithmException::class,],
-            "invalidNull" => [null, TypeError::class,],
-            "invalidInt0" => [0, TypeError::class,],
-            "invalidInt1" => [1, TypeError::class,],
-            "invalidInt256" => [256, TypeError::class,],
-            "invalidInt512" => [512, TypeError::class,],
-            "invalidFloat0.0" => [0.0, TypeError::class,],
-            "invalidFloat1.0" => [1.0, TypeError::class,],
-            "invalidFloat256.0" => [256.0, TypeError::class,],
-            "invalidFloat512.0" => [512.0, TypeError::class,],
-            "invalidStringableSha1" => [self::createStringable("Sha1"), TypeError::class,],
-            "invalidStringableSha256" => [self::createStringable("Sha256"), TypeError::class,],
-            "invalidStringableSha512" => [self::createStringable("Sha512"), TypeError::class,],
-            "invalidArray" => [[HashAlgorithm::Sha1Algorithm,], TypeError::class,],
-        ];
-    }
-
-    /**
-     * Test the setHashAlgorithm() method.
-     *
-     * @dataProvider dataForTestSetHashAlgorithm
-     *
-     * @param mixed $algorithm The algorithm to set.
-     * @param string|null $exceptionClass The type of exception expected to be thrown, if any.
-     *
-     * @noinspection PhpDocMissingThrowsInspection Totp::setHashAlgorithm() should only throw expected test exceptions.
-     */
-    public function testSetHashAlgorithm(mixed $algorithm, ?string $exceptionClass = null): void
-    {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        $totp = self::createTotp();
-        /** @noinspection PhpUnhandledExceptionInspection setHashAlgorithm() should only throw expected test exceptions. */
-        $totp->withHashAlgorithm($algorithm);
-        $this->assertSame($algorithm, $totp->hashAlgorithm(), "The has algorithm was expected to be {$algorithm} but {$totp->hashAlgorithm()} was reported.");
-    }
+//
+//    /**
+//     * Data provider for testSetBase32Secret().
+//     *
+//     * @return array The test data.
+//     */
+//    public static function dataForTestSetBase32Secret(): array
+//    {
+//        return [
+//            "typicalPlainText" => ["OBQXG43XN5ZGILLQMFZXG53POJSA====", "password-password",],
+//            "typicalBinary" => ["CVYNPLS6RDRTYW2JY6U46JPTD7N2Z645", "\x15\x70\xd7\xae\x5e\x88\xe3\x3c\x5b\x49\xc7\xa9\xcf\x25\xf3\x1f\xdb\xac\xfb\x9d",],
+//            "invalidEmpty" => ["", null, InvalidSecretException::class,],
+//            "invalidTooShort" => ["OBQXG43XN5ZGI===", null, InvalidSecretException::class,],
+//            "invalidWrongTypeNull" => [null, null, TypeError::class,],
+//            "invalidWrongTypeStringable" => [self::createStringable("OBQXG43XN5ZGILLQMFZXG53POJSA===="), null, TypeError::class,],
+//        ];
+//    }
+//
+//    /**
+//     * @dataProvider dataForTestSetBase32Secret
+//     *
+//     * @param mixed $base32 The base32-encoded secret to set.
+//     * @param string|null $raw The raw secret expected.
+//     * @param string|null $exceptionClass The class name of the exception expected to be thrown, if any.
+//     *
+//     * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() should only throw expected test exceptions.
+//     * TotpSecret::fromBase32() shouldn't throw with test data.
+//     */
+//    public function testSetBase32Secret(mixed $base32, string|null $raw, ?string $exceptionClass = null): void
+//    {
+//        if (isset($exceptionClass)) {
+//            $this->expectException($exceptionClass);
+//        }
+//
+//        $totp = self::createFactory();
+//
+//        /** @noinspection PhpUnhandledExceptionInspection setSecret() should only throw expected test exceptions.
+//         * fromBase32() shouldn't throw with test data.
+//         */
+//        $totp->setSecret(Secret::fromBase32($base32));
+//        self::assertSame($base32, $totp->base32Secret());
+//
+//        if (isset($raw)) {
+//            self::assertSame($raw, $totp->secret());
+//        }
+//    }
+//
+//    /**
+//     * Data provider for testSetBase32Secret().
+//     *
+//     * @return array The test data.
+//     */
+//    public static function dataForTestSetBase64Secret(): array
+//    {
+//        return [
+//            "typicalPlainText" => ["cGFzc3dvcmQtcGFzc3dvcmQ=", "password-password",],
+//            "typicalBinary" => ["FXDXrl6I4zxbScepzyXzH9us+50=", "\x15\x70\xd7\xae\x5e\x88\xe3\x3c\x5b\x49\xc7\xa9\xcf\x25\xf3\x1f\xdb\xac\xfb\x9d",],
+//            "invalidEmpty" => ["", null, InvalidSecretException::class,],
+//            "invalidTooShort" => ["cGFzc3dvcmQ=", null, InvalidSecretException::class,],
+//            "invalidWrongTypeNull" => [null, null, TypeError::class,],
+//            "invalidWrongTypeStringable" => [self::createStringable("cGFzc3dvcmQtcGFzc3dvcmQ="), null, TypeError::class,],
+//        ];
+//    }
+//
+//    /**
+//     * @dataProvider dataForTestSetBase64Secret
+//     *
+//     * @param mixed $base64 The base64-encoded secret to set.
+//     * @param string|null $raw The raw secret expected.
+//     * @param string|null $exceptionClass The class name of the exception expected to be thrown, if any.
+//     *
+//     * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() should only throw expected test exceptions.
+//     * TotpSecret::fromBase64() shouldn't throw with test data.
+//     */
+//    public function testSetBase64Secret(mixed $base64, string|null $raw, ?string $exceptionClass = null): void
+//    {
+//        if (isset($exceptionClass)) {
+//            $this->expectException($exceptionClass);
+//        }
+//
+//        $totp = self::createFactory();
+//
+//        /** @noinspection PhpUnhandledExceptionInspection setSecret() should only throw expected test exceptions.
+//         * fromBase64() shouldn't throw with test data.
+//         */
+//        $totp->setSecret(Secret::fromBase64($base64));
+//        self::assertSame($base64, $totp->base64Secret());
+//
+//        if (isset($raw)) {
+//            self::assertSame($raw, $totp->secret());
+//        }
+//    }
+//
+//    /**
+//     * Test data for testBase64Secret().
+//     *
+//     * @return array The test data.
+//     */
+//    public static function dataForTestBase64Secret(): array
+//    {
+//        return [
+//            "typicalPlainText" => ["password-password", "cGFzc3dvcmQtcGFzc3dvcmQ=",],
+//            "typicalBinary" => ["\x15\x70\xd7\xae\x5e\x88\xe3\x3c\x5b\x49\xc7\xa9\xcf\x25\xf3\x1f\xdb\xac\xfb\x9d", "FXDXrl6I4zxbScepzyXzH9us+50=",],
+//            "extremeBinaryZeroes" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",],
+//            "extremeBinaryOnes" => ["\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff", "//////////////////////////8=",],
+//            "extremeLongBinary" => [
+//                "\x4d\x51\xa7\x96\x6f\x8f\xf6\xcb\x19\xb5\x61\x2f\xe8\x77\xa8\x78\x26\xb7\xcc\x92\x09\xa0\xe0\x6c\x1a\x8e\x99\x30\x61\x1c\xfc\x18\xd4\x9e\xae\x78\x0c\xc0\x5e\x73\x0c\xd5\x55\x25\x5b\x39\x2a\xd9\x64\x95\xf5\x36\xa5\xe8\x64\x06\xf0\x73\x58\xfc\xfa\x27\xd5\x15\xe5\xa9\x62\xce\x0c\x04\x1e\xa6\xbd\xbc\xde\x61\xb5\x95\xca\x42\x94\xb5\x1b\x1e\xe3\x8c\xde\x14\xb2\x8a\x00\x10\xd4\x96\xa8\xd0\x33\xf6\x7e\x85\xc4\x3e\x94\x5c\xe2\xe5\x6a\x24\x5a\x5e\x27\x2c\xd0\xed\xb0\x33\xe4\x4e\x1a\xcc",
+//                "TVGnlm+P9ssZtWEv6HeoeCa3zJIJoOBsGo6ZMGEc/BjUnq54DMBecwzVVSVbOSrZZJX1NqXoZAbwc1j8+ifVFeWpYs4MBB6mvbzeYbWVykKUtRse44zeFLKKABDUlqjQM/Z+hcQ+lFzi5WokWl4nLNDtsDPkThrM",
+//            ],
+//        ];
+//    }
+//
+//    /**
+//     * @dataProvider dataForTestBase64Secret
+//     *
+//     * @param string $raw The raw secret.
+//     * @param string $base64 The expected Base64 for the raw secret.
+//     *
+//     * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() shouldn't throw with test data.
+//     */
+//    public function testBase64Secret(string $raw, string $base64): void
+//    {
+//        $totp = self::createFactory();
+//        /** @noinspection PhpUnhandledExceptionInspection setSecret() shouldn't throw with test data. */
+//        $totp->setSecret($raw);
+//        self::assertSame($base64, $totp->base64Secret(), "The base64 of the raw secret '" . self::hexOf($raw) . "' did not match the expected string.");
+//    }
 
     /**
      * Data provider for testHashAlgorithm().
      *
      * @return array The test data.
      */
-    public function dataForTestHashAlgorithm(): array
+    public static function dataForTestHashAlgorithm(): array
     {
         return [
             "typicalSha1" => [HashAlgorithm::Sha1Algorithm,],
@@ -1623,78 +685,8 @@ class TotpTest extends TestCase
      */
     public function testHashAlgorithm(string $algorithm): void
     {
-        $totp = self::createTotp();
-        $this->assertSame(HashAlgorithm::Sha1Algorithm, $totp->hashAlgorithm(), "The default hash algorithm was expected to be " . HashAlgorithm::Sha1Algorithm . " but {$totp->hashAlgorithm()} was reported.");
-        /** @noinspection PhpUnhandledExceptionInspection setHashAlgorithm() shouldn't throw with test data. */
-        $totp->withHashAlgorithm($algorithm);
-        $this->assertSame($algorithm, $totp->hashAlgorithm(), "The hash algorithm was expected to be {$algorithm} but {$totp->hashAlgorithm()} was reported.");
-    }
-
-    /**
-     * Data provider for testSetReferenceTime()
-     *
-     * @return array The test data.
-     * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
-     */
-    public function dataForTestSetReferenceTime(): array
-    {
-        /** @noinspection PhpUnhandledExceptionInspection DateTime constructor shouldn't throw with test data. */
-        return [
-            "typicalEpochAsInt" => [0,],
-            "typicalEpochAsDateTime" => [new DateTime("@0"),],
-            "typicalEpochAsDateTimeUtc+4" => [new DateTime("@0", new DateTimeZone("UTC")),],
-            "typicalNowAsTimestamp" => [time(),],
-            "typical10YearsAgoAsTimestamp" => [time() - self::yearsInSeconds(10),],
-            "typical10DaysAgoAsTimestamp" => [time() - self::daysInSeconds(10),],
-            "typical10YearsAfterEpoch" => [self::yearsInSeconds(10),],
-            "typical20YearsAfterEpoch" => [self::yearsInSeconds(20),],
-            "typical30YearsAfterEpoch" => [self::yearsInSeconds(30),],
-            "typical10SecondsAfterEpoch" => [self::daysInSeconds(10),],
-            "typical20SecondsAfterEpoch" => [self::daysInSeconds(20),],
-            "typical30SecondsAfterEpoch" => [self::daysInSeconds(30),],
-            "typical40SecondsAfterEpoch" => [self::daysInSeconds(40),],
-            "typical50SecondsAfterEpoch" => [self::daysInSeconds(50),],
-            "typical60SecondsAfterEpoch" => [self::daysInSeconds(60),],
-            "typical70SecondsAfterEpoch" => [self::daysInSeconds(70),],
-            "typical80SecondsAfterEpoch" => [self::daysInSeconds(80),],
-            "typical90SecondsAfterEpoch" => [self::daysInSeconds(90),],
-            "typical100SecondsAfterEpoch" => [self::daysInSeconds(100),],
-
-            // NOTE we don't use "now" because it creates a time with fractional seconds which aren't preserved in the
-            // conversion to a unix timestamp, and which therefore causes a failed test assertion
-            "typicalNowAsDateTime" => [new DateTime("@" . time()),],
-            "typicalDateTimeUtc" => [new DateTime("23-04-1974", new DateTimeZone("UTC")),],
-            "typicalDateTimeUtc-4" => [new DateTime("28-01-1978", new DateTimeZone("-0400")),],
-            "typicalDateTimeUtc+4" => [new DateTime("19-07-2000", new DateTimeZone("+0400")),],
-            "typicalDateTimeUtc-6" => [new DateTime("04-03-1984", new DateTimeZone("-0600")),],
-            "typicalDateTimeUtc+6" => [new DateTime("31-12-1999", new DateTimeZone("+0600")),],
-            "invalidNull" => [null, TypeError::class],
-            "invalidEmptyString" => ["", TypeError::class],
-            "invalidDateTimeParseableString" => ["now", TypeError::class],
-        ];
-    }
-
-    /**
-     * @dataProvider dataForTestSetReferenceTime
-     *
-     * @param int|\DateTime $time
-     * @param string|null $exceptionClass
-     */
-    public function testSetReferenceTime(mixed $time, ?string $exceptionClass = null): void
-    {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        $totp = self::createTotp();
-        $totp->withReferenceTime($time);
-
-        if (is_int($time)) {
-            $this->assertSame($time, $totp->referenceTimestamp());
-        } else if ($time instanceof DateTime) {
-            $this->assertInstanceOf(DateTime::class, $totp->referenceTime(), "referenceTime() failed to return a DateTime object with input DateTime '" . $time->format("Y-m-d H:i:s") . "'");
-            $this->assertEquals($time, $totp->referenceTime());
-        }
+        $totp = self::createTotp(hashAlgorithm: $algorithm);
+        self::assertSame($algorithm, $totp->hashAlgorithm()->algorithm(), "The hash algorithm was expected to be {$algorithm} but {$totp->hashAlgorithm()->algorithm()} was reported.");
     }
 
     /**
@@ -1703,7 +695,7 @@ class TotpTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
      */
-    public function dataForTestReferenceTimestamp(): array
+    public static function dataForTestReferenceTimestamp(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor shouldn't throw with test data. */
         return [
@@ -1751,9 +743,8 @@ class TotpTest extends TestCase
             $expectedTimestamp = $time;
         }
 
-        $totp = self::createTotp();
-        $totp->withReferenceTime($time);
-        $this->assertSame($expectedTimestamp, $totp->referenceTimestamp());
+        $totp = self::createTotp(referenceTime: $time);
+        self::assertSame($expectedTimestamp, $totp->referenceTimestamp());
     }
 
     /**
@@ -1762,7 +753,7 @@ class TotpTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
      */
-    public function dataForTestReferenceTime(): array
+    public static function dataForTestReferenceTime(): array
     {
         $now = time();
 
@@ -1812,62 +803,8 @@ class TotpTest extends TestCase
             $expectedDateTime = $time;
         }
 
-        $totp = self::createTotp();
-        $totp->withReferenceTime($time);
-        $actual = $totp->referenceTime();
-        $this->assertInstanceOf(DateTime::class, $actual);
-        $this->assertEquals($expectedDateTime, $actual);
-    }
-
-    /**
-     * Data provider for testSetTimeStep()
-     *
-     * @return array The test data.
-     */
-    public function dataForTestSetTimeStep(): array
-    {
-        return [
-            "typical30" => [30,],
-            "typical60" => [60,],
-            "typical10" => [10,],
-            "typical20" => [20,],
-
-            // these type casts should both result in (int) 0 - PHP type casts just truncate floats
-            "invalidFloat0.99CastInt" => [(int)0.99, InvalidTimeStepException::class],
-            "invalidFloat0.49CastInt" => [(int)0.49, InvalidTimeStepException::class],
-            "invalidFloat0.49" => [0.49, TypeError::class,],
-            "invalidFloat0.51" => [0.51, TypeError::class,],
-            "invalid0" => [0, InvalidTimeStepException::class,],
-            "invalidMinus1" => [-1, InvalidTimeStepException::class,],
-            "invalidMinus30" => [-30, InvalidTimeStepException::class,],
-            "invalidNull" => [null, TypeError::class,],
-            "invalidString" => ["30", TypeError::class,],
-            "invalidObject" => [new class
-            {
-            }, TypeError::class,],
-        ];
-    }
-
-    /**
-     * Test for setTimeStep() method.
-     *
-     * @dataProvider dataForTestSetTimeStep
-     *
-     * @param mixed $timeStep The time step to set.
-     * @param class-string|null $exceptionClass The type of exception that is expected, if any.
-     *
-     * @noinspection PhpDocMissingThrowsInspection totp::setTimeStep() should only throw expected test exceptions.
-     */
-    public function testSetTimeStep(mixed $timeStep, ?string $exceptionClass = null): void
-    {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        $totp = self::createTotp();
-        /** @noinspection PhpUnhandledExceptionInspection setTimeStep() should only throw expected test exceptions. */
-        $totp->withTimeStep($timeStep);
-        $this->assertSame($timeStep, $totp->timeStep(), "The time step {$timeStep} was expected but {$totp->timeStep()} was reported.");
+        $totp = self::createTotp(referenceTime: $time);
+        self::assertEquals($expectedDateTime, $totp->referenceTime());
     }
 
     /**
@@ -1875,16 +812,11 @@ class TotpTest extends TestCase
      *
      * @return Generator The test data.
      */
-    public function dataForTestTimeStep(): Generator
+    public static function dataForTestTimeStep(): Generator
     {
         // test with all valid time steps up to 1 hour
         for ($timeStep = 1; $timeStep <= 3600; ++$timeStep) {
             yield [$timeStep,];
-        }
-
-        // throw some random valid time steps at it for good measure
-        for ($idx = 0; $idx < 5000; ++$idx) {
-            yield [mt_rand(1, 3600),];
         }
     }
 
@@ -1899,62 +831,8 @@ class TotpTest extends TestCase
      */
     public function testTimeStep(int $timeStep): void
     {
-        $totp = self::createTotp();
-        /** @noinspection PhpUnhandledExceptionInspection setTimeStep() shouldn't throw with test data. */
-        $totp->withTimeStep($timeStep);
-        $this->assertSame($timeStep, $totp->timeStep(), "The time step {$timeStep} was expected but {$totp->timeStep()} was reported.");
-    }
-
-    /**
-     * Test data for testSetSecret.
-     *
-     * @return \Generator
-     * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
-     */
-    public function dataForTestSetSecret(): Generator
-    {
-        // 100 datasets with random valid secrets
-        for ($idx = 0; $idx < 100; ++$idx) {
-            yield "validSecret" . sprintf("%02d", $idx) => [self::randomValidSecret(),];
-        }
-
-        // 100 datasets with random invalid secrets
-        for ($idx = 0; $idx < 100; ++$idx) {
-            yield "invalidSecret" . sprintf("%02d", $idx) => [self::randomInvalidSecret(), InvalidSecretException::class,];
-        }
-
-        // tests for specific scenarios
-        yield "marginallyInvalidSecret" => [self::randomInvalidSecret(15), InvalidSecretException::class,];
-        yield "emptySecret" => ["", InvalidSecretException::class,];
-        yield "nullSecret" => [null, TypeError::class,];
-        yield "intSecret" => [1234567890123456, TypeError::class,];    // NOTE requires 64-bit int type
-        yield "floatSecret" => [1234567890123456.12345, TypeError::class,];
-        yield "objectSecret" => [new class
-        {
-        }, TypeError::class,];
-        yield "arraySecret" => [["12345678901234567890",], TypeError::class,];
-    }
-
-    /**
-     * Test for the setSecret() method.
-     *
-     * @dataProvider dataForTestSetSecret
-     *
-     * @param mixed $secret The secret to set.
-     * @param string|null $exceptionClass The class name of the expected exception, if any.
-     *
-     * @noinspection PhpDocMissingThrowsInspection setSecret() should only throw expected test exception.
-     */
-    public function testSetSecret(mixed $secret, ?string $exceptionClass = null): void
-    {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        $totp = self::createTotp();
-        /** @noinspection PhpUnhandledExceptionInspection Should only throw expected test exceptions. */
-        $totp->setSecret($secret);
-        $this->assertSame($secret, $totp->secret(), "Secret was not as expected.");
+        $totp = self::createTotp(timeStep: $timeStep);
+        self::assertSame($timeStep, $totp->timeStep()->seconds(), "The time step {$timeStep} was expected but {$totp->timeStep()} was reported.");
     }
 
     /**
@@ -1963,7 +841,7 @@ class TotpTest extends TestCase
      * @return \Generator
      * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
      */
-    public function dataForTestSecret(): Generator
+    public static function dataForTestSecret(): iterable
     {
         // 100 datasets with random valid secrets
         for ($idx = 0; $idx < 100; ++$idx) {
@@ -1980,73 +858,10 @@ class TotpTest extends TestCase
      */
     public function testSecret(string $secret): void
     {
-        $totp = self::createTotp();
-        /** @noinspection PhpUnhandledExceptionInspection Shouldn't throw with test data. */
-        $totp->setSecret($secret);
-        $this->assertSame($secret, $totp->secret(), "The secret returned from Totp::secret() is not as expected.");
+        $totp = self::createTotp($secret);
+        self::assertSame($secret, $totp->secret(), "The secret returned from Totp::secret() is not as expected.");
     }
 
-    /**
-     * Test data for testSetRenderer()
-     *
-     * @return array The test data.
-     * @noinspection PhpDocMissingThrowsInspection Integer renderer constructor does not throw in these cases.
-     */
-    public function dataForTestSetRenderer(): array
-    {
-        /** @noinspection PhpUnhandledExceptionInspection Integer renderer constructor does not throw in these cases. */
-        return [
-            "sixDigits" => [new SixDigits(),],
-            "eightDigits" => [new EightDigits(),],
-            "integer6Digits" => [new Integer(6),],
-            "integer7Digits" => [new Integer(7),],
-            "integer8Digits" => [new Integer(8),],
-            "integer9Digits" => [new Integer(9),],
-            "integer10Digits" => [new Integer(10),],
-            "anonymousClass" => [new class implements Renderer
-            {
-                public function name(): string
-                {
-                    return "insecure renderer";
-                }
-
-                public function render(string $hmac): string
-                {
-                    return "insecure";
-                }
-            },],
-            "invalidNull" => [null, TypeError::class,],
-            "invalidInt" => [6, TypeError::class,],
-            "invalidFloat" => [6.5, TypeError::class,],
-            "invalidString" => ["foo", TypeError::class,],
-            "invalidObject" => [new class
-            {
-            }, TypeError::class,],
-            "invalidArray" => [["render" => function (string $hmac): string {
-                return "insecure";
-            }], TypeError::class,],
-            "invalidStdClass" => [(object)["render" => function (string $hmac): string {
-                return "insecure";
-            }], TypeError::class,],
-        ];
-    }
-
-    /**
-     * @dataProvider dataForTestSetRenderer
-     *
-     * @param mixed $renderer The renderer to set.
-     * @param string|null $exceptionClass The class name of an exception that is expected to be thrown, if any.
-     */
-    public function testSetRenderer(mixed $renderer, ?string $exceptionClass = null): void
-    {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        $totp = self::createTotp();
-        $totp->withRenderer($renderer);
-        $this->assertSame($renderer, $totp->renderer(), "Renderer set was not returned from renderer() method.");
-    }
 
     /**
      * Test data for testSetRenderer()
@@ -2054,17 +869,17 @@ class TotpTest extends TestCase
      * @return array
      * @noinspection PhpDocMissingThrowsInspection Integer renderer constructor shouldn't throw with test data.
      */
-    public function dataForTestRenderer(): array
+    public static function dataForTestRenderer(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection Integer renderer constructor shouldn't throw with test data. */
         return [
             "sixDigits" => [new SixDigits(),],
             "eightDigits" => [new EightDigits(),],
-            "integer6Digits" => [new Integer(6),],
-            "integer7Digits" => [new Integer(7),],
-            "integer8Digits" => [new Integer(8),],
-            "integer9Digits" => [new Integer(9),],
-            "integer10Digits" => [new Integer(10),],
+            "integer6Digits" => [new Integer(new Digits(6)),],
+            "integer7Digits" => [new Integer(new Digits(7)),],
+            "integer8Digits" => [new Integer(new Digits(8)),],
+            "integer9Digits" => [new Integer(new Digits(9)),],
+            "integer10Digits" => [new Integer(new Digits(10)),],
             "anonymousClass" => [new class implements Renderer
             {
                 public function name(): string
@@ -2087,9 +902,8 @@ class TotpTest extends TestCase
      */
     public function testRenderer(Renderer $renderer): void
     {
-        $totp = self::createTotp();
-        $totp->withRenderer($renderer);
-        $this->assertSame($renderer, $totp->renderer(), "Unexpected object returned from renderer() method.");
+        $totp = self::createTotp(renderer: $renderer);
+        self::assertEquals($renderer, $totp->renderer(), "Unexpected object returned from renderer() method.");
     }
 
     /**
@@ -2100,7 +914,7 @@ class TotpTest extends TestCase
      *
      * @return \int[][]
      */
-    public function dataForTestCounterAt(): array
+    public static function dataForTestCounterAt(): array
     {
         return [
             // test data from RFC 6238
@@ -2142,26 +956,17 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp::setTimeStep() should not throw with test data.
      * Totp::counterAt() should only throw expected test exceptions.
      */
-    public function testCounterAt(int|DateTime $currentTime, int $expectedCounter, int|DateTime $referenceTime = null, ?int $timeStep = null, ?string $exceptionClass = null): void
+    public function testCounterAt(int|DateTime $currentTime, int $expectedCounter, int|DateTime|null $referenceTime = null, ?int $timeStep = null, ?string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
             $this->expectException($exceptionClass);
         }
 
-        $totp = $this->createTotp();
-
-        if (isset($referenceTime)) {
-            $totp->withReferenceTime($referenceTime);
-        }
-
-        if (isset($timeStep)) {
-            /** @noinspection PhpUnhandledExceptionInspection setTimeStep() should not throw with test data. */
-            $totp->withTimeStep($timeStep);
-        }
+        $totp = self::createTotp(referenceTime: $referenceTime ?? 0, timeStep: $timeStep ?? 30);
 
         /** @noinspection PhpUnhandledExceptionInspection counterAt() should only throw expected test exceptions. */
         $actualCounter = $totp->counterAt($currentTime);
-        $this->assertSame($expectedCounter, $actualCounter, "The counter is expected to be {$expectedCounter} but is actually {$actualCounter}.");
+        self::assertSame($expectedCounter, $actualCounter, "The counter is expected to be {$expectedCounter} but is actually {$actualCounter}.");
     }
 
     /**
@@ -2170,7 +975,7 @@ class TotpTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor should not throw with test data.
      */
-    public function dataForTestCounter(): array
+    public static function dataForTestCounter(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with test data. */
         return [
@@ -2193,7 +998,7 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp constructor, Totp::counter() and Totp::counterAt() should not
      * throw with test data.
      */
-    public function testCounter(string $secret = null, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
+    public function testCounter(?string $secret = null, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
         // The logic behind this test is this: counter() can't return a pre-known value because it produces a value that
         // is dependent on an external factor - the current system time. So we use counterAt() as our source of
@@ -2207,7 +1012,7 @@ class TotpTest extends TestCase
         // Note that while debugging, if you put a breakpoint on the call to Totp::counterBytes() you are more likely
         // to trigger a repeat of the loop
         /** @noinspection PhpUnhandledExceptionInspection Totp constructor should not throw with test data. */
-        $totp = (new Factory(referenceTime: $referenceTime, hashAlgorithm: new HashAlgorithm($algorithm)))->totp(Secret::fromRaw($secret));
+        $totp       = self::createTotp(secret: $secret ?? self::TestSecret, referenceTime: $referenceTime, hashAlgorithm: $algorithm);
 
         // unless you've set a breakpoint we should traverse this loop no more than twice
         do {
@@ -2216,16 +1021,16 @@ class TotpTest extends TestCase
             $actual = $totp->counter();
             /** @noinspection PhpUnhandledExceptionInspection counterAt() should not throw with test data. */
             $expected = $totp->counterAt($time);
-            $repeat   = (time() !== $time);
+            $repeat = (time() !== $time);
         } while ($repeat);
 
-        $this->assertSame($expected, $actual, "The generated current counter did not match the expected counter.");
+        self::assertSame($expected, $actual, "The generated current counter did not match the expected counter.");
     }
 
     /**
      * @return array
      */
-    public function dataForTestCounterBytesAt(): array
+    public static function dataForTestCounterBytesAt(): array
     {
         return [
             // test data from RFC 6238
@@ -2265,24 +1070,13 @@ class TotpTest extends TestCase
      */
     public function testCounterBytesAt(int|DateTime $currentTime, string $expectedBytes, int|DateTime $referenceTime = null, ?int $timeStep = null): void
     {
-        $totp = $this->createTotp();
+        $totp = self::createTotp(
+            referenceTime: $referenceTime ?? 0,
+            timeStep: $timeStep ?? 30,
+        );
 
-        if (isset($referenceTime)) {
-            $totp->withReferenceTime($referenceTime);
-        }
-
-        if (isset($timeStep)) {
-            /** @noinspection PhpUnhandledExceptionInspection setTimeStep() should not throw with test data. */
-            $totp->withTimeStep($timeStep);
-        }
-
-        /** @noinspection PhpUnhandledExceptionInspection Guaranteed not to throw in this case. */
-        $counterBytesAt = new ReflectionMethod($totp, "counterBytesAt");
-        $counterBytesAt->setAccessible(true);
-        $counterBytesAt = $counterBytesAt->getClosure($totp);
-
-        $actualBytes = $counterBytesAt($currentTime);
-        $this->assertSame($expectedBytes, $actualBytes, "The counter is expected to be " . self::hexOf($expectedBytes) . " but is actually " . self::hexOf($actualBytes) . ".");
+        $actualBytes = (new XRay($totp))->counterBytesAt($currentTime);
+        self::assertSame($expectedBytes, $actualBytes, "The counter is expected to be " . self::hexOf($expectedBytes) . " but is actually " . self::hexOf($actualBytes) . ".");
     }
 
     /**
@@ -2291,7 +1085,7 @@ class TotpTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
      */
-    public function dataForTestCounterBytes(): array
+    public static function dataForTestCounterBytes(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor shouldn't throw with test data. */
         return [
@@ -2326,26 +1120,23 @@ class TotpTest extends TestCase
         //
         // Note that while debugging, if you put a breakpoint on the call to Totp::counterBytes() you are more likely
         // to trigger a repeat of the loop
-        /** @noinspection PhpUnhandledExceptionInspection Totp constructor should not throw with test data. */
-        $totp = (new Factory(referenceTime: $referenceTime, hashAlgorithm: $algorithm))->totp(Secret::fromRaw($secret));
+        $totp = self::createTotp(
+            secret: $secret ?? self::TestSecret,
+            referenceTime: $referenceTime ?? 0,
+            hashAlgorithm: $algorithm,
+        );
 
-        $counterBytes = new ReflectionMethod(Factory::class, "counterBytes");
-        $counterBytes->setAccessible(true);
-        $counterBytes = $counterBytes->getClosure($totp);
-
-        $counterBytesAt = new ReflectionMethod(Factory::class, "counterBytesAt");
-        $counterBytesAt->setAccessible(true);
-        $counterBytesAt = $counterBytesAt->getClosure($totp);
+        $xray = new XRay($totp);
 
         // unless you've set a breakpoint we should traverse this loop no more than twice
         do {
             $time     = time();
-            $actual   = $counterBytes();
-            $expected = $counterBytesAt($time);
+            $actual   = $xray->counterBytes();
+            $expected = $xray->counterBytesAt($time);
             $repeat   = (time() !== $time);
         } while ($repeat);
 
-        $this->assertSame($expected, $actual, "The generated counter bytes did not match the expected counter bytes.");
+        self::assertSame($expected, $actual, "The generated counter bytes did not match the expected counter bytes.");
     }
 
     /**
@@ -2354,7 +1145,7 @@ class TotpTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
      */
-    public function dataForTestHmac(): array
+    public static function dataForTestHmac(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor shouldn't throw with test data. */
         return [
@@ -2405,8 +1196,13 @@ class TotpTest extends TestCase
         //
         // Note that while debugging, if you put a breakpoint on the call to Totp::password() you are more likely
         // to trigger a repeat of the loop
-        /** @noinspection PhpUnhandledExceptionInspection Totp constructor should not throw with test data. */
-        $totp = (new Factory(renderer: new Integer(new Digits($digits)), referenceTime: $referenceTime, hashAlgorithm: new HashAlgorithm($algorithm)))->totp(Secret::fromRaw($secret));
+        /** @noinspection PhpUnhandledExceptionInspection Digits constructor should not throw with test data. */
+        $totp = self::createTotp(
+            $secret ?? self::TestSecret,
+            new Integer(new Digits($digits)),
+            $referenceTime,
+            hashAlgorithm: $algorithm,
+        );
 
         // unless you've set a breakpoint we should traverse this loop no more than twice
         do {
@@ -2418,7 +1214,7 @@ class TotpTest extends TestCase
 
         /** @noinspection PhpUnhandledExceptionInspection hmacAt() should not throw with test data. */
         $expected = $totp->hmacAt($time);
-        $this->assertSame($expected, $actual, "The generated HMAC did not match the expected HMAC.");
+        self::assertSame($expected, $actual, "The generated HMAC did not match the expected HMAC.");
     }
 
     /**
@@ -2427,7 +1223,7 @@ class TotpTest extends TestCase
      * @return Generator The test data.
      * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
      */
-    public function dataForTestHmacAt(): Generator
+    public static function dataForTestHmacAt(): Generator
     {
         // transform the RFC test data into the args required for testHmacAt()
         yield from array_map(
@@ -2469,7 +1265,7 @@ class TotpTest extends TestCase
         /** @noinspection PhpUnhandledExceptionInspection Constructor should not throw with test data. */
         $totp = (new Factory(timeStep: new TimeStep(30), referenceTime: $referenceTime, hashAlgorithm: new HashAlgorithm($algorithm)))->totp(Secret::fromRaw($secret));
         /** @noinspection PhpUnhandledExceptionInspection Totp::hmacAt() shouldn't throw unless we're expecting a test exception. */
-        $this->assertSame(
+        self::assertSame(
             $hmac,
             $totp->hmacAt($currentTime),
             "Unexpected HMAC at " .
@@ -2485,7 +1281,7 @@ class TotpTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
      */
-    public function dataForTestPassword(): array
+    public static function dataForTestPassword(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor shouldn't throw with test data. */
         return [
@@ -2534,10 +1330,13 @@ class TotpTest extends TestCase
         //
         // Note that while debugging, if you put a breakpoint on the call to Totp::password() you are more likely
         // to trigger a repeat of the loop
-        /** @noinspection PhpUnhandledExceptionInspection Totp constructor and Integer renderer constructor should not
-         * throw with test data.
-         */
-        $totp = (new Factory(renderer: new Integer(new Digits($digits)), referenceTime: $referenceTime, hashAlgorithm: new HashAlgorithm($algorithm)))->totp(Secret::fromRaw($secret));
+        /** @noinspection PhpUnhandledExceptionInspection Digits constructor should not throw with test data. */
+        $totp = self::createTotp(
+            secret: $secret ?? self::TestSecret,
+            renderer: new Integer(new Digits($digits)),
+            referenceTime: $referenceTime,
+            hashAlgorithm: $algorithm,
+        );
 
         // unless you've set a breakpoint we should traverse this loop no more than twice
         do {
@@ -2549,7 +1348,7 @@ class TotpTest extends TestCase
 
         /** @noinspection PhpUnhandledExceptionInspection passwordAt() should not throw with test data. */
         $expected = $totp->passwordAt($time);
-        $this->assertSame($expected, $actual, "The generated password did not match the expected password.");
+        self::assertSame($expected, $actual, "The generated password did not match the expected password.");
     }
 
     /**
@@ -2558,7 +1357,7 @@ class TotpTest extends TestCase
      * @return Generator The test data.
      * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
      */
-    public function dataForTestPasswordAt(): Generator
+    public static function dataForTestPasswordAt(): Generator
     {
         // transform the RFC test data into the args required for testPasswordAt()
         yield from array_map(
@@ -2597,27 +1396,25 @@ class TotpTest extends TestCase
             $this->expectException($exceptionClass);
         }
 
-        /** @noinspection PhpUnhandledExceptionInspection 8 is a known valid value for $digits. */
-        $renderer = new Integer(8);
-        /** @noinspection PhpUnhandledExceptionInspection Constructor should not throw with test data. */
-        $totp = (new Factory(renderer: $renderer, timeStep: new TimeStep(30), referenceTime: $referenceTime, hashAlgorithm: $algorithm))->totp(Secret::fromRaw($secret));
+        /** @noinspection PhpUnhandledExceptionInspection Digits constructor does not throw with 8. */
+        $renderer = new Integer(new Digits(8));
 
-        for ($digits = 8; $digits >= 6; --$digits) {
-            /** @noinspection PhpUnhandledExceptionInspection this is a known valid value for $digits. */
-            $renderer->withDigits($digits);
+        $totp = self::createTotp(
+            secret: $secret,
+            renderer: $renderer,
+            referenceTime: $referenceTime,
+            hashAlgorithm: $algorithm,
+        );
 
-            /** @noinspection PhpUnhandledExceptionInspection passwordAt() should only throw expected test exceptions. */
-            $this->assertSame(
-                $password,
-                $totp->passwordAt($currentTime),
-                "Unexpected {$digits}-digit password at " .
-                ($currentTime instanceof DateTime ? $currentTime : new DateTime("@{$currentTime}"))->format("Y-m-d H:i:s") .
-                " with secret '" . self::hexOf($secret) . "', algorithm {$totp->hashAlgorithm()}, reference time " .
-                $totp->referenceTime()->format("Y-m-d H:i:s") . ", time step {$totp->timeStep()}"
-            );
-
-            $password = substr($password, 1);
-        }
+        /** @noinspection PhpUnhandledExceptionInspection passwordAt() should only throw expected test exceptions. */
+        self::assertSame(
+            $password,
+            $totp->passwordAt($currentTime),
+            "Unexpected password at " .
+            ($currentTime instanceof DateTime ? $currentTime : new DateTime("@{$currentTime}"))->format("Y-m-d H:i:s") .
+            " with secret '" . self::hexOf($secret) . "', algorithm {$totp->hashAlgorithm()}, reference time " .
+            $totp->referenceTime()->format("Y-m-d H:i:s") . ", time step {$totp->timeStep()}"
+        );
     }
 
     /**
@@ -2626,7 +1423,7 @@ class TotpTest extends TestCase
      * @return \Generator
      * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
      */
-    public function dataForTestVerify(): Generator
+    public static function dataForTestVerify(): Generator
     {
         // yield 100 random valid configurations for a Totp
         for ($idx = 0; $idx < 100; ++$idx) {
@@ -2688,8 +1485,8 @@ class TotpTest extends TestCase
             $repeat                    = (time() !== $time);
         } while ($repeat);
 
-        $this->assertTrue($correctPasswordVerified, "Totp::verified() did not verify the correct password.");
-        $this->assertFalse($incorrectPasswordVerified, "Totp::verified() incorrectly verified the incorrect password.");
+        self::assertTrue($correctPasswordVerified, "Totp::verified() did not verify the correct password.");
+        self::assertFalse($incorrectPasswordVerified, "Totp::verified() incorrectly verified the incorrect password.");
     }
 
     /**
@@ -2698,7 +1495,7 @@ class TotpTest extends TestCase
      * @return Generator The test data.
      * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
      */
-    public function dataForTestVerifyAt(): Generator
+    public static function dataForTestVerifyAt(): Generator
     {
         // transforms the RFC data into the structure required for this test
         $extractData = function (array $testData) use (&$digits, &$window): array {
@@ -2873,37 +1670,18 @@ class TotpTest extends TestCase
             $this->expectException($exceptionClass);
         }
 
-        /** @noinspection PhpUnhandledExceptionInspection Totp::integer() shouldn't throw with test data. */
-        $totp = Factory::integer(digits: $totpSpec["digits"], timeStep: $totpSpec["time-step"], referenceTime: $totpSpec["referenceTime"], hashAlgorithm: $totpSpec["hashAlgorithm"])->totp(Secret::fromRaw($totpSpec["secret"]));
+        /** @noinspection PhpUnhandledExceptionInspection Digits constructor shouldn't throw with test data. */
+        $totp = self::createTotp(
+            $totpSpec["secret"],
+            new Integer(new Digits($totpSpec["digits"])),
+            $totpSpec["referenceTime"],
+            $totpSpec["time-step"],
+            $totpSpec["hashAlgorithm"],
+        );
 
         /** @noinspection PhpUnhandledExceptionInspection Totp::verifyAt() won't throw unless we're expecting a test
          * exception.
          */
-        $this->assertEquals($expectedVerification, $totp->verifyAt(password: $userPassword, time: $currentTime, window: $window), "Verification not as expected.");
-    }
-
-    /**
-     * Test the defaultRenderer() method.
-     */
-    public function testDefaultRenderer(): void
-    {
-        $defaultRenderer = new ReflectionMethod(Factory::class, "defaultRenderer");
-        $defaultRenderer->setAccessible(true);
-        $defaultRenderer = $defaultRenderer->getClosure();
-        $renderer        = $defaultRenderer();
-        $this->assertInstanceOf(SixDigits::class, $renderer);
-    }
-
-    /**
-     * Test the randomSecret() method.
-     * @throws \Equit\Totp\Exceptions\SecureRandomDataUnavailableException if Totp::randomSecret() is unable to provide
-     * cryptographically-secure random data.
-     */
-    public function testRandomSecret(): void
-    {
-        // NOTE can't test case where randomSecret() throws because we can't force random_bytes() to throw
-        for ($idx = 0; $idx < 100; ++$idx) {
-            $this->assertGreaterThanOrEqual(64, strlen(Factory::randomSecret()->raw()), "randomSecret() did not return a sufficiently large byte sequence.");
-        }
+        self::assertEquals($expectedVerification, $totp->verifyAt(password: $userPassword, time: $currentTime, window: $window), "Verification not as expected.");
     }
 }
