@@ -21,7 +21,8 @@
   },
   "require-dev": {
     "phpunit/phpunit": "^10",
-    "ext-mbstring": "*"
+    "ext-mbstring": "*",
+    "equit/xray": "dev-main"
   },
   "autoload": {
     "psr-4": {
