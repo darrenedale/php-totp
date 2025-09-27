@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -540,18 +541,16 @@ class UrlGeneratorTest extends TestCase
         }
 
         if (isset($totpConfig["renderer"])) {
-            $totp = new Factory(timeStep: $totpConfig["time-step"] ?? TimeStep::DefaultTimeStep, referenceTime: $totpConfig["referenceTime"] ?? 0, hashAlgorithm: $totpConfig["hashAlgorithm"] ?? HashAlgorithm::DefaultAlgorithm);
+            $factory = new Factory(timeStep: new TimeStep($totpConfig["time-step"] ?? TimeStep::DefaultTimeStep), referenceTime: $totpConfig["referenceTime"] ?? 0, hashAlgorithm: new HashAlgorithm($totpConfig["hashAlgorithm"] ?? HashAlgorithm::DefaultAlgorithm));
 
-            $totp = match (true) {
-                is_string($totpConfig["renderer"]) =>
-                    $totp->withRenderer(new $totpConfig["renderer"]()),
-                is_callable($totpConfig["renderer"]) =>
-                    $totp->withRenderer($totpConfig["renderer"]()),
-                $totpConfig["renderer"] instanceof Renderer =>
-                    $totp->withRenderer($totpConfig["renderer"]),
-                default =>
-                    throw new InvalidArgumentException("The renderer provided in the TOTP config is not valid."),
+            $factory = match (true) {
+                is_string($totpConfig["renderer"]) => $factory->withRenderer(new $totpConfig["renderer"]()),
+                is_callable($totpConfig["renderer"]) => $factory->withRenderer($totpConfig["renderer"]()),
+                $totpConfig["renderer"] instanceof Renderer => $factory->withRenderer($totpConfig["renderer"]),
+                default => throw new InvalidArgumentException("The renderer provided in the TOTP config is not valid."),
             };
+
+            $totp = $factory->totp(Secret::fromRaw($totpConfig["secret"]));
         } else {
             $totp = Factory::integer(
                 digits: new Digits($totpConfig["digits"] ?? 6),

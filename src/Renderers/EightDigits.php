@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -35,12 +36,16 @@ final class EightDigits implements IntegerRenderer
 {
     use RendersStandardIntegerPasswords;
 
-    /** @return Digits 8 */
+    /**
+     * @return Digits 8
+     * @noinspection PhpDocMissingThrowsInspection Digits constructor won't throw with 8.
+     */
     public function digits(): Digits
     {
         static $digits = null;
 
         if (null === $digits) {
+            /** @noinspection PhpUnhandledExceptionInspection 8 is a known valid number of digits. */
             $digits = new Digits(8);
         }
 

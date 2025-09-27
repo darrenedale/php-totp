@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -62,7 +63,7 @@ class EquivalentOtpAuthUrl extends Constraint
     /**
      * @param string $referenceUrl The URL that tested URLs are expected to match.
      *
-     * @throws \Equit\Totp\Tests\Framework\Exceptions\InvalidOtpUrlException
+     * @throws \Equit\TotpTests\Framework\Exceptions\InvalidOtpUrlException
      */
     public function __construct(string $referenceUrl)
     {

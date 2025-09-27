@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -774,8 +775,7 @@ class FactoryTest extends TestCase
 
         $renderer = $totp->renderer();
         self::assertInstanceOf(SixDigits::class, $renderer, "The Totp does not have the expected renderer type.");
-        /** @noinspection PhpPossiblePolymorphicInvocationInspection Guaranteed to be an instance of IntegerRenderer */
-        self::assertEquals(6, $renderer->digits()->digits(), "The Totp renderer does not use the expected number of digits.");
+        self::assertEquals(6, $renderer->digits()->quantity(), "The Totp renderer does not use the expected number of digits.");
         self::assertEquals($referenceTime, $totp->referenceTime(), "Reference DateTime in Totp object does not match expected DateTime.");
         self::assertEquals($referenceTimestamp, $totp->referenceTimestamp(), "Reference timestamp in Totp object does not match expected timestamp.");
 
@@ -915,10 +915,9 @@ class FactoryTest extends TestCase
         }
 
         self::assertInstanceOf(EightDigits::class, $totp->renderer(), "The Totp does not have the expected renderer type.");
-        /** @noinspection PhpPossiblePolymorphicInvocationInspection Guaranteed to be an instance of IntegerRenderer */
         $renderer = $totp->renderer();
         self::assertInstanceOf(IntegerRenderer::class, $renderer, "The Totp does not have the expected renderer type.");
-        self::assertEquals(8, $renderer->digits()->digits(), "The Totp renderer does not use the expected number of digits.");
+        self::assertEquals(8, $renderer->digits()->quantity(), "The Totp renderer does not use the expected number of digits.");
         self::assertEquals($referenceTime, $totp->referenceTime(), "Reference DateTime in Totp object does not match expected DateTime.");
         self::assertEquals($referenceTimestamp, $totp->referenceTimestamp(), "Reference timestamp in Totp object does not match expected timestamp.");
 
@@ -1056,7 +1055,7 @@ class FactoryTest extends TestCase
 
         $renderer = $totp->renderer();
         self::assertInstanceOf(Integer::class, $renderer, "The Totp does not have the expected renderer type.");
-        self::assertEquals($digits, $renderer->digits()->digits(), "The Totp renderer does not use the expected number of digits.");
+        self::assertEquals($digits, $renderer->digits()->quantity(), "The Totp renderer does not use the expected number of digits.");
         self::assertEquals($referenceTime, $totp->referenceTime(), "Reference DateTime in Totp object does not match expected DateTime.");
         self::assertEquals($referenceTimestamp, $totp->referenceTimestamp(), "Reference timestamp in Totp object does not match expected timestamp.");
 
@@ -1567,11 +1566,11 @@ class FactoryTest extends TestCase
         return [
             "sixDigits" => [new SixDigits(),],
             "eightDigits" => [new EightDigits(),],
-            "integer6Digits" => [new Integer(6),],
-            "integer7Digits" => [new Integer(7),],
-            "integer8Digits" => [new Integer(8),],
-            "integer9Digits" => [new Integer(9),],
-            "integer10Digits" => [new Integer(10),],
+            "integer6Digits" => [new Integer(new Digits(6)),],
+            "integer7Digits" => [new Integer(new Digits(7)),],
+            "integer8Digits" => [new Integer(new Digits(8)),],
+            "integer9Digits" => [new Integer(new Digits(9)),],
+            "integer10Digits" => [new Integer(new Digits(10)),],
             "anonymousClass" => [new class implements Renderer
             {
                 public function name(): string

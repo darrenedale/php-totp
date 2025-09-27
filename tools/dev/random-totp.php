@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -83,29 +84,29 @@ echo "Current Time   : {$currentTime} " . (new DateTime("@{$currentTime}"))->for
 echo "Counter        : " . $totp->counterAt($currentTime) . " - " . toPhpHexString($counterBytesAt($currentTime)) . "\n";
 echo "HMAC           : " . toPhpHexString($totp->hmacAt($currentTime)) . "\n";
 echo "OTP (6)        : {$totp->passwordAt($currentTime)}\n";
-$totp->renderer()->withDigits(7);
+$totp->renderer()->withDigits(new Digits(7));
 echo "OTP (7)        : {$totp->passwordAt($currentTime)}\n";
-$totp->renderer()->withDigits(8);
+$totp->renderer()->withDigits(new Digits(8));
 echo "OTP (8)        : {$totp->passwordAt($currentTime)}\n\n";
 
 // OTP details at -1 time step
 $currentTime -= $totp->timeStep()->seconds();
 echo "Counter - 1     : " . $totp->counterAt($currentTime) . " - " . toPhpHexString($counterBytesAt($currentTime)) . "\n";
 echo "HMAC - 1        : " . toPhpHexString($totp->hmacAt($currentTime)) . "\n";
-$totp->renderer()->withDigits(6);
+$totp->renderer()->withDigits(new Digits(6));
 echo "OTP - 1 (6)     : {$totp->passwordAt($currentTime)}\n";
-$totp->renderer()->withDigits(7);
+$totp->renderer()->withDigits(new Digits(7));
 echo "OTP - 1 (7)     : {$totp->passwordAt($currentTime)}\n";
-$totp->renderer()->withDigits(8);
+$totp->renderer()->withDigits(new Digits(8));
 echo "OTP - 1 (8)     : {$totp->passwordAt($currentTime)}\n\n";
 
 // OTP details at +1 time step
 $currentTime += (2 * $totp->timeStep()->seconds());
 echo "Counter + 1     : " . $totp->counterAt($currentTime) . " - " . toPhpHexString($counterBytesAt($currentTime)) . "\n";
 echo "HMAC + 1        : " . toPhpHexString($totp->hmacAt($currentTime)) . "\n";
-$totp->renderer()->withDigits(6);
+$totp->renderer()->withDigits(new Digits(6));
 echo "OTP + 1 (6)     : {$totp->passwordAt($currentTime)}\n";
-$totp->renderer()->withDigits(7);
+$totp->renderer()->withDigits(new Digits(7));
 echo "OTP + 1 (7)     : {$totp->passwordAt($currentTime)}\n";
-$totp->renderer()->withDigits(8);
+$totp->renderer()->withDigits(new Digits(8));
 echo "OTP + 1 (8)     : {$totp->passwordAt($currentTime)}\n";

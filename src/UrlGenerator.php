@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -75,7 +76,7 @@ use Equit\Totp\Types\TimeStep;
  * @method static self withoutAlgorithm() Initialise a generator that never includes the algorithm parameter in URLs it
  * generates.
  */
-class UrlGenerator
+final class UrlGenerator
 {
     /**
      * The protocol for URLs.
@@ -224,7 +225,7 @@ class UrlGenerator
      *
      * @return bool|null Whether the period will be included.
      */
-    public function includesPeriod(): bool | null
+    public function includesPeriod(): ?bool
     {
         return $this->m_includePeriod;
     }
@@ -237,7 +238,7 @@ class UrlGenerator
      *
      * @param bool|null $include Whether to include the period.
      */
-    public function setIncludePeriod(bool | null $include): void
+    public function setIncludePeriod(?bool $include): void
     {
         $this->m_includePeriod = $include;
     }
@@ -249,7 +250,7 @@ class UrlGenerator
      *
      * @return bool|null Whether the digits will be included.
      */
-    public function includesDigits(): bool | null
+    public function includesDigits(): ?bool
     {
         return $this->m_includeDigits;
     }
@@ -265,7 +266,7 @@ class UrlGenerator
      *
      * @param bool|null $include Whether to include the number of digits.
      */
-    public function setIncludeDigits(bool | null $include): void
+    public function setIncludeDigits(?bool $include): void
     {
         $this->m_includeDigits = $include;
     }
@@ -277,7 +278,7 @@ class UrlGenerator
      *
      * @return bool|null Whether the algorithm will be included.
      */
-    public function includesAlgorithm(): bool | null
+    public function includesAlgorithm(): ?bool
     {
         return $this->m_includeAlgorithm;
     }
@@ -290,7 +291,7 @@ class UrlGenerator
      *
      * @param bool|null $include Whether to include the algorithm.
      */
-    public function setIncludeAlgorithm(bool | null $include): void
+    public function setIncludeAlgorithm(?bool $include): void
     {
         $this->m_includeAlgorithm = $include;
     }
@@ -334,7 +335,7 @@ class UrlGenerator
             $url .= "&issuer=" . urlencode($this->issuer());
         }
 
-        if (true === $this->includesDigits() || (is_null($this->includesDigits()) && $totp->renderer() instanceof IntegerRenderer && Integer::DefaultDigits !== $totp->renderer()->digits())) {
+        if (true === $this->includesDigits() || (is_null($this->includesDigits()) && $totp->renderer() instanceof IntegerRenderer && Integer::DefaultDigits !== $totp->renderer()->digits()->digits())) {
             $url .= "&digits={$totp->renderer()->digits()}";
         }
 
@@ -350,7 +351,7 @@ class UrlGenerator
     }
 
     /**
-     * @method static self for (string $user)
+     * @method self for (string $user)
      * Fluently configure an UrlGenerator for a specified user.
      *
      * This method can be invoked both statically and on an UrlGenerator instance. If invoked on an instance the return
@@ -362,7 +363,7 @@ class UrlGenerator
      */
 
     /**
-     * @method static self from(string $issuer)
+     * @method self from(string $issuer)
      * Fluently configure an UrlGenerator for a specified issuer.
      *
      * This method can be invoked both statically and on an UrlGenerator instance. If invoked on an instance the return
@@ -374,7 +375,7 @@ class UrlGenerator
      */
 
     /**
-     * @method static self withPeriod()
+     * @method self withPeriod()
      * Fluently configure an UrlGenerator to include the period in the generated URL.
      *
      * This method can be invoked both statically and on an UrlGenerator instance. If invoked on an instance the return
@@ -384,7 +385,7 @@ class UrlGenerator
      */
 
     /**
-     * @method static self withoutPeriod()
+     * @method self withoutPeriod()
      * Fluently configure an UrlGenerator to exclude the period in the generated URL.
      *
      * This method can be invoked both statically and on an UrlGenerator instance. If invoked on an instance the return
@@ -394,7 +395,7 @@ class UrlGenerator
      */
 
     /**
-     * @method static self withDigits()
+     * @method self withDigits()
      * Fluently configure an UrlGenerator to include the password digit count in the generated URL.
      *
      * In order to include the digits, any Totp instance provided to the urlFor() method MUST use an IntegerRenderer or
@@ -407,7 +408,7 @@ class UrlGenerator
      */
 
     /**
-     * @method static self withoutDigits()
+     * @method self withoutDigits()
      * Fluently configure an UrlGenerator to exclude the password digit count in the generated URL.
      *
      * This method can be invoked both statically and on an UrlGenerator instance. If invoked on an instance the return
@@ -417,7 +418,7 @@ class UrlGenerator
      */
 
     /**
-     * @method static self withAlgorithm()
+     * @method self withAlgorithm()
      * Fluently configure an UrlGenerator to include the hash algorithm name in the generated URL.
      *
      * This method can be invoked both statically and on an UrlGenerator instance. If invoked on an instance the return
@@ -427,7 +428,7 @@ class UrlGenerator
      */
 
     /**
-     * @method static self withoutAlgorithm()
+     * @method self withoutAlgorithm()
      * Fluently configure an UrlGenerator to exclude the hash algorithm name in the generated URL.
      *
      * This method can be invoked both statically and on an UrlGenerator instance. If invoked on an instance the return
@@ -439,9 +440,9 @@ class UrlGenerator
     /**
      * Magic method to handle calls to methods in the fluent interface.
      *
-     * The UrlGenerator class provides a fluent interface that can be used statically. This magic method is required to
-     * enable URL generation to be done statically. It implements all the fluent methods for the class. The methods
-     * are documented above.
+     * The UrlGenerator class provides a fluent interface that can be initiated statically. This magic method is
+     * required to enable the setup methods to be called both statically and dynamically without generating PHP errors.
+     * The methods are documented above.
      *
      * @param string $method The method called.
      * @param array $args The arguments provided in the call.
@@ -503,17 +504,9 @@ class UrlGenerator
     /**
      * Magic method to enable the static fluent interface.
      *
-     * Putative example using the fluent interface (bulk provision some users):
-     *
-     *     $generator = UrlGenerator::from($service)->withDigits();
-     *
-     *     foreach ($users as $user) {
-     *         $totp = Totp::eightDigitTotp();
-     *         $user->setTotpSecret(encrypt($totp->base32Secret()));
-     *         $user->sendTotpNotification($generator->for($user->userName())->urlFor($totp));
-     *     }
-     *
-     * Any subclasses you create must have a default constructor for the static fluent interface to work.
+     * The UrlGenerator class provides a fluent interface that can be initiated statically. This magic method is
+     * required to enable the setup methods to be called both statically and dynamically without generating PHP errors.
+     * The methods are documented above.
      *
      * @param string $method The method called.
      * @param array $args The arguments provided in the call.

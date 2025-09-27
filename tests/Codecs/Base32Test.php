@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -23,9 +24,10 @@ namespace Equit\TotpTests\Codecs;
 use Equit\Totp\Codecs\Base32;
 use Equit\Totp\Exceptions\InvalidBase32DataException;
 use Equit\TotpTests\Framework\TestCase;
+use Equit\XRay\XRay;
 use Error;
 use Generator;
-use ReflectionProperty;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Test case for the Base32 codec.
@@ -51,11 +53,10 @@ class Base32Test extends TestCase
 	/**
 	 * Test the Base32 codec constructor.
 	 *
-	 * @dataProvider dataForTestConstructor
-	 *
 	 * @param mixed $plainData
 	 * @param class-string|null $exceptionClass
 	 */
+    #[DataProvider("dataForTestConstructor")]
 	public function testConstructor(mixed $plainData, ?string $exceptionClass = null)
 	{
         if (isset($exceptionClass)) {
@@ -99,28 +100,18 @@ class Base32Test extends TestCase
     /**
      * Test the Totp destructor.
      *
-     * @dataProvider dataForTestDestructor
-     *
      * @param string $rawData The raw data to use to initialise the Base32 codec.
-     *
-     * @noinspection PhpDocMissingThrowsInspection ReflectionProperty won't throw because we know the properties exist.
      */
+    #[DataProvider("dataForTestDestructor")]
     public function testDestructor(string $rawData): void
     {
-        $base32     = new Base32($rawData);
+        $base32 = new Base32($rawData);
         $base32Data = $base32->encoded();
 
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $rawProperty = new ReflectionProperty($base32, "rawData");
-        $rawProperty->setAccessible(true);
-
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $encodedProperty = new ReflectionProperty($base32, "encodedData");
-        $encodedProperty->setAccessible(true);
-
         $base32->__destruct();
-        $this->assertAllCharactersHaveChanged($rawData, $rawProperty->getValue($base32), "The raw data was not overwritten with random data.");
-        $this->assertAllCharactersHaveChanged($base32Data, $encodedProperty->getValue($base32), "The base32 data was not overwritten with random data.");
+        $xray = new XRay($base32);
+        $this->assertAllCharactersHaveChanged($rawData, $xray->rawData, "The raw data was not overwritten with random data.");
+        $this->assertAllCharactersHaveChanged($base32Data, $xray->encodedData, "The base32 data was not overwritten with random data.");
     }
 
     /**
@@ -136,11 +127,10 @@ class Base32Test extends TestCase
 	/**
 	 * Test setting plain data for a Base32 codec.
 	 *
-	 * @dataProvider dataForTestSetRaw
-	 *
 	 * @param mixed $plainData
 	 * @param string|null $exceptionClass
 	 */
+    #[DataProvider("dataForTestSetRaw")]
 	public function testSetRaw(mixed $plainData, ?string $exceptionClass = null)
 	{
 		if (isset($exceptionClass)) {
@@ -188,11 +178,10 @@ class Base32Test extends TestCase
 	/**
 	 * Test setting encoded data for a Base32 codec.
 	 *
-	 * @dataProvider dataForTestSetEncoded
-	 *
 	 * @param mixed $encodedData
 	 * @param string|null $exceptionClass
 	 */
+    #[DataProvider("dataForTestSetEncoded")]
 	public function testSetEncoded(mixed $encodedData, ?string $exceptionClass = null)
 	{
 		$base32Codec = new Base32();
@@ -233,11 +222,10 @@ class Base32Test extends TestCase
 	 * This test receives valid string data and expects the codec to produce the correct encoded data. For a test of the
 	 * codec's response to non-string data, see testSetPlain().
 	 *
-	 * @dataProvider dataForTestEncoding
-	 *
 	 * @param string $plainData
 	 * @param string $expectedEncodedData
 	 */
+    #[DataProvider("dataForTestEncoding")]
 	public function testEncoding(string $plainData, string $expectedEncodedData)
 	{
 		$base32Codec = new Base32($plainData);
@@ -256,6 +244,7 @@ class Base32Test extends TestCase
 	{
 		return [
 			"typicalAsciiData" => ["ORSXG5BNMRQXIYJNORXS2ZLOMNXWIZI=", "test-data-to-encode",],
+            "typicalAsciiDataWithoutPadding" => ["ORSXG5BNMRQXIYJNORXS2ZLOMNXWIZI", "test-data-to-encode",],
 			"typicalMixedData" => ["ORSXG5BN74WW22LYMVSC3ABNMRQXIYJNAAWXI3ZNR4WWK3TDN5SGKCQK", "test-\xff-mixed-\x80-data-\x00-to-\x8f-encode\n\n",],
 			"typicalBinaryData" => ["777P37H37L4PO===", "\xff\xfe\xfd\xfc\xfb\xfa\xf8\xf7",],
 			"typicalPNGImageData" => [
@@ -272,12 +261,11 @@ class Base32Test extends TestCase
 	 * This test receives valid base32-encoded data and the codec is expected to produce the correct decoded data. For
 	 * a test of the codec's ability to identify invalid encoded data, see testSetEncoded().
 	 *
-	 * @dataProvider dataForTestDecoding
-	 *
 	 * @param string $encodedData
 	 * @param string|null $expectedPlainData
 	 * @param class-string|null $exceptionClass
 	 */
+    #[DataProvider("dataForTestDecoding")]
 	public function testDecoding(string $encodedData, string | null $expectedPlainData, string | null $exceptionClass = null)
 	{
 		$base32Codec = new Base32();
@@ -292,4 +280,21 @@ class Base32Test extends TestCase
 		$actual = Base32::decode($encodedData);
 		$this->assertSame($expectedPlainData, $actual, "static Base32::decode() produced unexpected output: expected = {$expectedPlainData}; actual = {$actual}");
 	}
+
+    /** Provides test data for testSetEncoded1. */
+    public static function dataForTestSetEncoded1(): iterable
+    {
+        yield "padded-with-2" => ["\x00\x00\x00\x00\x00\x00=="];
+        yield "padded-with-5" => ["\x00\x00\x00====="];
+        yield "padded-with-7" => ["\x00======="];
+    }
+
+    /** Ensure incorrect padding throws. */
+    #[DataProvider("dataForTestSetEncoded1")]
+    public function testSetEncoded1(string $encoded): void
+    {
+        $this->expectException(InvalidBase32DataException::class);
+        $this->expectExceptionMessage("Base32 data must be padded with either 0, 1, 3, 4 or 6 '=' characters.");
+        (new Base32())->setEncoded($encoded);
+    }
 }

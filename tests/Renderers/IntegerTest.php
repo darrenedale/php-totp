@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -68,7 +69,7 @@ class IntegerTest extends TestCase
 		$renderer = new Integer(new Digits($digits));
 
 		if (!isset($exceptionClass)) {
-			$this->assertSame($digits, $renderer->digits()->digits());
+            $this->assertSame($digits, $renderer->digits()->quantity());
 		}
 	}
 
@@ -220,9 +221,6 @@ class IntegerTest extends TestCase
 			[6, "\x19\x0f\x55\x70\x5e\x87\x5d\xdb\x67\xaa\x2a\x2d\x9c\x75\x05\x7c\x29\x85\x87\x99", "407260",],
 			[7, "\x19\x0f\x55\x70\x5e\x87\x5d\xdb\x67\xaa\x2a\x2d\x9c\x75\x05\x7c\x29\x85\x87\x99", "7407260",],
 			[8, "\x19\x0f\x55\x70\x5e\x87\x5d\xdb\x67\xaa\x2a\x2d\x9c\x75\x05\x7c\x29\x85\x87\x99", "07407260",],
-//			[6, "", "",],
-//			[7, "", "",],
-//			[8, "", "",],
 		];
 	}
 
@@ -243,4 +241,24 @@ class IntegerTest extends TestCase
 		$this->assertStringContainsOnly("0123456789", $actualPassword, "Renderer produced a non-decimal password.");
 		$this->assertSame($expectedPassword, $actualPassword, "Renderer produced an incorrect password.");
 	}
+
+    /** Ensure we can set the number of digits. */
+    public function testWithDigits1(): void
+    {
+        $renderer = new Integer(new Digits(6));
+        self::assertSame(6, $renderer->digits()->quantity(), "Integer renderer initialised with incorrect number of digits");
+        $renderer = $renderer->withDigits(new Digits(8));
+        self::assertSame(8, $renderer->digits()->quantity(), "Setting the number of digits to 8 produced a renderer with {$renderer->digits()->quantity()} digits");
+    }
+
+    /** Ensure setting the number of digits is immutably implemented. */
+    public function testWithDigits2(): void
+    {
+        $renderer = new Integer(new Digits(8));
+        self::assertSame(8, $renderer->digits()->quantity(), "Integer renderer initialised with incorrect number of digits");
+        $actual = $renderer->withDigits(new Digits(6));
+        self::assertNotSame($renderer, $actual, "Setting the number of digits returned the same renderer, not a clone");
+        self::assertSame(8, $renderer->digits()->quantity(), "Setting the number of digits modified the original renderer");
+        self::assertSame(6, $actual->digits()->quantity(), "Setting the number of digits to 6 produced a renderer with {$renderer->digits()->quantity()} digits");
+    }
 }

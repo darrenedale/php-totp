@@ -13,10 +13,10 @@
          executionOrder="random"
          cacheDirectory=".phpunit.cache">
     <testsuites>
-        <testsuite name="Equit Totp Full Test Suite">
+        <testsuite name="full-suite">
             <directory>./</directory>
         </testsuite>
-        <testsuite name="Equit Totp Renderers">
+        <testsuite name="renderers">
             <directory>./Renderers/</directory>
         </testsuite>
     </testsuites>

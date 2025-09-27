@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -24,15 +25,18 @@ use Equit\Totp\Exceptions\InvalidTimeStepException;
 use Equit\Totp\Totp;
 use Equit\Totp\Types\Secret;
 
-/** Contract for factories that produce TOTP generators. */
+/**
+ * Contract for factories that produce TOTP calculators.
+ *
+ * The parameters of the calculators the factory generates are determined by the factory. The built-in implementation
+ * produces calculators set up according to parameters that can be configured on the factory.
+ */
 interface Factory
 {
     /**
-     * Produce a TOTP calculator for a given set of parameters.
+     * Produce a TOTP calculator.
      *
      * @param Secret $secret The secret to use to generate passwords.
-     * @return Totp
-     * @throws InvalidTimeStepException
      */
     public function totp(Secret $secret): Totp;
 }

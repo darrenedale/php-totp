@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -54,7 +55,7 @@ trait RendersStandardIntegerPasswords
      */
     public function render(string $hmac): string
     {
-        $password = self::extractIntegerFromHmac($hmac) % (10 ** $this->digits()->digits());
-        return str_pad("{$password}", $this->digits()->digits(), "0", STR_PAD_LEFT);
+        $password = self::extractIntegerFromHmac($hmac) % (10 ** $this->digits()->quantity());
+        return str_pad("{$password}", $this->digits()->quantity(), "0", STR_PAD_LEFT);
     }
 }

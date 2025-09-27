@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -23,7 +24,7 @@ namespace Equit\Totp\Contracts;
 /** Contract for renderers that turn TOTP HMACs into the actual one-time passwords required. */
 interface Renderer
 {
-    /** The name of the rendering scheme used to turn the TOTP HMAC into a passcode. */
+    /** The name of the rendering scheme used to turn the TOTP HMAC into a password. */
     public function name(): string;
 
     /**

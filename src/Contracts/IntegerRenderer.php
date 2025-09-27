@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -22,13 +23,9 @@ namespace Equit\Totp\Contracts;
 
 use Equit\Totp\Types\Digits;
 
-/**
- * Interface for renderers that produce a fixed-width integer one-time password.
- */
+/** Interface for renderers that produce a fixed-width integer one-time password. */
 interface IntegerRenderer extends Renderer
 {
-    /**
-     * @return Digits The number of digits to render.
-     */
+    /** @return Digits The number of digits to render. */
     public function digits(): Digits;
 }

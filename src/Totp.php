@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -82,17 +83,15 @@ class Totp implements TotpContract
     private Renderer $renderer;
 
     /**
-     * Initialise a new TOTP.
+     * Initialise a new TOTP calculator.
      *
      * If the reference time is specified as an int, it is interpreted as the number of seconds since the Unix epoch.
-     * The default hashing algorithm is SHA1.
      *
      * @param Secret $secret The TOTP secret.
      * @param Renderer $renderer The renderer that produces one-time passwords from HMACs.
-     * @param TimeStep $timeStep The update time step for the passwords. Defaults to 30 seconds.
-     * @param int|DateTime $referenceTime The reference time from which time steps are measured. Defaults to 0.
-     * @param HashAlgorithm $hashAlgorithm The hash algorithm to use when generating OTPs. Must be one of the algorithm class
-     * constants. Defaults to Sha1Algorithm.
+     * @param TimeStep $timeStep The update time step for the passwords.
+     * @param int|DateTime $referenceTime The reference time from which time steps are measured.
+     * @param HashAlgorithm $hashAlgorithm The hash algorithm to use when generating OTPs.
      */
     public function __construct(Secret $secret, Renderer $renderer, TimeStep $timeStep, int|DateTime $referenceTime, HashAlgorithm $hashAlgorithm)
     {
@@ -104,7 +103,19 @@ class Totp implements TotpContract
     }
 
     /**
-     * Fetch the hashing algorithm to use to generate HMACs.
+     * Helper to get the current time.
+     *
+     * @return DateTime The current time.
+     * @noinspection PhpDocMissingThrowsInspection the DateTime constructor does not throw with "now".
+     */
+    protected static final function currentTime(): DateTime
+    {
+        /** @noinspection PhpUnhandledExceptionInspection the DateTime constructor does not throw with "now". */
+        return new DateTime("now", new DateTimeZone("UTC"));
+    }
+
+    /**
+     * Fetch the hashing algorithm used to generate HMACs.
      *
      * @return HashAlgorithm The hashing algorithm.
      */
@@ -126,8 +137,10 @@ class Totp implements TotpContract
     }
 
     /**
-     * @api
+     * Fetch the base32 encoding of the secret.
+     *
      * @return string The secret, base32 encoded so that it's printable.
+     * @api
      */
     public function base32Secret(): string
     {
@@ -135,8 +148,10 @@ class Totp implements TotpContract
     }
 
     /**
-     * @api
+     * Fetch the base32 encoding of the secret.
+     *
      * @return string The secret, base64 encoded so that it's printable.
+     * @api
      */
     public function base64Secret(): string
     {
@@ -155,7 +170,7 @@ class Totp implements TotpContract
 
 
     /**
-     * Fetch the size of the time step at which the one-time password changes, in seconds.
+     * Fetch the size of the time step at which the one-time password changes.
      *
      * @return TimeStep The time step.
      */
@@ -165,11 +180,9 @@ class Totp implements TotpContract
     }
 
     /**
-     * Fetch the reference time from which time steps are measured.
+     * Fetch the reference time (T0) from which time steps are measured.
      *
-     * The reference time is returned as the number of seconds since the Unix epoch.
-     *
-     * @return int The reference time number of seconds.
+     * @return int The reference time as a Unix timestamp.
      */
     public function referenceTimestamp(): int
     {
@@ -246,7 +259,6 @@ class Totp implements TotpContract
     /**
      * Fetch the HOTP counter bytes at a specified time.
      *
-     * @api
      * @param DateTime|int $time The time at which the counter is sought.
      *
      * @return string The 64 bits of the counter, in BIG ENDIAN format.
@@ -404,17 +416,5 @@ class Totp implements TotpContract
     public final function verify(string $password, int $window = 0): bool
     {
         return $this->verifyAt($password, self::currentTime(), $window);
-    }
-
-    /**
-     * Helper to get the current time.
-     *
-     * @return DateTime The current time.
-     * @noinspection PhpDocMissingThrowsInspection the DateTime constructor does not throw with "now".
-     */
-    protected static final function currentTime(): DateTime
-    {
-        /** @noinspection PhpUnhandledExceptionInspection the DateTime constructor does not throw with "now". */
-        return new DateTime("now", new DateTimeZone("UTC"));
     }
 }

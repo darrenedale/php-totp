@@ -37,7 +37,7 @@ class DigitsTest extends TestCase
     public function testConstructor1(int $digits): void
     {
         $instance = new Digits($digits);
-        self::assertSame($digits, $instance->digits());
+        self::assertSame($digits, $instance->quantity());
     }
 
     public static function dataForTestConstructor2(): iterable
@@ -62,7 +62,7 @@ class DigitsTest extends TestCase
     /** Ensure we can read the number of digits. */
     public function testDigits1(): void
     {
-        self::assertSame(8, $this->digits->digits());
+        self::assertSame(8, $this->digits->quantity());
     }
 
     /** Ensure the number of digits is stringified as expected. */

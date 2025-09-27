@@ -32,7 +32,7 @@ final class Digits implements Stringable
     }
 
     /** @return int The number of digits. */
-    public function digits(): int
+    public function quantity(): int
     {
         return $this->digits;
     }

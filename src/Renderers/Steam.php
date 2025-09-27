@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -44,6 +45,13 @@ class Steam implements Renderer
         return "Steam";
     }
 
+    /**
+     * Render the Steam one-time password from a given HMAC.
+     *
+     * @param string $hmac The HMAC to process.
+     *
+     * @return string The characters of the generated password.
+     */
 	public function render(string $hmac): string
 	{
         $passwordValue = self::extractIntegerFromHmac($hmac);

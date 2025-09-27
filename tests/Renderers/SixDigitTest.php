@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -34,7 +35,7 @@ class SixDigitTest extends TestCase
 	public function testConstructor()
 	{
 		$renderer = new SixDigits();
-		$this->assertSame($renderer->digits()->digits(), 6, "SixDigits renderer must return 6 from digits() at all times.");
+        $this->assertSame($renderer->digits()->quantity(), 6, "SixDigits renderer must return 6 from digits() at all times.");
 	}
 
 	/**

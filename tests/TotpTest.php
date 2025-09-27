@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -22,12 +23,8 @@ namespace Equit\TotpTests;
 
 use DateTime;
 use DateTimeZone;
-use Equit\Totp\Contracts\IntegerRenderer;
 use Equit\Totp\Contracts\Renderer;
-use Equit\Totp\Exceptions\InvalidHashAlgorithmException;
-use Equit\Totp\Exceptions\InvalidSecretException;
 use Equit\Totp\Exceptions\InvalidTimeException;
-use Equit\Totp\Exceptions\InvalidTimeStepException;
 use Equit\Totp\Exceptions\InvalidVerificationWindowException;
 use Equit\Totp\Renderers\EightDigits;
 use Equit\Totp\Renderers\Integer;
@@ -43,10 +40,6 @@ use Equit\XRay\XRay;
 use Generator;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
-use ReflectionException;
-use ReflectionMethod;
-use ReflectionProperty;
-use TypeError;
 
 /**
  * Unit test for the Totp class.
@@ -57,9 +50,7 @@ use TypeError;
  */
 class TotpTest extends TestCase
 {
-    /**
-     * Just a random secret to use to initialise a Totp instance for testing.
-     */
+    /** Just a random secret to use to initialise a Totp instance for testing. */
     protected const TestSecret = "hNDl963Ns6a1gp9d5aZ6";
 
     /** Create a default Totp instance, optionally customised according to the arguments. */
@@ -514,13 +505,12 @@ class TotpTest extends TestCase
     /**
      * Test the Totp destructor.
      *
-     * @dataProvider dataForTestDestructor
-     *
      * @param string $secret The secret to use to initialise the Totp object.
      *
      * @noinspection PhpDocMissingThrowsInspection Totp constructor won't throw, secret is guaranteed by the data
      * provider to be valid. ReflectionProperty won't throw because we know the property exists.
      */
+    #[DataProvider("dataForTestDestructor")]
     public function testDestructor(string $secret): void
     {
         /** @noinspection PhpUnhandledExceptionInspection */
@@ -530,133 +520,72 @@ class TotpTest extends TestCase
         self::assertAllCharactersHaveChanged($secret, (new XRay($totp))->secret, "The secret was not overwritten with random data.");
     }
 
-//
-//    /**
-//     * Data provider for testSetBase32Secret().
-//     *
-//     * @return array The test data.
-//     */
-//    public static function dataForTestSetBase32Secret(): array
-//    {
-//        return [
-//            "typicalPlainText" => ["OBQXG43XN5ZGILLQMFZXG53POJSA====", "password-password",],
-//            "typicalBinary" => ["CVYNPLS6RDRTYW2JY6U46JPTD7N2Z645", "\x15\x70\xd7\xae\x5e\x88\xe3\x3c\x5b\x49\xc7\xa9\xcf\x25\xf3\x1f\xdb\xac\xfb\x9d",],
-//            "invalidEmpty" => ["", null, InvalidSecretException::class,],
-//            "invalidTooShort" => ["OBQXG43XN5ZGI===", null, InvalidSecretException::class,],
-//            "invalidWrongTypeNull" => [null, null, TypeError::class,],
-//            "invalidWrongTypeStringable" => [self::createStringable("OBQXG43XN5ZGILLQMFZXG53POJSA===="), null, TypeError::class,],
-//        ];
-//    }
-//
-//    /**
-//     * @dataProvider dataForTestSetBase32Secret
-//     *
-//     * @param mixed $base32 The base32-encoded secret to set.
-//     * @param string|null $raw The raw secret expected.
-//     * @param string|null $exceptionClass The class name of the exception expected to be thrown, if any.
-//     *
-//     * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() should only throw expected test exceptions.
-//     * TotpSecret::fromBase32() shouldn't throw with test data.
-//     */
-//    public function testSetBase32Secret(mixed $base32, string|null $raw, ?string $exceptionClass = null): void
-//    {
-//        if (isset($exceptionClass)) {
-//            $this->expectException($exceptionClass);
-//        }
-//
-//        $totp = self::createFactory();
-//
-//        /** @noinspection PhpUnhandledExceptionInspection setSecret() should only throw expected test exceptions.
-//         * fromBase32() shouldn't throw with test data.
-//         */
-//        $totp->setSecret(Secret::fromBase32($base32));
-//        self::assertSame($base32, $totp->base32Secret());
-//
-//        if (isset($raw)) {
-//            self::assertSame($raw, $totp->secret());
-//        }
-//    }
-//
-//    /**
-//     * Data provider for testSetBase32Secret().
-//     *
-//     * @return array The test data.
-//     */
-//    public static function dataForTestSetBase64Secret(): array
-//    {
-//        return [
-//            "typicalPlainText" => ["cGFzc3dvcmQtcGFzc3dvcmQ=", "password-password",],
-//            "typicalBinary" => ["FXDXrl6I4zxbScepzyXzH9us+50=", "\x15\x70\xd7\xae\x5e\x88\xe3\x3c\x5b\x49\xc7\xa9\xcf\x25\xf3\x1f\xdb\xac\xfb\x9d",],
-//            "invalidEmpty" => ["", null, InvalidSecretException::class,],
-//            "invalidTooShort" => ["cGFzc3dvcmQ=", null, InvalidSecretException::class,],
-//            "invalidWrongTypeNull" => [null, null, TypeError::class,],
-//            "invalidWrongTypeStringable" => [self::createStringable("cGFzc3dvcmQtcGFzc3dvcmQ="), null, TypeError::class,],
-//        ];
-//    }
-//
-//    /**
-//     * @dataProvider dataForTestSetBase64Secret
-//     *
-//     * @param mixed $base64 The base64-encoded secret to set.
-//     * @param string|null $raw The raw secret expected.
-//     * @param string|null $exceptionClass The class name of the exception expected to be thrown, if any.
-//     *
-//     * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() should only throw expected test exceptions.
-//     * TotpSecret::fromBase64() shouldn't throw with test data.
-//     */
-//    public function testSetBase64Secret(mixed $base64, string|null $raw, ?string $exceptionClass = null): void
-//    {
-//        if (isset($exceptionClass)) {
-//            $this->expectException($exceptionClass);
-//        }
-//
-//        $totp = self::createFactory();
-//
-//        /** @noinspection PhpUnhandledExceptionInspection setSecret() should only throw expected test exceptions.
-//         * fromBase64() shouldn't throw with test data.
-//         */
-//        $totp->setSecret(Secret::fromBase64($base64));
-//        self::assertSame($base64, $totp->base64Secret());
-//
-//        if (isset($raw)) {
-//            self::assertSame($raw, $totp->secret());
-//        }
-//    }
-//
-//    /**
-//     * Test data for testBase64Secret().
-//     *
-//     * @return array The test data.
-//     */
-//    public static function dataForTestBase64Secret(): array
-//    {
-//        return [
-//            "typicalPlainText" => ["password-password", "cGFzc3dvcmQtcGFzc3dvcmQ=",],
-//            "typicalBinary" => ["\x15\x70\xd7\xae\x5e\x88\xe3\x3c\x5b\x49\xc7\xa9\xcf\x25\xf3\x1f\xdb\xac\xfb\x9d", "FXDXrl6I4zxbScepzyXzH9us+50=",],
-//            "extremeBinaryZeroes" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",],
-//            "extremeBinaryOnes" => ["\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff", "//////////////////////////8=",],
-//            "extremeLongBinary" => [
-//                "\x4d\x51\xa7\x96\x6f\x8f\xf6\xcb\x19\xb5\x61\x2f\xe8\x77\xa8\x78\x26\xb7\xcc\x92\x09\xa0\xe0\x6c\x1a\x8e\x99\x30\x61\x1c\xfc\x18\xd4\x9e\xae\x78\x0c\xc0\x5e\x73\x0c\xd5\x55\x25\x5b\x39\x2a\xd9\x64\x95\xf5\x36\xa5\xe8\x64\x06\xf0\x73\x58\xfc\xfa\x27\xd5\x15\xe5\xa9\x62\xce\x0c\x04\x1e\xa6\xbd\xbc\xde\x61\xb5\x95\xca\x42\x94\xb5\x1b\x1e\xe3\x8c\xde\x14\xb2\x8a\x00\x10\xd4\x96\xa8\xd0\x33\xf6\x7e\x85\xc4\x3e\x94\x5c\xe2\xe5\x6a\x24\x5a\x5e\x27\x2c\xd0\xed\xb0\x33\xe4\x4e\x1a\xcc",
-//                "TVGnlm+P9ssZtWEv6HeoeCa3zJIJoOBsGo6ZMGEc/BjUnq54DMBecwzVVSVbOSrZZJX1NqXoZAbwc1j8+ifVFeWpYs4MBB6mvbzeYbWVykKUtRse44zeFLKKABDUlqjQM/Z+hcQ+lFzi5WokWl4nLNDtsDPkThrM",
-//            ],
-//        ];
-//    }
-//
-//    /**
-//     * @dataProvider dataForTestBase64Secret
-//     *
-//     * @param string $raw The raw secret.
-//     * @param string $base64 The expected Base64 for the raw secret.
-//     *
-//     * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() shouldn't throw with test data.
-//     */
-//    public function testBase64Secret(string $raw, string $base64): void
-//    {
-//        $totp = self::createFactory();
-//        /** @noinspection PhpUnhandledExceptionInspection setSecret() shouldn't throw with test data. */
-//        $totp->setSecret($raw);
-//        self::assertSame($base64, $totp->base64Secret(), "The base64 of the raw secret '" . self::hexOf($raw) . "' did not match the expected string.");
-//    }
+
+    /**
+     * Data provider for testSetBase32Secret().
+     *
+     * @return array The test data.
+     */
+    public static function dataForTestBase32Secret(): array
+    {
+        return [
+            "typicalPlainText" => ["password-password", "OBQXG43XN5ZGILLQMFZXG53POJSA====",],
+            "typicalBinary" => ["\x15\x70\xd7\xae\x5e\x88\xe3\x3c\x5b\x49\xc7\xa9\xcf\x25\xf3\x1f\xdb\xac\xfb\x9d", "CVYNPLS6RDRTYW2JY6U46JPTD7N2Z645",],
+            "extremeBinaryZeroes" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",],
+            "extremeBinaryOnes" => ["\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff", "77777777777777777777777777777777",],
+            "extremeLongBinary" => [
+                "\x4d\x51\xa7\x96\x6f\x8f\xf6\xcb\x19\xb5\x61\x2f\xe8\x77\xa8\x78\x26\xb7\xcc\x92\x09\xa0\xe0\x6c\x1a\x8e\x99\x30\x61\x1c\xfc\x18\xd4\x9e\xae\x78\x0c\xc0\x5e\x73\x0c\xd5\x55\x25\x5b\x39\x2a\xd9\x64\x95\xf5\x36\xa5\xe8\x64\x06\xf0\x73\x58\xfc\xfa\x27\xd5\x15\xe5\xa9\x62\xce\x0c\x04\x1e\xa6\xbd\xbc\xde\x61\xb5\x95\xca\x42\x94\xb5\x1b\x1e\xe3\x8c\xde\x14\xb2\x8a\x00\x10\xd4\x96\xa8\xd0\x33\xf6\x7e\x85\xc4\x3e\x94\x5c\xe2\xe5\x6a\x24\x5a\x5e\x27\x2c\xd0\xed\xb0\x33\xe4\x4e\x1a\xcc",
+                "JVI2PFTPR73MWGNVMEX6Q55IPATLPTESBGQOA3A2R2MTAYI47QMNJHVOPAGMAXTTBTKVKJK3HEVNSZEV6U3KL2DEA3YHGWH47IT5KFPFVFRM4DAED2TL3PG6MG2ZLSSCSS2RWHXDRTPBJMUKAAINJFVI2AZ7M7UFYQ7JIXHC4VVCIWS6E4WNB3NQGPSE4GWM",
+            ],
+        ];
+    }
+
+    /**
+     * @param mixed $base32 The base32-encoded secret to set.
+     * @param string|null $raw The raw secret expected.
+     * @param string|null $exceptionClass The class name of the exception expected to be thrown, if any.
+     *
+     * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() should only throw expected test exceptions.
+     * TotpSecret::fromBase32() shouldn't throw with test data.
+     */
+    #[DataProvider("dataForTestBase32Secret")]
+    public function testBase32Secret(string|null $raw, mixed $expectedBase32): void
+    {
+        $totp = self::createTotp($raw);
+        self::assertSame($expectedBase32, $totp->base32Secret(), "The base32 of the raw secret '" . self::hexOf($raw) . "' did not match the expected string.");
+    }
+
+    /**
+     * Test data for testBase64Secret().
+     *
+     * @return array The test data.
+     */
+    public static function dataForTestBase64Secret(): array
+    {
+        return [
+            "typicalPlainText" => ["password-password", "cGFzc3dvcmQtcGFzc3dvcmQ=",],
+            "typicalBinary" => ["\x15\x70\xd7\xae\x5e\x88\xe3\x3c\x5b\x49\xc7\xa9\xcf\x25\xf3\x1f\xdb\xac\xfb\x9d", "FXDXrl6I4zxbScepzyXzH9us+50=",],
+            "extremeBinaryZeroes" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", "AAAAAAAAAAAAAAAAAAAAAAAAAAA=",],
+            "extremeBinaryOnes" => ["\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff", "//////////////////////////8=",],
+            "extremeLongBinary" => [
+                "\x4d\x51\xa7\x96\x6f\x8f\xf6\xcb\x19\xb5\x61\x2f\xe8\x77\xa8\x78\x26\xb7\xcc\x92\x09\xa0\xe0\x6c\x1a\x8e\x99\x30\x61\x1c\xfc\x18\xd4\x9e\xae\x78\x0c\xc0\x5e\x73\x0c\xd5\x55\x25\x5b\x39\x2a\xd9\x64\x95\xf5\x36\xa5\xe8\x64\x06\xf0\x73\x58\xfc\xfa\x27\xd5\x15\xe5\xa9\x62\xce\x0c\x04\x1e\xa6\xbd\xbc\xde\x61\xb5\x95\xca\x42\x94\xb5\x1b\x1e\xe3\x8c\xde\x14\xb2\x8a\x00\x10\xd4\x96\xa8\xd0\x33\xf6\x7e\x85\xc4\x3e\x94\x5c\xe2\xe5\x6a\x24\x5a\x5e\x27\x2c\xd0\xed\xb0\x33\xe4\x4e\x1a\xcc",
+                "TVGnlm+P9ssZtWEv6HeoeCa3zJIJoOBsGo6ZMGEc/BjUnq54DMBecwzVVSVbOSrZZJX1NqXoZAbwc1j8+ifVFeWpYs4MBB6mvbzeYbWVykKUtRse44zeFLKKABDUlqjQM/Z+hcQ+lFzi5WokWl4nLNDtsDPkThrM",
+            ],
+        ];
+    }
+
+    /**
+     * @param string $raw The raw secret.
+     * @param string $base64 The expected Base64 for the raw secret.
+     *
+     * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() shouldn't throw with test data.
+     */
+    #[DataProvider("dataForTestBase64Secret")]
+    public function testBase64Secret(string $raw, string $base64): void
+    {
+        $totp = self::createTotp($raw);
+        self::assertSame($base64, $totp->base64Secret(), "The base64 of the raw secret '" . self::hexOf($raw) . "' did not match the expected string.");
+    }
 
     /**
      * Data provider for testHashAlgorithm().
@@ -677,12 +606,11 @@ class TotpTest extends TestCase
      *
      * Note that each run of this test asserts that the default algorithm is SHA1.
      *
-     * @dataProvider dataForTestHashAlgorithm
-     *
      * @param string $algorithm The algorithm to test with.
      *
      * @noinspection PhpDocMissingThrowsInspection Totp::setHashAlgorithm() shouldn't throw with test data.
      */
+    #[DataProvider("dataForTestHashAlgorithm")]
     public function testHashAlgorithm(string $algorithm): void
     {
         $totp = self::createTotp(hashAlgorithm: $algorithm);
@@ -728,11 +656,10 @@ class TotpTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestReferenceTimestamp
-     *
      * @param int|\DateTime $time The time to set in the Totp as the reference.
      * @param int|null $expectedTimestamp What referenceTimestamp() is expected to return.
      */
+    #[DataProvider("dataForTestReferenceTimestamp")]
     public function testReferenceTimestamp(int|DateTime $time, ?int $expectedTimestamp = null): void
     {
         if (!isset($expectedTimestamp)) {
@@ -788,11 +715,11 @@ class TotpTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestReferenceTime
-     *
      * @param int|\DateTime $time The time to set in the Totp as the reference.
      * @param DateTime|null $expectedDateTime What referenceTime() is expected to return.
      */
+    #[DataProvider("dataForTestReferenceTime")]
+
     public function testReferenceTime(int|DateTime $time, ?DateTime $expectedDateTime = null): void
     {
         if (!isset($expectedDateTime)) {
@@ -823,12 +750,12 @@ class TotpTest extends TestCase
     /**
      * Test the timeStep() method.
      *
-     * @dataProvider dataForTestTimeStep
-     *
      * @param int $timeStep The timeStep to test with.
      *
      * @noinspection PhpDocMissingThrowsInspection Totp::setTimeStep() shouldn't throw with test data.
      */
+    #[DataProvider("dataForTestTimeStep")]
+
     public function testTimeStep(int $timeStep): void
     {
         $totp = self::createTotp(timeStep: $timeStep);
@@ -850,12 +777,12 @@ class TotpTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestSecret
-     *
      * @param string $secret
      *
      * @noinspection PhpDocMissingThrowsInspection setSecret() shouldn't throw with test data.
      */
+    #[DataProvider("dataForTestSecret")]
+
     public function testSecret(string $secret): void
     {
         $totp = self::createTotp($secret);
@@ -896,10 +823,10 @@ class TotpTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestRenderer
-     *
      * @param \Equit\Totp\Contracts\Renderer $renderer
      */
+    #[DataProvider("dataForTestRenderer")]
+
     public function testRenderer(Renderer $renderer): void
     {
         $totp = self::createTotp(renderer: $renderer);
@@ -943,8 +870,6 @@ class TotpTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestCounterAt
-     *
      * @param int|\DateTime $currentTime The time at which to test the counter.
      * @param int $expectedCounter The expected value for the counter.
      * @param int|\DateTime|null $referenceTime The reference time for the test TOTP. Default is null: the default for
@@ -956,6 +881,8 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp::setTimeStep() should not throw with test data.
      * Totp::counterAt() should only throw expected test exceptions.
      */
+    #[DataProvider("dataForTestCounterAt")]
+
     public function testCounterAt(int|DateTime $currentTime, int $expectedCounter, int|DateTime|null $referenceTime = null, ?int $timeStep = null, ?string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
@@ -989,8 +916,6 @@ class TotpTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestCounter
-     *
      * @param string|null $secret The TOTP secret. If null, a random secret will be chosen.
      * @param string $algorithm The hash algorithm to use. Defaults to Totp::Sha1Algorithm.
      * @param int|\DateTime $referenceTime The reference time for the TOTP. Defaults to 0, the Unix epoch.
@@ -998,6 +923,8 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp constructor, Totp::counter() and Totp::counterAt() should not
      * throw with test data.
      */
+    #[DataProvider("dataForTestCounter")]
+
     public function testCounter(?string $secret = null, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
         // The logic behind this test is this: counter() can't return a pre-known value because it produces a value that
@@ -1056,8 +983,6 @@ class TotpTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestCounterBytesAt
-     *
      * @param int|\DateTime $currentTime The time at which to test the bytes.
      * @param string $expectedBytes The expected bytes for the counter. Must be of length 8.
      * @param int|\DateTime|null $referenceTime The reference time for the test TOTP. Default is null: the default for
@@ -1068,6 +993,8 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp::setTimeStep() should not throw with test data. ReflectionMethod
      * constructor guaranteed not to throw in this case.
      */
+    #[DataProvider("dataForTestCounterBytesAt")]
+
     public function testCounterBytesAt(int|DateTime $currentTime, string $expectedBytes, int|DateTime $referenceTime = null, ?int $timeStep = null): void
     {
         $totp = self::createTotp(
@@ -1099,14 +1026,14 @@ class TotpTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestCounterBytes
-     *
      * @param string|null $secret The TOTP secret. If null, a random secret will be chosen.
      * @param string $algorithm The hash algorithm to use. Defaults to Totp::Sha1Algorithm.
      * @param int|\DateTime $referenceTime The reference time for the TOTP. Defaults to 0, the Unix epoch.
      *
      * @noinspection PhpDocMissingThrowsInspection Totp constructor should not throw with test data.
      */
+    #[DataProvider("dataForTestCounterBytes")]
+
     public function testCounterBytes(string $secret = null, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
         // The logic behind this test is this: counterBytes() can't return a pre-known value because it produces a
@@ -1173,8 +1100,6 @@ class TotpTest extends TestCase
     /**
      * Test for Totp::hmac().
      *
-     * @dataProvider dataForTestHmac
-     *
      * @param string|null $secret The TOTP secret. If null, a random secret will be chosen.
      * @param int $digits The number of digits for the password. Defaults to 6.
      * @param string $algorithm The hash algorithm to use. Defaults to Totp::Sha1Algorithm.
@@ -1183,6 +1108,8 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp constructor, hmac() and hmacAt() should not throw with
      * test data.
      */
+    #[DataProvider("dataForTestHmac")]
+
     public function testHmac(string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
         // The logic behind this test is this: password() can't return a pre-known value because it produces a
@@ -1242,8 +1169,6 @@ class TotpTest extends TestCase
     /**
      * Test for Totp::hmacAt()
      *
-     * @dataProvider dataForTestHmacAt
-     *
      * Tests the HMACs generated as part of the TOTP process.
      *
      * @param string $secret The TOTP secret.
@@ -1256,6 +1181,8 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp::hmacAt() shouldn't throw unless we're expecting a test
      *     exception.
      */
+    #[DataProvider("dataForTestHmacAt")]
+
     public function testHmacAt(string $secret, int|DateTime $referenceTime, int|DateTime $currentTime, string $hmac, ?string $algorithm = HashAlgorithm::Sha1Algorithm, ?string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
@@ -1307,8 +1234,6 @@ class TotpTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestPassword
-     *
      * @param string|null $secret The TOTP secret. If null, a random secret will be chosen.
      * @param int $digits The number of digits for the password. Defaults to 6.
      * @param string $algorithm The hash algorithm to use. Defaults to Totp::Sha1Algorithm.
@@ -1317,6 +1242,8 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp constructor and Integer renderer constructor should not throw
      * with test data. Totp::password() and Totp::passwordAt() should not throw with test data.
      */
+    #[DataProvider("dataForTestPassword")]
+
     public function testPassword(string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
         // The logic behind this test is this: password() can't return a pre-known value because it produces a
@@ -1374,8 +1301,6 @@ class TotpTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestPasswordAt
-     *
      * Tests the generated passwords. The provided password is expected to be 8 digits. It will be tested with Integer
      * renderers of 8, 7 and 6 digits using a substring of the password where appropriate.
      *
@@ -1390,6 +1315,8 @@ class TotpTest extends TestCase
      * constructor and setDigits() won't throw with known valid $digits used here. Totp::passwordAt() should only throw
      * expected test exceptions
      */
+    #[DataProvider("dataForTestPasswordAt")]
+
     public function testPasswordAt(string $secret, int|DateTime $referenceTime, int|DateTime $currentTime, string $password, ?string $algorithm = HashAlgorithm::Sha1Algorithm, ?string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
@@ -1441,8 +1368,6 @@ class TotpTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestVerify
-     *
      * @param string|null $secret The raw bytes of the TOTP secret. If null, a random secret will be chosen.
      * @param int $digits The number of digits for the password. Defaults to 6.
      * @param string $algorithm The hash algorithm to use. Defaults to Totp::Sha1Algorithm.
@@ -1451,6 +1376,8 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp constructor, Integer renderer constructor,
      * Totp::password() and Totp::verify() shouldn't throw with test data.
      */
+    #[DataProvider("dataForTestVerify")]
+
     public function testVerify(string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
         // The logic behind this test is this: verify() can't return a pre-known value because it is dependent on an
@@ -1652,8 +1579,6 @@ class TotpTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestVerifyAt
-     *
      * @param array $totpSpec The values to use to initialise the Totp object.
      * @param int|\DateTime $currentTime The timestamp at which to check verification.
      * @param int $window The verification window, expressed in time steps.
@@ -1664,6 +1589,8 @@ class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp::integer() shouldn't throw with test data. Totp::verifyAt()
      * won't throw unless we're expecting a test exception.
      */
+    #[DataProvider("dataForTestVerifyAt")]
+
     public function testVerifyAt(array $totpSpec, int|DateTime $currentTime, int $window, string $userPassword, bool $expectedVerification, string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {

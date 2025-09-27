@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -20,13 +21,13 @@ declare(strict_types=1);
 
 namespace Equit\Totp\Exceptions;
 
-use Exception;
+use RuntimeException;
 use Throwable;
 
 /**
  * Exception thrown when data that is expected to be base64 encoded is not valid.
  */
-class InvalidBase64DataException extends Exception
+class InvalidBase64DataException extends RuntimeException
 {
     /**
      * @var string The data that was found to be invalid.

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -41,6 +42,9 @@ class Base64 implements Codec
     /** The base64 dictionary. */
     protected const Dictionary = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+    /** @var bool Whether objects employ strict rules when receiving encoded Base64 data. */
+    private static bool $strict = true;
+
     /**
      * @var string|null The raw data.
      *
@@ -69,13 +73,32 @@ class Base64 implements Codec
     }
 
     /**
+     * Set whether Base64 instances are strict about the encoded content when decoding.
+     *
+     * When in strict mode, all encoded Base64 data must be of the correct length and be correctly padded with =
+     * characters.
+     *
+     * @param bool $strict Whether to enable or disable strict mode.
+     */
+    public static function setStrict(bool $strict = true): void
+    {
+        self::$strict = $strict;
+    }
+
+    /** Whether Base64 instances are in strict mode. */
+    public static function isStrict(): bool
+    {
+        return self::$strict;
+    }
+
+    /**
      * Set the raw data.
      *
-     * @param string $rawData The raw data to encode.
+     * @param string $raw The raw data to encode.
      */
-    public function setRaw(string $rawData): void
+    public function setRaw(string $raw): void
     {
-        $this->rawData = $rawData;
+        $this->rawData = $raw;
         $this->encodedData = null;
     }
 
@@ -94,7 +117,7 @@ class Base64 implements Codec
         // false being returned from base64_decode()
         $length = strlen($base64);
 
-        if (0 !== ($length % 4)) {
+        if (self::isStrict() && 0 !== ($length % 4)) {
             throw new InvalidBase64DataException($base64, "Base64 data must be padded to a multiple of 4 bytes.");
         }
 
@@ -133,7 +156,7 @@ class Base64 implements Codec
      */
     public function raw(): string
     {
-        if (!isset($this->rawData)) {
+        if (null === $this->rawData) {
             $this->decodeBase64Data();
         }
 
@@ -149,7 +172,7 @@ class Base64 implements Codec
      */
     public function encoded(): string
     {
-        if (!isset($this->encodedData)) {
+        if (null === $this->encodedData) {
             $this->encodeRawData();
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -23,13 +24,13 @@ namespace Equit\Totp\Contracts;
 use Equit\Totp\Types\HashAlgorithm;
 use Equit\Totp\Types\TimeStep;
 
-/** Contract for TOTP verifiers. */
+/** Contract for TOTP calculators. */
 interface Totp
 {
-    /** @return HashAlgorithm The hash algorithm that is being used when computing the OTP. */
+    /** @return HashAlgorithm The hash algorithm that will be used when calculating the OTP. */
     public function hashAlgorithm(): HashAlgorithm;
 
-    /** @return TimeStep The time step, used when computing the OTP. */
+    /** @return TimeStep The time step that will be used to determine the counter when calculating the OTP. */
     public function timeStep(): TimeStep;
 
     /** @return int The reference unix timestamp (T0 in RFC6238-speak). */

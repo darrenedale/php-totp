@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -35,12 +36,16 @@ class SixDigits implements IntegerRenderer
 {
     use RendersStandardIntegerPasswords;
 
-    /** @return Digits 6 */
+    /**
+     * @return Digits 6
+     * @noinspection PhpDocMissingThrowsInspection Digits constructor won't throw with 6.
+     */
     public function digits(): Digits
     {
         static $digits = null;
 
         if (null === $digits) {
+            /** @noinspection PhpUnhandledExceptionInspection 6 is a known valid number of digits. */
             $digits = new Digits(6);
         }
 

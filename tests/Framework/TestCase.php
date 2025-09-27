@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -162,7 +163,7 @@ class TestCase extends BaseTestCase
      * @param string $actualUrl The URL to test.
      * @param string $message Optional message for use when the assertion fails.
      *
-     * @throws \Equit\Totp\Tests\Framework\Exceptions\InvalidOtpUrlException if the reference URL is found not to be
+     * @throws \Equit\TotpTests\Framework\Exceptions\InvalidOtpUrlException if the reference URL is found not to be
      *     valid.
      */
     public static function assertOtpUrlIsEquivalentTo(string $referenceUrl, string $actualUrl, string $message = ""): void

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2025 Darren Edale
  *
@@ -34,7 +35,7 @@ class EightDigitTest extends TestCase
 	public function testConstructor()
 	{
 		$renderer = new EightDigits();
-		$this->assertSame($renderer->digits()->digits(), 8, "EightDigits renderer must return 8 from digits() at all times.");
+        $this->assertSame($renderer->digits()->quantity(), 8, "EightDigits renderer must return 8 from digits() at all times.");
 	}
 
 	/**
