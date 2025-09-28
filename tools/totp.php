@@ -1,3 +1,4 @@
+#! /usr/bin/env php
 <?php
 
 /*
@@ -513,10 +514,10 @@ EOT;
             echo "Secret         : '" . toPhpHexString($options->secret) . "'\n";
             echo "Secret (base32): '" . Base32::encode($options->secret) . "'\n";
             echo "Secret (base64): '" . base64::encode($options->secret) . "'\n";
-            echo "Reference Time : {$totp->referenceTimestamp()} - {$totp->referenceTime()->format("Y-m-d H:i:s")} UTC\n";
+            echo "Reference Time : {$totp->referenceTimestamp()} [{$totp->referenceTime()->format("Y-m-d H:i:s")} UTC]\n";
             echo "Time step      : {$totp->timeStep()} seconds\n";
             /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with Unix timestamp. */
-            echo "TOTP time      : {$options->totpTime} - " . (new DateTime("@{$options->totpTime}", new DateTimeZone("UTC")))->format("Y-m-d H:i:s") . "\n";
+            echo "TOTP time      : {$options->totpTime} [" . (new DateTime("@{$options->totpTime}", new DateTimeZone("UTC")))->format("Y-m-d H:i:s") . " UTC]\n";
             /** @noinspection PhpUnhandledExceptionInspection We validate above that the time is not before the reference time. */
             echo "Counter        : {$totp->counterAt($options->totpTime)}\n";
             /** @noinspection PhpUnhandledExceptionInspection We validate above that the time is not before the reference time. */
