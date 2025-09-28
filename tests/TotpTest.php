@@ -48,7 +48,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
  * random_bytes() is unable to provide cryptographically-secure data, and we can't mock that scenario as far as I can
  * tell.
  */
-class TotpTest extends TestCase
+final class TotpTest extends TestCase
 {
     /** Just a random secret to use to initialise a Totp instance for testing. */
     protected const TestSecret = "hNDl963Ns6a1gp9d5aZ6";

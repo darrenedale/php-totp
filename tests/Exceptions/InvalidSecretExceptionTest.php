@@ -30,7 +30,7 @@ use TypeError;
 /**
  * Unit test for the InvalidSecretException class.
  */
-class InvalidSecretExceptionTest extends TestCase
+final class InvalidSecretExceptionTest extends TestCase
 {
     /**
      * Test data for InvalidSecretException constructor.

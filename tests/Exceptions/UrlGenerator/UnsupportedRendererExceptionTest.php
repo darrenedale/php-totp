@@ -34,7 +34,7 @@ use TypeError;
 /**
  * Unit test for the UnsupportedRendererException class.
  */
-class UnsupportedRendererExceptionTest extends TestCase
+final class UnsupportedRendererExceptionTest extends TestCase
 {
     /**
      * Create an anonymous unsupported Renderer instance.

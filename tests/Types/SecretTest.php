@@ -26,70 +26,41 @@ use Equit\Totp\Exceptions\InvalidBase64DataException;
 use Equit\Totp\Exceptions\InvalidSecretException;
 use Equit\TotpTests\Framework\TestCase;
 use Equit\Totp\Types\Secret;
+use Equit\XRay\XRay;
 use Generator;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use ReflectionProperty;
 use TypeError;
 
-/** Tests for the Secret class. */
-class SecretTest extends TestCase
+#[CoversClass(Secret::class)]
+final class SecretTest extends TestCase
 {
-    /**
-     * Test data for testDestructor1().
-     *
-     * @return iterable<string[]>
-     */
+    /** Data provider with valid secrets for testDestructor1(). */
     public static function dataForTestDestructor1(): iterable
     {
         yield "typicalAsciiSecret" => ["password-password"];
         yield "nullBytes16Secret" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"];
         yield "nullBytes20Secret" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"];
-
-        // yield 100 random valid secrets
-        for ($idx = 0; $idx < 100; ++$idx) {
-            yield [self::randomValidSecret(),];
-        }
     }
 
-    /**
-     * Test the Secret destructor.
-     *
-     * @dataProvider dataForTestDestructor1
-     *
-     * @param string $secret The raw secret to use to initialise the Secret object.
-     *
-     * @noinspection PhpDocMissingThrowsInspection Secret::fromRaw() shouldn't throw with test data.
-     * ReflectionProperty won't throw because we know the property exists.
-     */
+    /** Ensure the destructor scrubs the secret strings. */
+    #[DataProvider("dataForTestDestructor1")]
     public function testDestructor1(string $secret): void
     {
         /** @noinspection PhpUnhandledExceptionInspection Secret::fromRaw() shouldn't throw with test data. */
         $totpSecret = Secret::fromRaw($secret);
         $base32 = $totpSecret->base32();
         $base64 = $totpSecret->base64();
-
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $rawProperty = new ReflectionProperty($totpSecret, "raw");
-        $rawProperty->setAccessible(true);
-
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $base32Property = new ReflectionProperty($totpSecret, "base32");
-        $base32Property->setAccessible(true);
-
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $base64Property = new ReflectionProperty($totpSecret, "base64");
-        $base64Property->setAccessible(true);
+        $xray = new XRay($totpSecret);
 
         $totpSecret->__destruct();
-        $this->assertAllCharactersHaveChanged($secret, $rawProperty->getValue($totpSecret), "The raw secret was not overwritten with random data.");
-        $this->assertAllCharactersHaveChanged($base32, $base32Property->getValue($totpSecret), "The base32 secret was not overwritten with random data.");
-        $this->assertAllCharactersHaveChanged($base64, $base64Property->getValue($totpSecret), "The base64 secret was not overwritten with random data.");
+        $this->assertAllCharactersHaveChanged($secret, $xray->raw, "The raw secret was not overwritten with random data.");
+        $this->assertAllCharactersHaveChanged($base32, $xray->base32, "The base32 secret was not overwritten with random data.");
+        $this->assertAllCharactersHaveChanged($base64, $xray->base64, "The base64 secret was not overwritten with random data.");
     }
 
-    /**
-     * Test data for testFromRaw1()
-     *
-     * @return iterable The test data.
-     */
+    /** Data provider with valid raw secrets for testFromRaw1(). */
     public static function dataForTestFromRaw1(): iterable
     {
         yield "typicalAscii" => ["password-password",];
@@ -114,39 +85,34 @@ class SecretTest extends TestCase
         yield "extremeNullBinary20" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",];
         yield "extremeNullBinary32" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",];
         yield "extremeNullBinary64" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",];
-        yield "invalidJustTooShortAscii" => ["!fifteen-bytes!", InvalidSecretException::class,];
-        yield "invalidJustTooShortBinary" => ["\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b", InvalidSecretException::class,];
-        yield "invalidJustTooShortNullBinary" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", InvalidSecretException::class,];
-        yield "invalidNull" => [null, TypeError::class];
-        yield "invalidStringable" => [self::createStringable("\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b\x23\x3f\x40\x55\x5a"), TypeError::class];
-        yield "invalidArray" => [["\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b\x23\x3f\x40\x55\x5a",], TypeError::class];
-        yield "invalidInt" => [16, TypeError::class];
-        yield "invalidFloat" => [1234567890123456.789, TypeError::class];
-        yield "invalidTrue" => [true, TypeError::class];
-        yield "invalidFalse" => [false, TypeError::class];
 	}
 
-	/**
-	 * @dataProvider dataForTestFromRaw1
-	 *
-	 * @param mixed $raw
-	 * @param string|null $exceptionClass
-	 */
-	public function testFromRaw1(mixed $raw, string $exceptionClass = null): void
+    /** Ensure we can create Secret instances from valid raw strings. */
+    #[DataProvider("dataForTestFromRaw1")]
+    public function testFromRaw1(mixed $raw): void
 	{
-		if (isset($exceptionClass)) {
-			$this->expectException($exceptionClass);
-		}
-		
 		$secret = Secret::fromRaw($raw);
 		$this->assertEquals($raw, $secret->raw(), "Raw bytes in Secret are not as expected.");
 	}
-	
-	/**
-	 * Test data for testFromBase321()
-	 *
-	 * @return iterable The test data.
-	 */
+
+    /** Data provider with invalid raw secrets for testFromRaw2(). */
+    public static function dataForTestFromRaw2(): iterable
+    {
+        yield "invalidJustTooShortAscii" => ["!fifteen-bytes!",];
+        yield "invalidJustTooShortBinary" => ["\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b",];
+        yield "invalidJustTooShortNullBinary" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",];
+    }
+
+    /** Ensure invalid raw secrets throw the expected exception. */
+    #[DataProvider("dataForTestFromRaw2")]
+    public function testFromRaw2(mixed $raw): void
+    {
+        $this->expectException(InvalidSecretException::class);
+        $this->expectExceptionMessage("Raw secrets for TOTP are required to be 128 bits (16 bytes) or longer");
+        Secret::fromRaw($raw);
+    }
+
+    /** Data provider with base32-encoded valid secrets for testFromBase321(). */
 	public static function dataForTestFromBase321(): iterable
 	{
         yield "typicalAscii" => ["OBQXG43XN5ZGILLQMFZXG53POJSA====", "password-password",];
@@ -158,42 +124,54 @@ class SecretTest extends TestCase
         yield "typicalBinary06" => ["7HXO4WFASDGM7WVBIKNNTURERCMOIJQD3WZ6MGXLEUREUWDTIGJA====", "\xf9\xee\xee\x58\xa0\x90\xcc\xcf\xda\xa1\x42\x9a\xd9\xd2\x24\x88\x98\xe4\x26\x03\xdd\xb3\xe6\x1a\xeb\x25\x22\x4a\x58\x73\x41\x92",];
         yield "typicalBinary07" => ["ROA7PMHVBIVW4FMYCVRNNETT6V42AL67", "\x8b\x81\xf7\xb0\xf5\x0a\x2b\x6e\x15\x98\x15\x62\xd6\x92\x73\xf5\x79\xa0\x2f\xdf",];
         yield "typicalBinary08" => ["7LD2ZAEBHX3TZJ4OZFERPG2SMSEXTYIR", "\xfa\xc7\xac\x80\x81\x3d\xf7\x3c\xa7\x8e\xc9\x49\x17\x9b\x52\x64\x89\x79\xe1\x11",];
-        yield "invalidJustTooShortAscii" => ["EFTGSZTUMVSW4LLCPF2GK4ZB", "!fifteen-bytes!", InvalidSecretException::class,];
-        yield "invalidJustTooShortBinary" => ["CBZEOM3Q2FNNPLPOHCZURH3L", "\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b", InvalidSecretException::class,];
-        yield "invalidJustTooShortNullBinary" => ["AAAAAAAAAAAAAAAAAAAAAAAA", "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", InvalidSecretException::class,];
-        yield "invalidNonBase32Characters" => ["cBZEOM3Q2FNNPLPOHCZURH3L", "", InvalidBase32DataException::class,];
-//        yield "invalidBadBase32" => ["7HXO4WFASDGM7WVBIKNNTURERCMOIJQD3WZ6MGXLEUREUWDTIGJA===", "", InvalidBase32DataException::class,];
-        yield "invalidNull" => [null, "", TypeError::class];
-        yield "invalidStringable" => [self::createStringable("7HXO4WFASDGM7WVBIKNNTURERCMOIJQD3WZ6MGXLEUREUWDTIGJA===="), "", TypeError::class,];
-        yield "invalidArray" => [["7HXO4WFASDGM7WVBIKNNTURERCMOIJQD3WZ6MGXLEUREUWDTIGJA====",], "", TypeError::class];
-        yield "invalidInt" => [16, "", TypeError::class];
-        yield "invalidFloat" => [1234567890123456.789, "", TypeError::class];
-        yield "invalidTrue" => [true, "", TypeError::class];
-        yield "invalidFalse" => [false, "", TypeError::class];
 	}
 
-	/**
-	 * @dataProvider dataForTestFromBase321
-	 *
-	 * @param mixed $raw
-	 * @param string|null $exceptionClass
-	 */
-	public function testFromBase321(mixed $base32, string $raw, string $exceptionClass = null): void
+    /** Ensure we can create Secret instances from valid base32-encoded secret strings. */
+    #[DataProvider("dataForTestFromBase321")]
+    public function testFromBase321(mixed $base32, string $expectedRaw): void
 	{
-		if (isset($exceptionClass)) {
-			$this->expectException($exceptionClass);
-		}
-
 		$secret = Secret::fromBase32($base32);
 		$this->assertEquals($base32, $secret->base32(), "Base32 in Secret is not as expected.");
-		$this->assertEquals($raw, $secret->raw(), "Raw bytes in Secret are not as expected.");
+        $this->assertEquals($expectedRaw, $secret->raw(), "Raw bytes in Secret are not as expected.");
 	}
-	
+
+    /** Data provider with base32-encoded invalid secrets for testFromBase322(). */
+    public static function dataForTestFromBase322(): iterable
+    {
+        yield "invalidJustTooShortAscii" => ["EFTGSZTUMVSW4LLCPF2GK4ZB",];
+        yield "invalidJustTooShortBinary" => ["CBZEOM3Q2FNNPLPOHCZURH3L",];
+        yield "invalidJustTooShortNullBinary" => ["AAAAAAAAAAAAAAAAAAAAAAAA",];
+    }
+
+    /** Ensure invalid secrets that are base32-encoded throw the expected exception. */
+    #[DataProvider("dataForTestFromBase322")]
+    public function testFromBase322(mixed $base32): void
+    {
+        $this->expectException(InvalidSecretException::class);
+        $this->expectExceptionMessage("Raw secrets for TOTP are required to be 128 bits (16 bytes) or longer");
+        Secret::fromBase32($base32);
+    }
+
 	/**
-	 * Test data for testFromBase641()
-	 *
-	 * @return iterable The test data.
-	 */
+     * Data provider with invalid base32-encodings of secrets for testFromBase323(). */
+    public static function dataForTestFromBase323(): iterable
+    {
+        yield "invalid-base32-at-0" => ["cBZEOM3Q2FNNPLPOHCZURH3L", "Invalid base32 character found at position 0",];
+        yield "invalid-base32-at-9" => ["CBZEOM3Q2fNNPLPOHCZURH3L", "Invalid base32 character found at position 9",];
+        yield "invalid-base32-length" => ["7HXO4WFASDGM7WVBIKNNTURERCMOIJQD3WZ6MGXLEUREUWDTIGJA===", "Base32 data must be padded to a multiple of 8 bytes",];
+        yield "invalid-base32-padding" => ["7HXO4WFASDGM7WVBIKNNTURERCMOIJQD3WZ6MGXLEUREUWDTIGJ=====", "Base32 data must be padded with either 0, 1, 3, 4 or 6 '=' characters",];
+    }
+
+    /** Ensure invalid base32-encodings of secrets throw the expected exception. */
+    #[DataProvider("dataForTestFromBase323")]
+    public function testFromBase323(mixed $base32, string $expectedExceptionMessage): void
+    {
+        $this->expectException(InvalidBase32DataException::class);
+        $this->expectExceptionMessage($expectedExceptionMessage);
+        Secret::fromBase32($base32);
+    }
+
+    /** Data provider with base64-encoded valid secrets for testFromBase641(). */
 	public static function dataForTestFromBase641(): iterable
 	{
 		return  [
@@ -206,39 +184,58 @@ class SecretTest extends TestCase
 			"typicalBinary06" => ["idAW1Zg1781N6wLpDBkz4GqLsp380xUwXwbIY8s0q0GTxzkWOJZFltTB8T56mv/OtQZWrYSv7GCRrcZlt/59lA==", "\x89\xd0\x16\xd5\x98\x35\xef\xcd\x4d\xeb\x02\xe9\x0c\x19\x33\xe0\x6a\x8b\xb2\x9d\xfc\xd3\x15\x30\x5f\x06\xc8\x63\xcb\x34\xab\x41\x93\xc7\x39\x16\x38\x96\x45\x96\xd4\xc1\xf1\x3e\x7a\x9a\xff\xce\xb5\x06\x56\xad\x84\xaf\xec\x60\x91\xad\xc6\x65\xb7\xfe\x7d\x94",],
 			"typicalBinary07" => ["Xb8Vl3cXq5THpzDWi3C2Lwa2yss=", "\x5d\xbf\x15\x97\x77\x17\xab\x94\xc7\xa7\x30\xd6\x8b\x70\xb6\x2f\x06\xb6\xca\xcb",],
 			"typicalBinary08" => ["sQJ0oy8IzHH+VC9JK261t/ZDhXCMGuLelJzSEyTsjDc=", "\xb1\x02\x74\xa3\x2f\x08\xcc\x71\xfe\x54\x2f\x49\x2b\x6e\xb5\xb7\xf6\x43\x85\x70\x8c\x1a\xe2\xde\x94\x9c\xd2\x13\x24\xec\x8c\x37",],
-			"invalidJustTooShortAscii" => ["IWZpZnRlZW4tYnl0ZXMh", "!fifteen-bytes!", InvalidSecretException::class,],
-			"invalidJustTooShortBinary" => ["EHJHM3DRWtet7jizSJ9r", "\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b", InvalidSecretException::class,],
-			"invalidJustTooShortNullBinary" => ["AAAAAAAAAAAAAAAAAAAA", "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", InvalidSecretException::class,],
-			"invalidNonBase64Characters" => ["_HJHM3DRWtet7jizSJ9r", "", InvalidBase64DataException::class,],
-			"invalidBadBase64" => ["cGFzc3dvcmQtcGFzc3dvcmQ", "", InvalidBase64DataException::class,],
-			"invalidNull" => [null, "", TypeError::class],
-			"invalidStringable" => [self::createStringable("cGFzc3dvcmQtcGFzc3dvcmQ="), "", TypeError::class],
-			"invalidArray" => [["cGFzc3dvcmQtcGFzc3dvcmQ=",], "", TypeError::class],
-			"invalidInt" => [16, "", TypeError::class],
-			"invalidFloat" => [1234567890123456.789, "", TypeError::class],
-			"invalidTrue" => [true, "", TypeError::class],
-			"invalidFalse" => [false, "", TypeError::class],
 		];
 	}
 
-	/**
-	 * @dataProvider dataForTestFromBase641
-	 *
-	 * @param mixed $raw
-	 * @param string|null $exceptionClass
-	 */
-	public function testFromBase641(mixed $base64, string $raw, string $exceptionClass = null): void
+    /** Ensure we can create Secret instances from valid base64-encoded secret strings. */
+    #[DataProvider("dataForTestFromBase641")]
+    public function testFromBase641(mixed $base64, string $raw): void
 	{
-		if (isset($exceptionClass)) {
-			$this->expectException($exceptionClass);
-		}
-
 		$secret = Secret::fromBase64($base64);
 		$this->assertEquals($base64, $secret->base64(), "Base64 in Secret is not as expected.");
 		$this->assertEquals($raw, $secret->raw(), "Raw bytes in Secret are not as expected.");
 	}
 
-	/**
+    /** Data provider with base64-encoded invalid secrets for testFromBase642(). */
+    public static function dataForTestFromBase642(): iterable
+    {
+        return [
+            "invalidJustTooShortAscii" => ["IWZpZnRlZW4tYnl0ZXMh",],
+            "invalidJustTooShortBinary" => ["EHJHM3DRWtet7jizSJ9r",],
+            "invalidJustTooShortNullBinary" => ["AAAAAAAAAAAAAAAAAAAA",],
+        ];
+    }
+
+    /** Ensure invalid secrets that are base64-encoded throw the expected exception. */
+    #[DataProvider("dataForTestFromBase642")]
+    public function testFromBase642(mixed $base64): void
+    {
+        $this->expectException(InvalidSecretException::class);
+        $this->expectExceptionMessage("Raw secrets for TOTP are required to be 128 bits (16 bytes) or longer");
+        Secret::fromBase64($base64);
+    }
+
+    /** Data provider with invalid base64-encoded secrets for testFromBase643(). */
+    public static function dataForTestFromBase643(): iterable
+    {
+        return [
+            "invalid-base64-at-0" => ["_HJHM3DRWtet7jizSJ9r", "Invalid base64 character found at position 0",],
+            "invalid-base64-at-11" => ["HJHM3DRWtet_7jizSJ9r", "Invalid base64 character found at position 11",],
+            "invalid-base64-length" => ["cGFzc3dvcmQtcGFzc3dvcmQ", "Base64 data must be padded to a multiple of 4 bytes",],
+            "invalid-base64-padding" => ["cGFzc3dvcmQtcGFzc3dvc===", "Base64 data must be padded with either 0, 1 or 2 '=' characters",],
+        ];
+    }
+
+    /** Ensure invalid base64-encodings of secrets throw the expected exception. */
+    #[DataProvider("dataForTestFromBase643")]
+    public function testFromBase643(mixed $base64, string $expectedExceptionMessage): void
+    {
+        $this->expectException(InvalidBase64DataException::class);
+        $this->expectExceptionMessage($expectedExceptionMessage);
+        Secret::fromBase64($base64);
+    }
+
+    /**
 	 * Test data for testRaw1().
 	 *
 	 * @return iterable
@@ -262,24 +259,17 @@ class SecretTest extends TestCase
         yield ["\x89\xd0\x16\xd5\x98\x35\xef\xcd\x4d\xeb\x02\xe9\x0c\x19\x33\xe0\x6a\x8b\xb2\x9d\xfc\xd3\x15\x30\x5f\x06\xc8\x63\xcb\x34\xab\x41\x93\xc7\x39\x16\x38\x96\x45\x96\xd4\xc1\xf1\x3e\x7a\x9a\xff\xce\xb5\x06\x56\xad\x84\xaf\xec\x60\x91\xad\xc6\x65\xb7\xfe\x7d\x94",];
         yield ["\x5d\xbf\x15\x97\x77\x17\xab\x94\xc7\xa7\x30\xd6\x8b\x70\xb6\x2f\x06\xb6\xca\xcb",];
         yield ["\xb1\x02\x74\xa3\x2f\x08\xcc\x71\xfe\x54\x2f\x49\x2b\x6e\xb5\xb7\xf6\x43\x85\x70\x8c\x1a\xe2\xde\x94\x9c\xd2\x13\x24\xec\x8c\x37",];
-
-		for ($idx = 0; $idx < 100; ++$idx) {
-            yield [self::randomValidSecret(),];
-		}
 	}
-	
-	/** @dataProvider dataForTestRaw1 */
+
+    /** Ensure we can read the raw secret correctly. */
+    #[DataProvider("dataForTestRaw1")]
 	public function testRaw1(string $raw): void
 	{
 		$secret = Secret::fromRaw($raw);
 		$this->assertEquals($raw, $secret->raw(), "The secret did not contain the expected raw bytes.");
 	}
-	
-	/**
-	 * Test data for testBase321()
-	 * 
-	 * @return iterable<string[]>
-	 */
+
+    /** Data provider with valid secrets and their base32 encodings for testBase321() */
 	public static function dataForTestBase321(): iterable
 	{
         yield ["password-password", "OBQXG43XN5ZGILLQMFZXG53POJSA====",];
@@ -293,23 +283,15 @@ class SecretTest extends TestCase
         yield ["\xfa\xc7\xac\x80\x81\x3d\xf7\x3c\xa7\x8e\xc9\x49\x17\x9b\x52\x64\x89\x79\xe1\x11", "7LD2ZAEBHX3TZJ4OZFERPG2SMSEXTYIR",];
 	}
 
-	/**
-	 * @dataProvider dataForTestBase321
-	 *
-	 * @param string $raw The raw secret.
-	 * @param string $expectedBase32 The expected return value from base32().
-	 */
-	public function testBase32(string $raw, string $expectedBase32): void
+    /** Ensure we can read the base32-encoded secret correctly. */
+    #[DataProvider("dataForTestBase321")]
+    public function testBase321(string $raw, string $expectedBase32): void
 	{
 		$secret = Secret::fromRaw($raw);
 		$this->assertEquals($expectedBase32, $secret->base32(), "The base32 provided by the Secret object is not the same as the expected base32.");
 	}
-	
-	/**
-	 * Test data for testBase641()
-	 * 
-	 * @return iterable<string[]>
-	 */
+
+    /** Data provider with valid secrets and their base64 encodings for testBase321() */
 	public static function dataForTestBase641(): iterable
 	{
         yield ["password-password", "cGFzc3dvcmQtcGFzc3dvcmQ=",];
@@ -323,12 +305,8 @@ class SecretTest extends TestCase
         yield ["\xb1\x02\x74\xa3\x2f\x08\xcc\x71\xfe\x54\x2f\x49\x2b\x6e\xb5\xb7\xf6\x43\x85\x70\x8c\x1a\xe2\xde\x94\x9c\xd2\x13\x24\xec\x8c\x37", "sQJ0oy8IzHH+VC9JK261t/ZDhXCMGuLelJzSEyTsjDc=",];
 	}
 
-	/**
-	 * @dataProvider dataForTestBase641
-	 *
-	 * @param string $raw The raw secret.
-	 * @param string $expectedBase64 The expected return value from base64().
-	 */
+    /** Ensure we can read the base64-encoded secret correctly. */
+    #[DataProvider("dataForTestBase641")]
 	public function testBase641(string $raw, string $expectedBase64): void
 	{
 		$secret = Secret::fromRaw($raw);

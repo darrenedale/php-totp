@@ -1,5 +1,22 @@
 <?php
 
+/*
+ * Copyright 2025 Darren Edale
+ *
+ * This file is part of the php-totp package.
+ *
+ * php-totp is free software: you can redistribute it and/or modify
+ * it under the terms of the Apache License v2.0.
+ *
+ * php-totp is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * Apache License for more details.
+ *
+ * You should have received a copy of the Apache License v2.0
+ * along with php-totp. If not, see <http://www.apache.org/licenses/>.
+ */
+
 declare(strict_types=1);
 
 namespace Equit\TotpTests\Types;
@@ -7,14 +24,16 @@ namespace Equit\TotpTests\Types;
 use Equit\Totp\Exceptions\InvalidHashAlgorithmException;
 use Equit\TotpTests\Framework\TestCase;
 use Equit\Totp\Types\HashAlgorithm;
+use PHPUnit\Framework\Attributes\CoversClass;
 
-class HashAlgorithmTest extends TestCase
+#[CoversClass(HashAlgorithm::class)]
+final class HashAlgorithmTest extends TestCase
 {
     private HashAlgorithm $hashAlgorithm;
 
     public function setUp(): void
     {
-        $this->hashAlgorithm = new HashAlgorithm(HashAlgorithm::DefaultAlgorithm);
+        $this->hashAlgorithm = new HashAlgorithm(HashAlgorithm::Sha256Algorithm);
     }
 
     public function tearDown(): void
@@ -22,6 +41,7 @@ class HashAlgorithmTest extends TestCase
         unset($this->hashAlgorithm);
     }
 
+    /** Data provider with valid hash algorithms for the constructor test. */
     public static function dataForTestConstructor1(): iterable
     {
         yield "sha1" => [HashAlgorithm::Sha1Algorithm,];
@@ -36,10 +56,12 @@ class HashAlgorithmTest extends TestCase
      */
     public function testConstructor1(string $algorithm): void
     {
+        /** @noinspection PhpUnhandledExceptionInspection Constructor shouldn't throw with this test data. */
         $instance = new HashAlgorithm($algorithm);
         self::assertSame($algorithm, $instance->algorithm());
     }
 
+    /** Data provider with invalid hash algorithms for the constructor test. */
     public static function dataForTestConstructor2(): iterable
     {
         yield "empty" => ["",];
@@ -65,7 +87,7 @@ class HashAlgorithmTest extends TestCase
     /** Ensure we can read the algorithm. */
     public function testAlgorithm1(): void
     {
-        self::assertSame(HashAlgorithm::DefaultAlgorithm, $this->hashAlgorithm->algorithm());
+        self::assertSame(HashAlgorithm::Sha256Algorithm, $this->hashAlgorithm->algorithm());
     }
 
     /** Ensure we can get a Sha1 instance with the correct algorithm. */
@@ -89,6 +111,6 @@ class HashAlgorithmTest extends TestCase
     /** Ensure we get the algorithm when stringified. */
     public function testToString1(): void
     {
-        self::assertSame(HashAlgorithm::DefaultAlgorithm, $this->hashAlgorithm->__toString());
+        self::assertSame(HashAlgorithm::Sha256Algorithm, $this->hashAlgorithm->__toString());
     }
 }

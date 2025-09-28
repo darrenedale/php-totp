@@ -30,7 +30,7 @@ use TypeError;
 /**
  * Unit test for the InvalidVerificationWindowException class.
  */
-class InvalidVerificationWindowExceptionTest extends TestCase
+final class InvalidVerificationWindowExceptionTest extends TestCase
 {
     /**
      * Test data for InvalidVerificationWindowException constructor.

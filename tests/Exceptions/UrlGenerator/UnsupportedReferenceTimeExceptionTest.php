@@ -33,7 +33,7 @@ use TypeError;
 /**
  * Unit test for the UnsupportedReferenceTimeException class.
  */
-class UnsupportedReferenceTimeExceptionTest extends TestCase
+final class UnsupportedReferenceTimeExceptionTest extends TestCase
 {
     /**
      * When generating random timestamps, the earliest will be 80 years before the Unix epoch.

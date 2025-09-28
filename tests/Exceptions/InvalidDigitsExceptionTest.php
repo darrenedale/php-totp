@@ -30,7 +30,7 @@ use TypeError;
 /**
  * Unit test for the InvalidDigitsException class.
  */
-class InvalidDigitsExceptionTest extends TestCase
+final class InvalidDigitsExceptionTest extends TestCase
 {
 
     /**

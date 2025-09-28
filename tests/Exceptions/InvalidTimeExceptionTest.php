@@ -32,7 +32,7 @@ use TypeError;
 /**
  * Unit test for the InvalidTimeException class.
  */
-class InvalidTimeExceptionTest extends TestCase
+final class InvalidTimeExceptionTest extends TestCase
 {
     /**
      * Test data for InvalidTimeException constructor.

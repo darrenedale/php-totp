@@ -42,7 +42,7 @@ use TypeError;
 /**
  * Test for the UrlGenerator class.
  */
-class UrlGeneratorTest extends TestCase
+final class UrlGeneratorTest extends TestCase
 {
     /**
      * Seed data for random issuers.

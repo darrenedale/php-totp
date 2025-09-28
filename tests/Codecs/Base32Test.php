@@ -32,7 +32,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 /**
  * Test case for the Base32 codec.
  */
-class Base32Test extends TestCase
+final class Base32Test extends TestCase
 {
     /**
      * Data provider for testConstructor()

@@ -30,7 +30,7 @@ use TypeError;
 /**
  * Unit test for the InvalidTimeStepException class.
  */
-class InvalidTimeStepExceptionTest extends TestCase
+final class InvalidTimeStepExceptionTest extends TestCase
 {
 
     /**

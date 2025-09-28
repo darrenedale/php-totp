@@ -30,7 +30,7 @@ use TypeError;
 /**
  * Unit test for the InvalidUserException class.
  */
-class InvalidUserExceptionTest extends TestCase
+final class InvalidUserExceptionTest extends TestCase
 {
     /**
      * Generate a random user string.

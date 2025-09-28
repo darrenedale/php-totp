@@ -29,7 +29,7 @@ use Equit\TotpTests\Framework\TestCase;
 /**
  * Test case for Integer Totp renderer.
  */
-class IntegerTest extends TestCase
+final class IntegerTest extends TestCase
 {
 	/**
 	 * Data provider for testConstructor().

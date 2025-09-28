@@ -27,7 +27,7 @@ use Equit\TotpTests\Framework\TestCase;
 /**
  * Test the Steam password renderer.
  */
-class SteamTest extends TestCase
+final class SteamTest extends TestCase
 {
     /**
      * Data provider for testRender().

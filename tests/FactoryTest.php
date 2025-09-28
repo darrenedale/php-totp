@@ -54,7 +54,7 @@ use TypeError;
  * random_bytes() is unable to provide cryptographically-secure data, and we can't mock that scenario as far as I can
  * tell.
  */
-class FactoryTest extends TestCase
+final class FactoryTest extends TestCase
 {
     /**
      * Just a random secret to use to initialise a Totp instance for testing.

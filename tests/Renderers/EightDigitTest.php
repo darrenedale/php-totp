@@ -27,7 +27,7 @@ use Equit\TotpTests\Framework\TestCase;
 /**
  * Test case for EightDigit Totp renderer.
  */
-class EightDigitTest extends TestCase
+final class EightDigitTest extends TestCase
 {
 	/**
 	 * Test the renderer's constructor.

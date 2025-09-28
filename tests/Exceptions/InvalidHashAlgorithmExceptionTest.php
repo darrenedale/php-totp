@@ -32,7 +32,7 @@ use TypeError;
 /**
  * Unit test for the InvalidHashAlgorithmException class.
  */
-class InvalidHashAlgorithmExceptionTest extends TestCase
+final class InvalidHashAlgorithmExceptionTest extends TestCase
 {
     /**
      * Generate a random string that is guaranteed not to be a valid TOTP hash algorithm.

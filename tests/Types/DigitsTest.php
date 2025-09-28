@@ -1,5 +1,22 @@
 <?php
 
+/*
+ * Copyright 2025 Darren Edale
+ *
+ * This file is part of the php-totp package.
+ *
+ * php-totp is free software: you can redistribute it and/or modify
+ * it under the terms of the Apache License v2.0.
+ *
+ * php-totp is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * Apache License for more details.
+ *
+ * You should have received a copy of the Apache License v2.0
+ * along with php-totp. If not, see <http://www.apache.org/licenses/>.
+ */
+
 declare(strict_types=1);
 
 namespace Equit\TotpTests\Types;
@@ -7,13 +24,16 @@ namespace Equit\TotpTests\Types;
 use Equit\Totp\Exceptions\InvalidDigitsException;
 use Equit\TotpTests\Framework\TestCase;
 use Equit\Totp\Types\Digits;
+use PHPUnit\Framework\Attributes\CoversClass;
 
-class DigitsTest extends TestCase
+#[CoversClass(Digits::class)]
+final class DigitsTest extends TestCase
 {
     private Digits $digits;
 
     public function setUp(): void
     {
+        /** @noinspection PhpUnhandledExceptionInspection Constructor won't throw with 8. */
         $this->digits = new Digits(8);
     }
 
@@ -22,6 +42,7 @@ class DigitsTest extends TestCase
         unset($this->digits);
     }
 
+    /** Data provider with valid quantities of digits for the constructor. */
     public static function dataForTestConstructor1(): iterable
     {
         for ($digits = 6; $digits < 15; ++$digits) {
@@ -36,15 +57,19 @@ class DigitsTest extends TestCase
      */
     public function testConstructor1(int $digits): void
     {
+        /** @noinspection PhpUnhandledExceptionInspection Constructor shouldn't throw with test data. */
         $instance = new Digits($digits);
         self::assertSame($digits, $instance->quantity());
     }
 
+    /** Data provider with invalid quantities of digits for the constructor. */
     public static function dataForTestConstructor2(): iterable
     {
-        for ($digits = 0; $digits < 6; ++$digits) {
+        for ($digits = -1; $digits < 6; ++$digits) {
             yield "{$digits} digits" => [$digits];
         }
+
+        yield "min int digits" => [PHP_INT_MIN];
     }
 
     /**

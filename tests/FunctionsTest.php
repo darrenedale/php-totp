@@ -28,7 +28,7 @@ use function Equit\Totp\scrubString;
 /**
  * Tests for standalone functions included in the library.
  */
-class FunctionsTest extends Framework\TestCase
+final class FunctionsTest extends Framework\TestCase
 {
     /**
      * Test data for scrubString()
