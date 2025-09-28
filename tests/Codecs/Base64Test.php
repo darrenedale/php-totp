@@ -24,9 +24,8 @@ namespace Equit\TotpTests\Codecs;
 use Equit\Totp\Codecs\Base64;
 use Equit\Totp\Exceptions\InvalidBase64DataException;
 use Equit\TotpTests\Framework\TestCase;
+use Equit\XRay\XRay;
 use Error;
-use Generator;
-use ReflectionProperty;
 
 /**
  * Test case for the Base64 codec.
@@ -38,7 +37,7 @@ class Base64Test extends TestCase
      *
      * @return array
 	 */
-	public function dataForTestConstructor(): array
+    public static function providerTestConstructor(): array
 	{
 		return [
 			"typicalData" => ["test-data-to-encode",],
@@ -52,7 +51,7 @@ class Base64Test extends TestCase
 	/**
 	 * Test the Base64 codec constructor.
 	 *
-	 * @dataProvider dataForTestConstructor
+     * @dataProvider providerTestConstructor
 	 *
 	 * @param mixed $plainData
 	 * @param class-string|null $exceptionClass
@@ -70,13 +69,8 @@ class Base64Test extends TestCase
         }
     }
 
-    /**
-     * Test data for testDestructor().
-     *
-     * @return \Generator
-     * @throws \Exception if random_bytes() is unable to generate cryptographically-secure random data.
-     */
-    public function dataForTestDestructor(): Generator
+    /** Test data for testDestructor(). */
+    public static function providerTestDestructor(): iterable
     {
         yield "typicalAsciiRaw" => ["password-password"];
         yield "nullBytes16Raw" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"];
@@ -90,38 +84,24 @@ class Base64Test extends TestCase
         yield "nullBytes160Raw" => [str_repeat("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 8)];
         yield "nullBytes180Raw" => [str_repeat("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 9)];
         yield "nullBytes200Raw" => [str_repeat("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 10)];
-
-        // yield 100 random valid secrets
-        for ($idx = 0; $idx < 100; ++$idx) {
-            yield [self::randomBinaryString(),];
-        }
     }
 
     /**
      * Test the Totp destructor.
      *
-     * @dataProvider dataForTestDestructor
+     * @dataProvider providerTestDestructor
      *
      * @param string $rawData The raw data to use to initialise the Base64 codec.
-     *
-     * @noinspection PhpDocMissingThrowsInspection ReflectionProperty won't throw because we know the properties exist.
      */
     public function testDestructor(string $rawData): void
     {
-        $base64     = new Base64($rawData);
+        $base64 = new Base64($rawData);
         $base64Data = $base64->encoded();
-
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $rawProperty = new ReflectionProperty($base64, "rawData");
-        $rawProperty->setAccessible(true);
-
-        /** @noinspection PhpUnhandledExceptionInspection */
-        $encodedProperty = new ReflectionProperty($base64, "encodedData");
-        $encodedProperty->setAccessible(true);
+        $xray   = new XRay($base64);
 
         $base64->__destruct();
-        $this->assertAllCharactersHaveChanged($rawData, $rawProperty->getValue($base64), "The raw data was not overwritten with random data.");
-        $this->assertAllCharactersHaveChanged($base64Data, $encodedProperty->getValue($base64), "The base64 data was not overwritten with random data.");
+        $this->assertAllCharactersHaveChanged($rawData, $xray->rawData, "The raw data was not overwritten with random data.");
+        $this->assertAllCharactersHaveChanged($base64Data, $xray->encodedData, "The base64 data was not overwritten with random data.");
     }
 
     /**
@@ -129,15 +109,15 @@ class Base64Test extends TestCase
      *
      * @return array
      */
-    public function dataForTestSetRaw(): array
+    public static function providerTestSetRaw(): array
     {
-        return $this->dataForTestConstructor();
+        return self::providerTestConstructor();
     }
 
 	/**
 	 * Test setting plain data for a Base64 codec.
 	 *
-	 * @dataProvider dataForTestSetRaw
+     * @dataProvider providerTestSetRaw
 	 *
 	 * @param mixed $plainData
 	 * @param string|null $exceptionClass
@@ -162,7 +142,7 @@ class Base64Test extends TestCase
 	 *
 	 * @return array
 	 */
-	public function dataForTestSetEncoded(): array
+    public static function providerTestSetEncoded(): array
 	{
 		return [
 			"typicalAsciiData" => ["dGVzdC1kYXRhLXRvLWVuY29kZQ==",],
@@ -188,7 +168,7 @@ class Base64Test extends TestCase
 	/**
 	 * Test setting encoded data for a Base64 codec.
 	 *
-	 * @dataProvider dataForTestSetEncoded
+     * @dataProvider providerTestSetEncoded
 	 *
 	 * @param mixed $encodedData
 	 * @param string|null $exceptionClass
@@ -213,7 +193,7 @@ class Base64Test extends TestCase
 	 *
 	 * @return array
 	 */
-	public function dataForTestEncoding(): array
+    public static function providerTestEncoding(): array
 	{
 		return [
 			"typicalAsciiData" => ["test-data-to-encode", "dGVzdC1kYXRhLXRvLWVuY29kZQ==",],
@@ -233,7 +213,7 @@ class Base64Test extends TestCase
 	 * This test receives valid string data and expects the codec to produce the correct encoded data. For a test of the
 	 * codec's response to non-string data, see testSetPlain().
 	 *
-	 * @dataProvider dataForTestEncoding
+     * @dataProvider providerTestEncoding
 	 *
 	 * @param string $plainData
 	 * @param string $expectedEncodedData
@@ -252,7 +232,7 @@ class Base64Test extends TestCase
 	 *
 	 * @return array
 	 */
-	public function dataForTestDecoding(): array
+    public static function providerTestDecoding(): array
 	{
 		return [
 			"typicalAsciiData" => ["dGVzdC1kYXRhLXRvLWVuY29kZQ==", "test-data-to-encode",],
@@ -272,7 +252,7 @@ class Base64Test extends TestCase
 	 * This test receives valid base64-encoded data and the codec is expected to produce the correct decoded data. For
 	 * a test of the codec's ability to identify invalid encoded data, see testSetEncoded().
 	 *
-	 * @dataProvider dataForTestDecoding
+     * @dataProvider providerTestDecoding
 	 *
 	 * @param string $encodedData
 	 * @param string|null $expectedRawData

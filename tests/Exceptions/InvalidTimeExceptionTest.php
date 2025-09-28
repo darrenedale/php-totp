@@ -40,7 +40,7 @@ final class InvalidTimeExceptionTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
      */
-    public function dataForTestConstructor(): array
+    public static function providerTestConstructor(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor shouldn't throw with test data. */
         return [
@@ -72,7 +72,7 @@ final class InvalidTimeExceptionTest extends TestCase
     /**
      * Test for the InvalidTimeException constructor.
      *
-     * @dataProvider dataForTestConstructor
+     * @dataProvider providerTestConstructor
      *
      * @param mixed $time The invalid time for the test exception.
      * @param mixed $message The message for the test exception. Defaults to an empty string.
@@ -110,7 +110,7 @@ final class InvalidTimeExceptionTest extends TestCase
      *
      * @return \Generator
      */
-    public function dataForTestGetTimestamp(): Generator
+    public static function providerTestGetTimestamp(): Generator
     {
         yield from [
             "typical0" => [0,],
@@ -127,7 +127,7 @@ final class InvalidTimeExceptionTest extends TestCase
     /**
      * Test the InvalidTimeException::getTimestamp() method.
      *
-     * @dataProvider dataForTestGetTimestamp
+     * @dataProvider providerTestGetTimestamp
      *
      * @param int $timestamp The timestamp to test with.
      */
@@ -143,7 +143,7 @@ final class InvalidTimeExceptionTest extends TestCase
      * @return \Generator
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor should not throw with timestamp argument.
      */
-    public function dataForTestGetDateTime(): Generator
+    public static function providerTestGetDateTime(): Generator
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with timestamp argument. */
         yield from [
@@ -164,7 +164,7 @@ final class InvalidTimeExceptionTest extends TestCase
     /**
      * Test the InvalidTimeException::getDateTime() method.
      *
-     * @dataProvider dataForTestGetDateTime
+     * @dataProvider providerTestGetDateTime
      *
      * @param int $timestamp The timestamp to use to initialise the test exception.
      * @param \DateTime $expectedTime The expected value returned from getDateTime().

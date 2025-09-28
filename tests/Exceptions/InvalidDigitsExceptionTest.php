@@ -38,7 +38,7 @@ final class InvalidDigitsExceptionTest extends TestCase
      *
      * @return Generator The test data.
      */
-    public function dataForTestConstructor(): Generator
+    public static function providerTestConstructor(): Generator
     {
         for ($digits = 1; $digits < 6; ++$digits) {
             yield "typical{$digits}" => [$digits];
@@ -62,7 +62,7 @@ final class InvalidDigitsExceptionTest extends TestCase
     /**
      * Test for the InvalidDigitsException constructor.
      *
-     * @dataProvider dataForTestConstructor
+     * @dataProvider providerTestConstructor
      *
      * @param mixed $digits The invalid number of digits for the test exception.
      * @param mixed $message The message for the test exception. Defaults to an empty string.
@@ -88,7 +88,7 @@ final class InvalidDigitsExceptionTest extends TestCase
      *
      * @return \Generator
      */
-    public function dataForTestGetDigits(): Generator
+    public static function providerTestGetDigits(): Generator
     {
         yield from [
             "typical" => [5,],
@@ -104,7 +104,7 @@ final class InvalidDigitsExceptionTest extends TestCase
     /**
      * Test the InvalidDigitsException::getDigits() method.
      *
-     * @dataProvider dataForTestGetDigits
+     * @dataProvider providerTestGetDigits
      *
      * @param int $digits The number of digits to test with.
      */

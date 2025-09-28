@@ -490,7 +490,7 @@ final class TotpTest extends TestCase
      * @return \Generator
      * @throws \Exception if self::randomValidSecret() is unable to generate cryptographically-secure random data.
      */
-    public static function dataForTestDestructor(): Generator
+    public static function providerTestDestructor(): Generator
     {
         yield "typicalAsciiSecret" => ["password-password"];
         yield "nullBytes16Secret" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"];
@@ -510,7 +510,7 @@ final class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp constructor won't throw, secret is guaranteed by the data
      * provider to be valid. ReflectionProperty won't throw because we know the property exists.
      */
-    #[DataProvider("dataForTestDestructor")]
+    #[DataProvider("providerTestDestructor")]
     public function testDestructor(string $secret): void
     {
         /** @noinspection PhpUnhandledExceptionInspection */
@@ -526,7 +526,7 @@ final class TotpTest extends TestCase
      *
      * @return array The test data.
      */
-    public static function dataForTestBase32Secret(): array
+    public static function providerTestBase32Secret(): array
     {
         return [
             "typicalPlainText" => ["password-password", "OBQXG43XN5ZGILLQMFZXG53POJSA====",],
@@ -548,7 +548,7 @@ final class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() should only throw expected test exceptions.
      * TotpSecret::fromBase32() shouldn't throw with test data.
      */
-    #[DataProvider("dataForTestBase32Secret")]
+    #[DataProvider("providerTestBase32Secret")]
     public function testBase32Secret(string|null $raw, mixed $expectedBase32): void
     {
         $totp = self::createTotp($raw);
@@ -560,7 +560,7 @@ final class TotpTest extends TestCase
      *
      * @return array The test data.
      */
-    public static function dataForTestBase64Secret(): array
+    public static function providerTestBase64Secret(): array
     {
         return [
             "typicalPlainText" => ["password-password", "cGFzc3dvcmQtcGFzc3dvcmQ=",],
@@ -580,7 +580,7 @@ final class TotpTest extends TestCase
      *
      * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() shouldn't throw with test data.
      */
-    #[DataProvider("dataForTestBase64Secret")]
+    #[DataProvider("providerTestBase64Secret")]
     public function testBase64Secret(string $raw, string $base64): void
     {
         $totp = self::createTotp($raw);
@@ -592,7 +592,7 @@ final class TotpTest extends TestCase
      *
      * @return array The test data.
      */
-    public static function dataForTestHashAlgorithm(): array
+    public static function providerTestHashAlgorithm(): array
     {
         return [
             "typicalSha1" => [HashAlgorithm::Sha1Algorithm,],
@@ -610,7 +610,7 @@ final class TotpTest extends TestCase
      *
      * @noinspection PhpDocMissingThrowsInspection Totp::setHashAlgorithm() shouldn't throw with test data.
      */
-    #[DataProvider("dataForTestHashAlgorithm")]
+    #[DataProvider("providerTestHashAlgorithm")]
     public function testHashAlgorithm(string $algorithm): void
     {
         $totp = self::createTotp(hashAlgorithm: $algorithm);
@@ -623,7 +623,7 @@ final class TotpTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
      */
-    public static function dataForTestReferenceTimestamp(): array
+    public static function providerTestReferenceTimestamp(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor shouldn't throw with test data. */
         return [
@@ -659,7 +659,7 @@ final class TotpTest extends TestCase
      * @param int|\DateTime $time The time to set in the Totp as the reference.
      * @param int|null $expectedTimestamp What referenceTimestamp() is expected to return.
      */
-    #[DataProvider("dataForTestReferenceTimestamp")]
+    #[DataProvider("providerTestReferenceTimestamp")]
     public function testReferenceTimestamp(int|DateTime $time, ?int $expectedTimestamp = null): void
     {
         if (!isset($expectedTimestamp)) {
@@ -680,7 +680,7 @@ final class TotpTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
      */
-    public static function dataForTestReferenceTime(): array
+    public static function providerTestReferenceTime(): array
     {
         $now = time();
 
@@ -718,7 +718,7 @@ final class TotpTest extends TestCase
      * @param int|\DateTime $time The time to set in the Totp as the reference.
      * @param DateTime|null $expectedDateTime What referenceTime() is expected to return.
      */
-    #[DataProvider("dataForTestReferenceTime")]
+    #[DataProvider("providerTestReferenceTime")]
 
     public function testReferenceTime(int|DateTime $time, ?DateTime $expectedDateTime = null): void
     {
@@ -739,7 +739,7 @@ final class TotpTest extends TestCase
      *
      * @return Generator The test data.
      */
-    public static function dataForTestTimeStep(): Generator
+    public static function providerTestTimeStep(): Generator
     {
         // test with all valid time steps up to 1 hour
         for ($timeStep = 1; $timeStep <= 3600; ++$timeStep) {
@@ -754,7 +754,7 @@ final class TotpTest extends TestCase
      *
      * @noinspection PhpDocMissingThrowsInspection Totp::setTimeStep() shouldn't throw with test data.
      */
-    #[DataProvider("dataForTestTimeStep")]
+    #[DataProvider("providerTestTimeStep")]
 
     public function testTimeStep(int $timeStep): void
     {
@@ -768,7 +768,7 @@ final class TotpTest extends TestCase
      * @return \Generator
      * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
      */
-    public static function dataForTestSecret(): iterable
+    public static function providerTestSecret(): iterable
     {
         // 100 datasets with random valid secrets
         for ($idx = 0; $idx < 100; ++$idx) {
@@ -781,7 +781,7 @@ final class TotpTest extends TestCase
      *
      * @noinspection PhpDocMissingThrowsInspection setSecret() shouldn't throw with test data.
      */
-    #[DataProvider("dataForTestSecret")]
+    #[DataProvider("providerTestSecret")]
 
     public function testSecret(string $secret): void
     {
@@ -796,7 +796,7 @@ final class TotpTest extends TestCase
      * @return array
      * @noinspection PhpDocMissingThrowsInspection Integer renderer constructor shouldn't throw with test data.
      */
-    public static function dataForTestRenderer(): array
+    public static function providerTestRenderer(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection Integer renderer constructor shouldn't throw with test data. */
         return [
@@ -825,7 +825,7 @@ final class TotpTest extends TestCase
     /**
      * @param \Equit\Totp\Contracts\Renderer $renderer
      */
-    #[DataProvider("dataForTestRenderer")]
+    #[DataProvider("providerTestRenderer")]
 
     public function testRenderer(Renderer $renderer): void
     {
@@ -841,7 +841,7 @@ final class TotpTest extends TestCase
      *
      * @return \int[][]
      */
-    public static function dataForTestCounterAt(): array
+    public static function providerTestCounterAt(): array
     {
         return [
             // test data from RFC 6238
@@ -881,7 +881,7 @@ final class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp::setTimeStep() should not throw with test data.
      * Totp::counterAt() should only throw expected test exceptions.
      */
-    #[DataProvider("dataForTestCounterAt")]
+    #[DataProvider("providerTestCounterAt")]
 
     public function testCounterAt(int|DateTime $currentTime, int $expectedCounter, int|DateTime|null $referenceTime = null, ?int $timeStep = null, ?string $exceptionClass = null): void
     {
@@ -902,7 +902,7 @@ final class TotpTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor should not throw with test data.
      */
-    public static function dataForTestCounter(): array
+    public static function providerTestCounter(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with test data. */
         return [
@@ -923,7 +923,7 @@ final class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp constructor, Totp::counter() and Totp::counterAt() should not
      * throw with test data.
      */
-    #[DataProvider("dataForTestCounter")]
+    #[DataProvider("providerTestCounter")]
 
     public function testCounter(?string $secret = null, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
@@ -957,7 +957,7 @@ final class TotpTest extends TestCase
     /**
      * @return array
      */
-    public static function dataForTestCounterBytesAt(): array
+    public static function providerTestCounterBytesAt(): array
     {
         return [
             // test data from RFC 6238
@@ -993,7 +993,7 @@ final class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp::setTimeStep() should not throw with test data. ReflectionMethod
      * constructor guaranteed not to throw in this case.
      */
-    #[DataProvider("dataForTestCounterBytesAt")]
+    #[DataProvider("providerTestCounterBytesAt")]
 
     public function testCounterBytesAt(int|DateTime $currentTime, string $expectedBytes, int|DateTime $referenceTime = null, ?int $timeStep = null): void
     {
@@ -1012,7 +1012,7 @@ final class TotpTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
      */
-    public static function dataForTestCounterBytes(): array
+    public static function providerTestCounterBytes(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor shouldn't throw with test data. */
         return [
@@ -1032,7 +1032,7 @@ final class TotpTest extends TestCase
      *
      * @noinspection PhpDocMissingThrowsInspection Totp constructor should not throw with test data.
      */
-    #[DataProvider("dataForTestCounterBytes")]
+    #[DataProvider("providerTestCounterBytes")]
 
     public function testCounterBytes(string $secret = null, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
@@ -1072,7 +1072,7 @@ final class TotpTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
      */
-    public static function dataForTestHmac(): array
+    public static function providerTestHmac(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor shouldn't throw with test data. */
         return [
@@ -1108,7 +1108,7 @@ final class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp constructor, hmac() and hmacAt() should not throw with
      * test data.
      */
-    #[DataProvider("dataForTestHmac")]
+    #[DataProvider("providerTestHmac")]
 
     public function testHmac(string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
@@ -1150,7 +1150,7 @@ final class TotpTest extends TestCase
      * @return Generator The test data.
      * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
      */
-    public static function dataForTestHmacAt(): Generator
+    public static function providerTestHmacAt(): Generator
     {
         // transform the RFC test data into the args required for testHmacAt()
         yield from array_map(
@@ -1181,7 +1181,7 @@ final class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp::hmacAt() shouldn't throw unless we're expecting a test
      *     exception.
      */
-    #[DataProvider("dataForTestHmacAt")]
+    #[DataProvider("providerTestHmacAt")]
 
     public function testHmacAt(string $secret, int|DateTime $referenceTime, int|DateTime $currentTime, string $hmac, ?string $algorithm = HashAlgorithm::Sha1Algorithm, ?string $exceptionClass = null): void
     {
@@ -1208,7 +1208,7 @@ final class TotpTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
      */
-    public static function dataForTestPassword(): array
+    public static function providerTestPassword(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor shouldn't throw with test data. */
         return [
@@ -1242,7 +1242,7 @@ final class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp constructor and Integer renderer constructor should not throw
      * with test data. Totp::password() and Totp::passwordAt() should not throw with test data.
      */
-    #[DataProvider("dataForTestPassword")]
+    #[DataProvider("providerTestPassword")]
 
     public function testPassword(string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
@@ -1284,7 +1284,7 @@ final class TotpTest extends TestCase
      * @return Generator The test data.
      * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
      */
-    public static function dataForTestPasswordAt(): Generator
+    public static function providerTestPasswordAt(): Generator
     {
         // transform the RFC test data into the args required for testPasswordAt()
         yield from array_map(
@@ -1315,7 +1315,7 @@ final class TotpTest extends TestCase
      * constructor and setDigits() won't throw with known valid $digits used here. Totp::passwordAt() should only throw
      * expected test exceptions
      */
-    #[DataProvider("dataForTestPasswordAt")]
+    #[DataProvider("providerTestPasswordAt")]
 
     public function testPasswordAt(string $secret, int|DateTime $referenceTime, int|DateTime $currentTime, string $password, ?string $algorithm = HashAlgorithm::Sha1Algorithm, ?string $exceptionClass = null): void
     {
@@ -1350,7 +1350,7 @@ final class TotpTest extends TestCase
      * @return \Generator
      * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
      */
-    public static function dataForTestVerify(): Generator
+    public static function providerTestVerify(): Generator
     {
         // yield 100 random valid configurations for a Totp
         for ($idx = 0; $idx < 100; ++$idx) {
@@ -1376,7 +1376,7 @@ final class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp constructor, Integer renderer constructor,
      * Totp::password() and Totp::verify() shouldn't throw with test data.
      */
-    #[DataProvider("dataForTestVerify")]
+    #[DataProvider("providerTestVerify")]
 
     public function testVerify(string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
@@ -1422,7 +1422,7 @@ final class TotpTest extends TestCase
      * @return Generator The test data.
      * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
      */
-    public static function dataForTestVerifyAt(): Generator
+    public static function providerTestVerifyAt(): Generator
     {
         // transforms the RFC data into the structure required for this test
         $extractData = function (array $testData) use (&$digits, &$window): array {
@@ -1589,7 +1589,7 @@ final class TotpTest extends TestCase
      * @noinspection PhpDocMissingThrowsInspection Totp::integer() shouldn't throw with test data. Totp::verifyAt()
      * won't throw unless we're expecting a test exception.
      */
-    #[DataProvider("dataForTestVerifyAt")]
+    #[DataProvider("providerTestVerifyAt")]
 
     public function testVerifyAt(array $totpSpec, int|DateTime $currentTime, int $window, string $userPassword, bool $expectedVerification, string $exceptionClass = null): void
     {

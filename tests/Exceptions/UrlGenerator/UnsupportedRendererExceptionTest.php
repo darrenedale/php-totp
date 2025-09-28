@@ -62,7 +62,7 @@ final class UnsupportedRendererExceptionTest extends TestCase
      *
      * @return array The test data.
      */
-    public function dataForTestConstructor(): array
+    public static function providerTestConstructor(): array
     {
         return [
             "typicalRendererOnly" => [self::createUnsupportedRenderer(),],
@@ -84,7 +84,7 @@ final class UnsupportedRendererExceptionTest extends TestCase
     /**
      * Test for UnsupportedRendererException constructor.
      *
-     * @dataProvider dataForTestConstructor
+     * @dataProvider providerTestConstructor
      *
      * @param mixed $renderer The invalid Renderer instance for the test exception.
      * @param mixed $message The message for the test exception. Defaults to an empty string.
@@ -111,7 +111,7 @@ final class UnsupportedRendererExceptionTest extends TestCase
      * @return array
      * @noinspection PhpDocMissingThrowsInspection Integer renderer constructor guaranteed not to throw here.
      */
-    public function dataForTestGetRenderer(): array
+    public static function providerTestGetRenderer(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection Integer renderer constructor guaranteed not to throw here. */
         return [
@@ -125,7 +125,7 @@ final class UnsupportedRendererExceptionTest extends TestCase
     /**
      * Test the UnsupportedRendererException::getRenderer() method.
      *
-     * @dataProvider dataForTestGetRenderer
+     * @dataProvider providerTestGetRenderer
      *
      * @param Renderer $renderer The Renderer to test with.
      */
@@ -141,7 +141,7 @@ final class UnsupportedRendererExceptionTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection Integer renderer constructor guaranteed not to throw.
      */
-    public function dataForTestGetRendererClass(): array
+    public static function providerTestGetRendererClass(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection Renderer constructor guaranteed not to throw here */
         return [
@@ -154,7 +154,7 @@ final class UnsupportedRendererExceptionTest extends TestCase
     /**
      * Test the UnsupportedRendererException::getRendererClass() method.
      *
-     * @dataProvider dataForTestGetRendererClass
+     * @dataProvider providerTestGetRendererClass
      *
      * @param Renderer $renderer The Renderer to test with.
      * @param class-string $class The expected renderer class name.

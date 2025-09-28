@@ -43,7 +43,7 @@ final class EightDigitTest extends TestCase
 	 *
 	 * @return array[] The test data.
 	 */
-	public function dataForTestRender(): array
+    public static function providerTestRender(): array
 	{
 		return [
 			// max 31-bit unsigned int
@@ -107,7 +107,7 @@ final class EightDigitTest extends TestCase
 	/**
 	 * Test the integer renderer's render() method.
 	 *
-	 * @dataProvider dataForTestRender
+     * @dataProvider providerTestRender
 	 *
 	 * @param string $hmac The HMAC to use to render the password.
 	 * @param string $expectedPassword The password the renderer is expected to produce.

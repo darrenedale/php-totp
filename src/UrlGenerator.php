@@ -335,15 +335,15 @@ final class UrlGenerator
             $url .= "&issuer=" . urlencode($this->issuer());
         }
 
-        if (true === $this->includesDigits() || (is_null($this->includesDigits()) && $totp->renderer() instanceof IntegerRenderer && Integer::DefaultDigits !== $totp->renderer()->digits()->digits())) {
+        if ($totp->renderer() instanceof IntegerRenderer && (true === $this->includesDigits() || (null === $this->includesDigits() && Integer::DefaultDigits !== $totp->renderer()->digits()->quantity()))) {
             $url .= "&digits={$totp->renderer()->digits()}";
         }
 
-        if (true === $this->includesAlgorithm() || (is_null($this->includesAlgorithm()) && HashAlgorithm::DefaultAlgorithm !== $totp->hashAlgorithm()->algorithm())) {
+        if (true === $this->includesAlgorithm() || (null === $this->includesAlgorithm() && HashAlgorithm::DefaultAlgorithm !== $totp->hashAlgorithm()->algorithm())) {
             $url .= "&algorithm=" . strtoupper($totp->hashAlgorithm()->algorithm());
         }
 
-        if (true === $this->includesPeriod() || (is_null($this->includesPeriod()) && TimeStep::DefaultTimeStep !== $totp->timeStep()->seconds())) {
+        if (true === $this->includesPeriod() || (null === $this->includesPeriod() && TimeStep::DefaultTimeStep !== $totp->timeStep()->seconds())) {
             $url .= "&period={$totp->timeStep()}";
         }
 

@@ -60,7 +60,7 @@ final class InvalidHashAlgorithmExceptionTest extends TestCase
      *
      * @return array The test data.
      */
-    public function dataForTestConstructor(): array
+    public static function providerTestConstructor(): array
     {
         return [
             "typicalAlgorithmOnly" => ["md5",],
@@ -80,7 +80,7 @@ final class InvalidHashAlgorithmExceptionTest extends TestCase
     /**
      * Test for the InvalidHashAlgorithmException constructor.
      *
-     * @dataProvider dataForTestConstructor
+     * @dataProvider providerTestConstructor
      *
      * @param mixed $hashAlgorithm The invalid algorithm for the test exception.
      * @param mixed $message The message for the test exception. Defaults to an empty string.
@@ -106,7 +106,7 @@ final class InvalidHashAlgorithmExceptionTest extends TestCase
      *
      * @return Generator
      */
-    public function dataForTestGetAlgorithm(): Generator
+    public static function providerTestGetAlgorithm(): Generator
     {
         yield from [
             "typical" => ["md5",],
@@ -122,7 +122,7 @@ final class InvalidHashAlgorithmExceptionTest extends TestCase
     /**
      * Test the InvalidHashAlgorithmException::getHashAlgorithm() method.
      *
-     * @dataProvider dataForTestGetAlgorithm
+     * @dataProvider providerTestGetAlgorithm
      *
      * @param string $secret The algorithm to test with.
      */

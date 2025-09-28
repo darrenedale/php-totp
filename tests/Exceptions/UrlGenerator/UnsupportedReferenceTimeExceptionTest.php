@@ -51,7 +51,7 @@ final class UnsupportedReferenceTimeExceptionTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor should not throw with timestamp argument.
      */
-    public function dataForTestConstructor(): array
+    public static function providerTestConstructor(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with timestamp argument. */
         return [
@@ -86,7 +86,7 @@ final class UnsupportedReferenceTimeExceptionTest extends TestCase
     /**
      * Test for the UnsupportedReferenceTimeException constructor.
      *
-     * @dataProvider dataForTestConstructor
+     * @dataProvider providerTestConstructor
      *
      * @param mixed $time The invalid time for the test exception.
      * @param mixed $message The message for the test exception. Defaults to an empty string.
@@ -132,7 +132,7 @@ final class UnsupportedReferenceTimeExceptionTest extends TestCase
      * @return \Generator
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor should not throw with a timestamp argument.
      */
-    public function dataForTestGetTimestamp(): Generator
+    public static function providerTestGetTimestamp(): Generator
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with a timestamp argument. */
         yield from [
@@ -166,7 +166,7 @@ final class UnsupportedReferenceTimeExceptionTest extends TestCase
     /**
      * Test the UnsupportedReferenceTimeException::getTimestamp() method.
      *
-     * @dataProvider dataForTestGetTimestamp
+     * @dataProvider providerTestGetTimestamp
      *
      * @param int|\DateTime $time The time to use to initialise the test exception.
      * @param int $expectedTimestamp The expected value returned from getTimestamp().
@@ -183,7 +183,7 @@ final class UnsupportedReferenceTimeExceptionTest extends TestCase
      * @return \Generator
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor should not throw with a timestamp argument.
      */
-    public function dataForTestGetTime(): Generator
+    public static function providerTestGetTime(): Generator
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with a timestamp argument. */
         yield from [
@@ -217,7 +217,7 @@ final class UnsupportedReferenceTimeExceptionTest extends TestCase
     /**
      * Test the UnsupportedReferenceTimeException::getTime() method.
      *
-     * @dataProvider dataForTestGetTime
+     * @dataProvider providerTestGetTime
      *
      * @param int|\DateTime $time The time to use to initialise the test exception.
      * @param \DateTime $expectedTime The expected value returned from getDateTime().

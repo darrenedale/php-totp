@@ -36,7 +36,7 @@ final class IntegerTest extends TestCase
 	 *
 	 * @return array The test data.
 	 */
-	public function dataForTestConstructor(): array
+    public static function providerTestConstructor(): array
 	{
 		return [
 			"typicalSix" => [6,],
@@ -55,7 +55,7 @@ final class IntegerTest extends TestCase
 	/**
 	 * Test the integer renderer's constructor.
 	 *
-	 * @dataProvider dataForTestConstructor
+     * @dataProvider providerTestConstructor
 	 *
 	 * @param mixed $digits The number of digits for the integer renderer.
 	 * @param class-string|null $exceptionClass Class of exception expected, if any. Default is null.
@@ -78,7 +78,7 @@ final class IntegerTest extends TestCase
 	 *
 	 * @return array[] The test data.
 	 */
-	public function dataForTestRender(): array
+    public static function providerTestRender(): array
 	{
 		return [
 			// max 31-bit unsigned int
@@ -227,7 +227,7 @@ final class IntegerTest extends TestCase
 	/**
 	 * Test the integer renderer's render() method.
 	 *
-	 * @dataProvider dataForTestRender
+     * @dataProvider providerTestRender
 	 *
 	 * @param int $digits The number of digits to render in the password.
 	 * @param string $hmac The HMAC to use to render the password.

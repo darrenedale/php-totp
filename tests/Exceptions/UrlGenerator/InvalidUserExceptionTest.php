@@ -54,7 +54,7 @@ final class InvalidUserExceptionTest extends TestCase
      *
      * @return array The test data.
      */
-    public function dataForTestConstructor(): array
+    public static function providerTestConstructor(): array
     {
         return [
             "typicalUserOnly" => ["",],
@@ -74,7 +74,7 @@ final class InvalidUserExceptionTest extends TestCase
     /**
      * Test for the InvalidUserException constructor.
      *
-     * @dataProvider dataForTestConstructor
+     * @dataProvider providerTestConstructor
      *
      * @param mixed $user The invalid user for the test exception.
      * @param mixed $message The message for the test exception. Defaults to an empty string.
@@ -100,7 +100,7 @@ final class InvalidUserExceptionTest extends TestCase
      *
      * @return Generator
      */
-    public function dataForTestGetUser(): Generator
+    public static function providerTestGetUser(): Generator
     {
         yield from [
             "typicalEmpty" => ["",],
@@ -115,7 +115,7 @@ final class InvalidUserExceptionTest extends TestCase
     /**
      * Test the InvalidUserException::getUser() method.
      *
-     * @dataProvider dataForTestGetUser
+     * @dataProvider providerTestGetUser
      *
      * @param string $user The user to test with.
      */

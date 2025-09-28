@@ -42,7 +42,7 @@ final class TimeStepTest extends TestCase
         unset($this->timeStep);
     }
 
-    public static function dataForTestConstructor1(): iterable
+    public static function providerTestConstructor1(): iterable
     {
         for ($seconds = 1; $seconds < 600; ++$seconds) {
             yield "{$seconds} seconds" => [$seconds];
@@ -51,7 +51,7 @@ final class TimeStepTest extends TestCase
 
     /**
      * Ensure we can construct TimeSteps with valid time steps in seconds.
-     * @dataProvider dataForTestConstructor1
+     * @dataProvider providerTestConstructor1
      */
     public function testConstructor1(int $seconds): void
     {
@@ -59,7 +59,7 @@ final class TimeStepTest extends TestCase
         self::assertSame($seconds, $timeStep->seconds());
     }
 
-    public static function dataForTestConstructor2(): iterable
+    public static function providerTestConstructor2(): iterable
     {
         for ($seconds = 0; $seconds >= -100; --$seconds) {
             yield "{$seconds} seconds" => [$seconds];
@@ -70,7 +70,7 @@ final class TimeStepTest extends TestCase
 
     /**
      * Ensure the constructor throws with invalid time steps.
-     * @dataProvider dataForTestConstructor2
+     * @dataProvider providerTestConstructor2
      */
     public function testConstructor2(int $seconds): void
     {
@@ -84,14 +84,14 @@ final class TimeStepTest extends TestCase
         self::assertSame(TimeStep::DefaultTimeStep, $this->timeStep->seconds());
     }
 
-    /** @dataProvider dataForTestConstructor1 */
+    /** @dataProvider providerTestConstructor1 */
     public function testFromSeconds1(int $seconds): void
     {
         $timeStep = TimeStep::fromSeconds($seconds);
         self::assertSame($seconds, $timeStep->seconds());
     }
 
-    /** @dataProvider dataForTestConstructor2 */
+    /** @dataProvider providerTestConstructor2 */
     public function testFromSeconds2(int $seconds): void
     {
         self::expectException(InvalidTimeStepException::class);
@@ -99,28 +99,28 @@ final class TimeStepTest extends TestCase
         TimeStep::fromSeconds($seconds);
     }
 
-    public static function dataForTestFromMinutes1(): iterable
+    public static function providerTestFromMinutes1(): iterable
     {
         for ($minutes = 1; $minutes <= 60; ++$minutes) {
             yield "{$minutes} minutes" => [$minutes, 60 * $minutes,];
         }
     }
 
-    /** @dataProvider dataForTestFromMinutes1 */
+    /** @dataProvider providerTestFromMinutes1 */
     public function testFromMinutes1(int $minutes, int $expectedSeconds): void
     {
         $timeStep = TimeStep::fromMinutes($minutes);
         self::assertSame($expectedSeconds, $timeStep->seconds());
     }
 
-    public static function dataForTestFromMinutes2(): iterable
+    public static function providerTestFromMinutes2(): iterable
     {
         for ($minutes = 0; $minutes >= -60; --$minutes) {
             yield "{$minutes} minutes" => [$minutes, 60 * $minutes];
         }
     }
 
-    /** @dataProvider dataForTestFromMinutes2 */
+    /** @dataProvider providerTestFromMinutes2 */
     public function testFromMinutes2(int $minutes, $invalidSeconds): void
     {
         self::expectException(InvalidTimeStepException::class);
@@ -134,7 +134,7 @@ final class TimeStepTest extends TestCase
         self::assertSame("30", $this->timeStep->__toString());
     }
 
-    public static function dataForTestFromDateInterval1(): iterable
+    public static function providerTestFromDateInterval1(): iterable
     {
         yield "one-second" => [new DateInterval("PT1S"), 1,];
         yield "ten-seconds" => [new DateInterval("PT10S"), 10,];
@@ -147,7 +147,7 @@ final class TimeStepTest extends TestCase
 
     /**
      * Ensure we can successfully create a TimeStep from a DateInterval.
-     * @dataProvider dataForTestFromDateInterval1
+     * @dataProvider providerTestFromDateInterval1
      */
     public function testFromDateInterval1(DateInterval $interval, int $expectedSeconds): void
     {
@@ -155,7 +155,7 @@ final class TimeStepTest extends TestCase
         self::assertSame($expectedSeconds, $timeStep->seconds());
     }
 
-    public static function dataForTestFromDateInterval2(): iterable
+    public static function providerTestFromDateInterval2(): iterable
     {
         yield "has-month" => [new DateInterval("P1MT1S"), 1,];
         yield "has-year" => [new DateInterval("P1YT1S"), 10,];
@@ -163,7 +163,7 @@ final class TimeStepTest extends TestCase
 
     /**
      * Ensure we can successfully create a TimeStep from a DateInterval.
-     * @dataProvider dataForTestFromDateInterval2
+     * @dataProvider providerTestFromDateInterval2
      */
     public function testFromDateInterval2(DateInterval $interval): void
     {

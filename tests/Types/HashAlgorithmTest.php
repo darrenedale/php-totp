@@ -42,7 +42,7 @@ final class HashAlgorithmTest extends TestCase
     }
 
     /** Data provider with valid hash algorithms for the constructor test. */
-    public static function dataForTestConstructor1(): iterable
+    public static function providerTestConstructor1(): iterable
     {
         yield "sha1" => [HashAlgorithm::Sha1Algorithm,];
         yield "sha256" => [HashAlgorithm::Sha256Algorithm,];
@@ -52,7 +52,7 @@ final class HashAlgorithmTest extends TestCase
     /**
      * Ensure we can construct with valid algorithms.
      *
-     * @dataProvider dataForTestConstructor1
+     * @dataProvider providerTestConstructor1
      */
     public function testConstructor1(string $algorithm): void
     {
@@ -62,7 +62,7 @@ final class HashAlgorithmTest extends TestCase
     }
 
     /** Data provider with invalid hash algorithms for the constructor test. */
-    public static function dataForTestConstructor2(): iterable
+    public static function providerTestConstructor2(): iterable
     {
         yield "empty" => ["",];
         yield "whitespace" => ["  ",];
@@ -75,7 +75,7 @@ final class HashAlgorithmTest extends TestCase
     /**
      * Ensure the constructor throws with invalid algorithms.
      *
-     * @dataProvider dataForTestConstructor2
+     * @dataProvider providerTestConstructor2
      */
     public function testConstructor2(string $algorithm): void
     {

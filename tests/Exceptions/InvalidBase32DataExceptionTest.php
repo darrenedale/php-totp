@@ -55,7 +55,7 @@ class InvalidBase32DataExceptionTest extends TestCase
      *
      * @return array The test data.
      */
-    public function dataForTestConstructor(): array
+    public static function providerTestConstructor(): array
     {
         return [
             "typicalDataOnly" => ["blah",],
@@ -75,7 +75,7 @@ class InvalidBase32DataExceptionTest extends TestCase
     /**
      * Test for the InvalidBase32DataException constructor.
      *
-     * @dataProvider dataForTestConstructor
+     * @dataProvider providerTestConstructor
      *
      * @param mixed $data The invalid base32 data for the test exception.
      * @param mixed $message The message for the test exception. Defaults to an empty string.
@@ -101,7 +101,7 @@ class InvalidBase32DataExceptionTest extends TestCase
      *
      * @return \Generator
      */
-    public function dataForTestGetData(): Generator
+    public static function providerTestGetData(): Generator
     {
         yield from [
             "typical" => ["fizzbuzz",],
@@ -116,7 +116,7 @@ class InvalidBase32DataExceptionTest extends TestCase
     /**
      * Test the InvalidBase32DataException::getData() method.
      *
-     * @dataProvider dataForTestGetData
+     * @dataProvider providerTestGetData
      *
      * @param string $data The data to test with.
      */

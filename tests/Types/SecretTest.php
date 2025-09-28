@@ -37,7 +37,7 @@ use TypeError;
 final class SecretTest extends TestCase
 {
     /** Data provider with valid secrets for testDestructor1(). */
-    public static function dataForTestDestructor1(): iterable
+    public static function providerTestDestructor1(): iterable
     {
         yield "typicalAsciiSecret" => ["password-password"];
         yield "nullBytes16Secret" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"];
@@ -45,7 +45,7 @@ final class SecretTest extends TestCase
     }
 
     /** Ensure the destructor scrubs the secret strings. */
-    #[DataProvider("dataForTestDestructor1")]
+    #[DataProvider("providerTestDestructor1")]
     public function testDestructor1(string $secret): void
     {
         /** @noinspection PhpUnhandledExceptionInspection Secret::fromRaw() shouldn't throw with test data. */
@@ -61,7 +61,7 @@ final class SecretTest extends TestCase
     }
 
     /** Data provider with valid raw secrets for testFromRaw1(). */
-    public static function dataForTestFromRaw1(): iterable
+    public static function providerTestFromRaw1(): iterable
     {
         yield "typicalAscii" => ["password-password",];
         yield "typicalBinary01" => ["\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b\x23\x3f\x40\x55\x5a",];
@@ -88,7 +88,7 @@ final class SecretTest extends TestCase
 	}
 
     /** Ensure we can create Secret instances from valid raw strings. */
-    #[DataProvider("dataForTestFromRaw1")]
+    #[DataProvider("providerTestFromRaw1")]
     public function testFromRaw1(mixed $raw): void
 	{
 		$secret = Secret::fromRaw($raw);
@@ -96,7 +96,7 @@ final class SecretTest extends TestCase
 	}
 
     /** Data provider with invalid raw secrets for testFromRaw2(). */
-    public static function dataForTestFromRaw2(): iterable
+    public static function providerTestFromRaw2(): iterable
     {
         yield "invalidJustTooShortAscii" => ["!fifteen-bytes!",];
         yield "invalidJustTooShortBinary" => ["\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b",];
@@ -104,7 +104,7 @@ final class SecretTest extends TestCase
     }
 
     /** Ensure invalid raw secrets throw the expected exception. */
-    #[DataProvider("dataForTestFromRaw2")]
+    #[DataProvider("providerTestFromRaw2")]
     public function testFromRaw2(mixed $raw): void
     {
         $this->expectException(InvalidSecretException::class);
@@ -113,7 +113,7 @@ final class SecretTest extends TestCase
     }
 
     /** Data provider with base32-encoded valid secrets for testFromBase321(). */
-	public static function dataForTestFromBase321(): iterable
+    public static function providerTestFromBase321(): iterable
 	{
         yield "typicalAscii" => ["OBQXG43XN5ZGILLQMFZXG53POJSA====", "password-password",];
         yield "typicalBinary01" => ["CBZEOM3Q2FNNPLPOHCZURH3LEM7UAVK2", "\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b\x23\x3f\x40\x55\x5a",];
@@ -127,7 +127,7 @@ final class SecretTest extends TestCase
 	}
 
     /** Ensure we can create Secret instances from valid base32-encoded secret strings. */
-    #[DataProvider("dataForTestFromBase321")]
+    #[DataProvider("providerTestFromBase321")]
     public function testFromBase321(mixed $base32, string $expectedRaw): void
 	{
 		$secret = Secret::fromBase32($base32);
@@ -136,7 +136,7 @@ final class SecretTest extends TestCase
 	}
 
     /** Data provider with base32-encoded invalid secrets for testFromBase322(). */
-    public static function dataForTestFromBase322(): iterable
+    public static function providerTestFromBase322(): iterable
     {
         yield "invalidJustTooShortAscii" => ["EFTGSZTUMVSW4LLCPF2GK4ZB",];
         yield "invalidJustTooShortBinary" => ["CBZEOM3Q2FNNPLPOHCZURH3L",];
@@ -144,7 +144,7 @@ final class SecretTest extends TestCase
     }
 
     /** Ensure invalid secrets that are base32-encoded throw the expected exception. */
-    #[DataProvider("dataForTestFromBase322")]
+    #[DataProvider("providerTestFromBase322")]
     public function testFromBase322(mixed $base32): void
     {
         $this->expectException(InvalidSecretException::class);
@@ -154,7 +154,7 @@ final class SecretTest extends TestCase
 
 	/**
      * Data provider with invalid base32-encodings of secrets for testFromBase323(). */
-    public static function dataForTestFromBase323(): iterable
+    public static function providerTestFromBase323(): iterable
     {
         yield "invalid-base32-at-0" => ["cBZEOM3Q2FNNPLPOHCZURH3L", "Invalid base32 character found at position 0",];
         yield "invalid-base32-at-9" => ["CBZEOM3Q2fNNPLPOHCZURH3L", "Invalid base32 character found at position 9",];
@@ -163,7 +163,7 @@ final class SecretTest extends TestCase
     }
 
     /** Ensure invalid base32-encodings of secrets throw the expected exception. */
-    #[DataProvider("dataForTestFromBase323")]
+    #[DataProvider("providerTestFromBase323")]
     public function testFromBase323(mixed $base32, string $expectedExceptionMessage): void
     {
         $this->expectException(InvalidBase32DataException::class);
@@ -172,7 +172,7 @@ final class SecretTest extends TestCase
     }
 
     /** Data provider with base64-encoded valid secrets for testFromBase641(). */
-	public static function dataForTestFromBase641(): iterable
+    public static function providerTestFromBase641(): iterable
 	{
 		return  [
 			"typicalAscii" => ["cGFzc3dvcmQtcGFzc3dvcmQ=", "password-password",],
@@ -188,7 +188,7 @@ final class SecretTest extends TestCase
 	}
 
     /** Ensure we can create Secret instances from valid base64-encoded secret strings. */
-    #[DataProvider("dataForTestFromBase641")]
+    #[DataProvider("providerTestFromBase641")]
     public function testFromBase641(mixed $base64, string $raw): void
 	{
 		$secret = Secret::fromBase64($base64);
@@ -197,7 +197,7 @@ final class SecretTest extends TestCase
 	}
 
     /** Data provider with base64-encoded invalid secrets for testFromBase642(). */
-    public static function dataForTestFromBase642(): iterable
+    public static function providerTestFromBase642(): iterable
     {
         return [
             "invalidJustTooShortAscii" => ["IWZpZnRlZW4tYnl0ZXMh",],
@@ -207,7 +207,7 @@ final class SecretTest extends TestCase
     }
 
     /** Ensure invalid secrets that are base64-encoded throw the expected exception. */
-    #[DataProvider("dataForTestFromBase642")]
+    #[DataProvider("providerTestFromBase642")]
     public function testFromBase642(mixed $base64): void
     {
         $this->expectException(InvalidSecretException::class);
@@ -216,7 +216,7 @@ final class SecretTest extends TestCase
     }
 
     /** Data provider with invalid base64-encoded secrets for testFromBase643(). */
-    public static function dataForTestFromBase643(): iterable
+    public static function providerTestFromBase643(): iterable
     {
         return [
             "invalid-base64-at-0" => ["_HJHM3DRWtet7jizSJ9r", "Invalid base64 character found at position 0",],
@@ -227,7 +227,7 @@ final class SecretTest extends TestCase
     }
 
     /** Ensure invalid base64-encodings of secrets throw the expected exception. */
-    #[DataProvider("dataForTestFromBase643")]
+    #[DataProvider("providerTestFromBase643")]
     public function testFromBase643(mixed $base64, string $expectedExceptionMessage): void
     {
         $this->expectException(InvalidBase64DataException::class);
@@ -240,7 +240,7 @@ final class SecretTest extends TestCase
 	 *
 	 * @return iterable
 	 */
-	public static function dataForTestRaw1(): iterable
+    public static function providerTestRaw1(): iterable
 	{
         yield ["password-password"];
         yield ["\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b\x23\x3f\x40\x55\x5a",];
@@ -262,7 +262,7 @@ final class SecretTest extends TestCase
 	}
 
     /** Ensure we can read the raw secret correctly. */
-    #[DataProvider("dataForTestRaw1")]
+    #[DataProvider("providerTestRaw1")]
 	public function testRaw1(string $raw): void
 	{
 		$secret = Secret::fromRaw($raw);
@@ -270,7 +270,7 @@ final class SecretTest extends TestCase
 	}
 
     /** Data provider with valid secrets and their base32 encodings for testBase321() */
-	public static function dataForTestBase321(): iterable
+    public static function providerTestBase321(): iterable
 	{
         yield ["password-password", "OBQXG43XN5ZGILLQMFZXG53POJSA====",];
         yield ["\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b\x23\x3f\x40\x55\x5a", "CBZEOM3Q2FNNPLPOHCZURH3LEM7UAVK2",];
@@ -284,7 +284,7 @@ final class SecretTest extends TestCase
 	}
 
     /** Ensure we can read the base32-encoded secret correctly. */
-    #[DataProvider("dataForTestBase321")]
+    #[DataProvider("providerTestBase321")]
     public function testBase321(string $raw, string $expectedBase32): void
 	{
 		$secret = Secret::fromRaw($raw);
@@ -292,7 +292,7 @@ final class SecretTest extends TestCase
 	}
 
     /** Data provider with valid secrets and their base64 encodings for testBase321() */
-	public static function dataForTestBase641(): iterable
+    public static function providerTestBase641(): iterable
 	{
         yield ["password-password", "cGFzc3dvcmQtcGFzc3dvcmQ=",];
         yield ["\x8b\xd8\x91\x02\x35\x45\xbb\x16\xbc\x58\x4a\xb6\x73\x14\x3b\x61\xb0\x54\xba\xe7", "i9iRAjVFuxa8WEq2cxQ7YbBUuuc=",];
@@ -306,7 +306,7 @@ final class SecretTest extends TestCase
 	}
 
     /** Ensure we can read the base64-encoded secret correctly. */
-    #[DataProvider("dataForTestBase641")]
+    #[DataProvider("providerTestBase641")]
 	public function testBase641(string $raw, string $expectedBase64): void
 	{
 		$secret = Secret::fromRaw($raw);

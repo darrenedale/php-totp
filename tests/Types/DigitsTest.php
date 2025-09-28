@@ -43,7 +43,7 @@ final class DigitsTest extends TestCase
     }
 
     /** Data provider with valid quantities of digits for the constructor. */
-    public static function dataForTestConstructor1(): iterable
+    public static function providerTestConstructor1(): iterable
     {
         for ($digits = 6; $digits < 15; ++$digits) {
             yield "{$digits} digits" => [$digits];
@@ -53,7 +53,7 @@ final class DigitsTest extends TestCase
     /**
      * Ensure constructor accepts valid digit counts.
      *
-     * @dataProvider dataForTestConstructor1
+     * @dataProvider providerTestConstructor1
      */
     public function testConstructor1(int $digits): void
     {
@@ -63,7 +63,7 @@ final class DigitsTest extends TestCase
     }
 
     /** Data provider with invalid quantities of digits for the constructor. */
-    public static function dataForTestConstructor2(): iterable
+    public static function providerTestConstructor2(): iterable
     {
         for ($digits = -1; $digits < 6; ++$digits) {
             yield "{$digits} digits" => [$digits];
@@ -75,7 +75,7 @@ final class DigitsTest extends TestCase
     /**
      * Ensure constructor throws with invalid digit counts.
      *
-     * @dataProvider dataForTestConstructor2
+     * @dataProvider providerTestConstructor2
      */
     public function testConstructor2(int $digits): void
     {

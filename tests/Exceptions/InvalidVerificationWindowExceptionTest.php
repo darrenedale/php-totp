@@ -37,7 +37,7 @@ final class InvalidVerificationWindowExceptionTest extends TestCase
      *
      * @return array The test data.
      */
-    public function dataForTestConstructor(): array
+    public static function providerTestConstructor(): array
     {
         return [
             "typicalMinus1" => [-1],
@@ -57,7 +57,7 @@ final class InvalidVerificationWindowExceptionTest extends TestCase
     /**
      * Test for InvalidVerificationWindowException constructor.
      *
-     * @dataProvider dataForTestConstructor
+     * @dataProvider providerTestConstructor
      *
      * @param mixed $window The invalid window for the test exception.
      * @param mixed $message The message for the test exception. Defaults to an empty string.
@@ -83,7 +83,7 @@ final class InvalidVerificationWindowExceptionTest extends TestCase
      *
      * @return \Generator
      */
-    public function dataForTestGetWindow(): Generator
+    public static function providerTestGetWindow(): Generator
     {
         yield from [
             "typicalMinus1" => [-1,],
@@ -98,7 +98,7 @@ final class InvalidVerificationWindowExceptionTest extends TestCase
     /**
      * Test the InvalidVerificationWindowException::getWindow() method.
      *
-     * @dataProvider dataForTestGetWindow
+     * @dataProvider providerTestGetWindow
      *
      * @param int $window The window to test with.
      */

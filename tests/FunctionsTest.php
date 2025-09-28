@@ -35,7 +35,7 @@ final class FunctionsTest extends Framework\TestCase
      *
      * @return \Generator
      */
-    public function dataForTestScrubString(): Generator
+    public static function providerTestScrubString(): Generator
     {
         yield from [
             "typical" => ["foobarfizzbuzz",],
@@ -63,7 +63,7 @@ final class FunctionsTest extends Framework\TestCase
 
 
     /**
-     * @dataProvider dataForTestScrubString
+     * @dataProvider providerTestScrubString
      *
      * @param mixed $str The string to test with.
      * @param string|null $expectedException The class name of the Throwable that is expected, if any.

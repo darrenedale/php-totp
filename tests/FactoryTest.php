@@ -27,9 +27,7 @@ use Equit\Totp\Contracts\IntegerRenderer;
 use Equit\Totp\Contracts\Renderer;
 use Equit\Totp\Exceptions\InvalidHashAlgorithmException;
 use Equit\Totp\Exceptions\InvalidSecretException;
-use Equit\Totp\Exceptions\InvalidTimeException;
 use Equit\Totp\Exceptions\InvalidTimeStepException;
-use Equit\Totp\Exceptions\InvalidVerificationWindowException;
 use Equit\Totp\Renderers\EightDigits;
 use Equit\Totp\Renderers\Integer;
 use Equit\Totp\Renderers\SixDigits;
@@ -39,12 +37,11 @@ use Equit\TotpTests\Framework\TestCase;
 use Equit\Totp\Factory;
 use Equit\Totp\Types\Secret;
 use Equit\Totp\Types\TimeStep;
+use Equit\XRay\StaticXRay;
+use Equit\XRay\XRay;
 use Generator;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
-use ReflectionException;
-use ReflectionMethod;
-use ReflectionProperty;
 use TypeError;
 
 /**
@@ -663,7 +660,7 @@ final class FactoryTest extends TestCase
      * @return Generator The RFC test data mapped to the correct structure for the test arguments.
      * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
      */
-    public function dataForTestSixDigits(): iterable
+    public static function providerTestSixDigits(): iterable
     {
         yield from array_map(function (array $testData): array {
             return [
@@ -739,7 +736,7 @@ final class FactoryTest extends TestCase
     /**
      * Test for Totp::sixDigits() factory method.
      *
-     * @dataProvider dataForTestSixDigits
+     * @dataProvider providerTestSixDigits
      *
      * @param string $secret The secret for the Totp.
      * @param int $timeStep The time step for the Totp.
@@ -783,19 +780,10 @@ final class FactoryTest extends TestCase
         $password = $totp->password();
         self::assertEquals(6, strlen($password), "Password from Totp object is not 6 digits.");
         self::assertStringContainsOnly("0123456789", $password, "Password contains some invalid content.");
+        $xray = new XRay($totp);
 
-        foreach ($expectations as $methodName => $details) {
-            try {
-                $method = new ReflectionMethod($totp, $methodName);
-                $method->setAccessible(true);
-                $method   = $method->getClosure($totp);
-                $expected = $details["value"];
-                $actual   = $method(...$details["args"]);
-                self::assertEquals($expected, $actual, "Expected return value from {$methodName} not found.");
-            }
-            catch (ReflectionException) {
-                $this->fail("Invalid method name in expectations given to testSixDigitTotp().");
-            }
+        foreach ($expectations as $method => $details) {
+            self::assertEquals($details["value"], $xray->$method(...$details["args"]), "Expected return value from {$method} not found.");
         }
     }
 
@@ -805,7 +793,7 @@ final class FactoryTest extends TestCase
      * @return Generator The RFC test data mapped to the correct arrangement for the test arguments.
      * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
      */
-    public function dataForTestEightDigits(): iterable
+    public static function providerTestEightDigits(): iterable
     {
         yield from array_map(function (array $testData): array {
             return [
@@ -881,7 +869,7 @@ final class FactoryTest extends TestCase
     /**
      * Test for Totp::eightDigits() factory method.
      *
-     * @dataProvider dataForTestEightDigits
+     * @dataProvider providerTestEightDigits
      *
      * @param string $secret The secret for the Totp.
      * @param int $timeStep The time step for the Totp.
@@ -925,19 +913,10 @@ final class FactoryTest extends TestCase
         $password = $totp->password();
         self::assertEquals(8, strlen($password), "Password from Totp object is not 8 digits.");
         self::assertStringContainsOnly("0123456789", $password, "Password contains some invalid content.");
+        $xray = new XRay($totp);
 
-        foreach ($expectations as $methodName => $details) {
-            try {
-                $method = new ReflectionMethod($totp, $methodName);
-                $method->setAccessible(true);
-                $method   = $method->getClosure($totp);
-                $expected = $details["value"];
-                $actual   = $method(...$details["args"]);
-                self::assertEquals($expected, $actual, "Expected return value from {$methodName} not found.");
-            }
-            catch (ReflectionException) {
-                $this->fail("Invalid method name in expectations given to testSixDigitTotp().");
-            }
+        foreach ($expectations as $method => $details) {
+            self::assertEquals($details["value"], $xray->$method(...$details["args"]), "Expected return value from {$method} not found.");
         }
     }
 
@@ -950,7 +929,7 @@ final class FactoryTest extends TestCase
      * @return Generator The test data.
      * @throws \Exception if self::randomValidSecret() is not able to provide cryptographically-secure data.
      */
-    public function dataForTestInteger(): iterable
+    public static function providerTestInteger(): iterable
     {
         $digits = 8;
 
@@ -1019,7 +998,7 @@ final class FactoryTest extends TestCase
     /**
      * Test for Totp::eightDigits() factory method.
      *
-     * @dataProvider dataForTestInteger
+     * @dataProvider providerTestInteger
      *
      * @param mixed $digits The number of digits in generated passwords.
      * @param string $secret The secret for the Totp.
@@ -1063,19 +1042,10 @@ final class FactoryTest extends TestCase
         $password = $totp->password();
         self::assertEquals($digits, strlen($password), "Password from Totp object is not {$digits} digits.");
         self::assertStringContainsOnly("0123456789", $password, "Password contains some invalid content.");
+        $xray = new XRay($totp);
 
-        foreach ($expectations as $methodName => $details) {
-            try {
-                $method = new ReflectionMethod($totp, $methodName);
-                $method->setAccessible(true);
-                $method   = $method->getClosure($totp);
-                $expected = $details["value"];
-                $actual   = $method(...$details["args"]);
-                self::assertEquals($expected, $actual, "Expected return value from {$methodName} not found.");
-            }
-            catch (ReflectionException) {
-                $this->fail("Invalid method name in expectations given to testSixDigitTotp().");
-            }
+        foreach ($expectations as $method => $details) {
+            self::assertEquals($details["value"], $xray->$method(...$details["args"]), "Expected return value from {$method} not found.");
         }
     }
 
@@ -1084,7 +1054,7 @@ final class FactoryTest extends TestCase
      *
      * @return array The test data.
      */
-    public function dataForTestTotp1(): array
+    public static function providerTestTotp1(): array
     {
         return [
             "typicalPlainText" => ["password-password", "OBQXG43XN5ZGILLQMFZXG53POJSA====",],
@@ -1104,7 +1074,7 @@ final class FactoryTest extends TestCase
      *
      * @noinspection PhpDocMissingThrowsInspection Totp::setSecret() shouldn't throw with test data.
      */
-    #[DataProvider("dataForTestTotp1")]
+    #[DataProvider("providerTestTotp1")]
     public function testTotp1(string $raw, string $base32): void
     {
         $factory = self::createFactory();
@@ -1118,7 +1088,7 @@ final class FactoryTest extends TestCase
      *
      * @return array The test data.
      */
-    public function dataForTestSetHashAlgorithm(): array
+    public static function providerTestSetHashAlgorithm(): array
     {
         return [
             "typicalSha1" => [HashAlgorithm::Sha1Algorithm,],
@@ -1169,7 +1139,7 @@ final class FactoryTest extends TestCase
     /**
      * Test the setHashAlgorithm() method.
      *
-     * @dataProvider dataForTestSetHashAlgorithm
+     * @dataProvider providerTestSetHashAlgorithm
      *
      * @param mixed $algorithm The algorithm to set.
      * @param string|null $exceptionClass The type of exception expected to be thrown, if any.
@@ -1192,7 +1162,7 @@ final class FactoryTest extends TestCase
      *
      * @return array The test data.
      */
-    public function dataForTestHashAlgorithm(): array
+    public static function providerTestHashAlgorithm(): array
     {
         return [
             "typicalSha1" => [HashAlgorithm::Sha1Algorithm,],
@@ -1206,7 +1176,7 @@ final class FactoryTest extends TestCase
      *
      * Note that each run of this test asserts that the default algorithm is SHA1.
      *
-     * @dataProvider dataForTestHashAlgorithm
+     * @dataProvider providerTestHashAlgorithm
      *
      * @param string $algorithm The algorithm to test with.
      *
@@ -1227,7 +1197,7 @@ final class FactoryTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
      */
-    public function dataForTestSetReferenceTime(): array
+    public static function providerTestSetReferenceTime(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor shouldn't throw with test data. */
         return [
@@ -1266,7 +1236,7 @@ final class FactoryTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestSetReferenceTime
+     * @dataProvider providerTestSetReferenceTime
      *
      * @param int|\DateTime $time
      * @param string|null $exceptionClass
@@ -1295,7 +1265,7 @@ final class FactoryTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
      */
-    public function dataForTestReferenceTimestamp(): array
+    public static function providerTestReferenceTimestamp(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor shouldn't throw with test data. */
         return [
@@ -1328,7 +1298,7 @@ final class FactoryTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestReferenceTimestamp
+     * @dataProvider providerTestReferenceTimestamp
      *
      * @param int|\DateTime $time The time to set in the Totp as the reference.
      * @param int|null $expectedTimestamp What referenceTimestamp() is expected to return.
@@ -1353,7 +1323,7 @@ final class FactoryTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection DateTime constructor shouldn't throw with test data.
      */
-    public function dataForTestReferenceTime(): array
+    public static function providerTestReferenceTime(): array
     {
         $now = time();
 
@@ -1388,7 +1358,7 @@ final class FactoryTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestReferenceTime
+     * @dataProvider providerTestReferenceTime
      *
      * @param int|\DateTime $time The time to set in the Totp as the reference.
      * @param DateTime|null $expectedDateTime What referenceTime() is expected to return.
@@ -1414,7 +1384,7 @@ final class FactoryTest extends TestCase
      *
      * @return array The test data.
      */
-    public function dataForTestSetTimeStep(): array
+    public static function providerTestSetTimeStep(): array
     {
         return [
             "typical30" => [30,],
@@ -1441,7 +1411,7 @@ final class FactoryTest extends TestCase
     /**
      * Test for setTimeStep() method.
      *
-     * @dataProvider dataForTestSetTimeStep
+     * @dataProvider providerTestSetTimeStep
      *
      * @param mixed $timeStep The time step to set.
      * @param class-string|null $exceptionClass The type of exception that is expected, if any.
@@ -1464,7 +1434,7 @@ final class FactoryTest extends TestCase
      *
      * @return Generator The test data.
      */
-    public function dataForTestTimeStep(): iterable
+    public static function providerTestTimeStep(): iterable
     {
         // test with all valid time steps up to 1 hour
         for ($timeStep = 1; $timeStep <= 3600; ++$timeStep) {
@@ -1480,7 +1450,7 @@ final class FactoryTest extends TestCase
     /**
      * Test the timeStep() method.
      *
-     * @dataProvider dataForTestTimeStep
+     * @dataProvider providerTestTimeStep
      *
      * @param int $timeStep The timeStep to test with.
      *
@@ -1499,7 +1469,7 @@ final class FactoryTest extends TestCase
      * @return array The test data.
      * @noinspection PhpDocMissingThrowsInspection Integer renderer constructor does not throw in these cases.
      */
-    public function dataForTestSetRenderer(): array
+    public static function providerTestSetRenderer(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection Integer renderer constructor does not throw in these cases. */
         return [
@@ -1539,7 +1509,7 @@ final class FactoryTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestSetRenderer
+     * @dataProvider providerTestSetRenderer
      *
      * @param mixed $renderer The renderer to set.
      * @param string|null $exceptionClass The class name of an exception that is expected to be thrown, if any.
@@ -1560,7 +1530,7 @@ final class FactoryTest extends TestCase
      * @return array
      * @noinspection PhpDocMissingThrowsInspection Integer renderer constructor shouldn't throw with test data.
      */
-    public function dataForTestRenderer(): array
+    public static function providerTestRenderer(): array
     {
         /** @noinspection PhpUnhandledExceptionInspection Integer renderer constructor shouldn't throw with test data. */
         return [
@@ -1587,7 +1557,7 @@ final class FactoryTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestRenderer
+     * @dataProvider providerTestRenderer
      *
      * @param \Equit\Totp\Contracts\Renderer $renderer
      */
@@ -1602,11 +1572,8 @@ final class FactoryTest extends TestCase
      */
     public function testDefaultRenderer(): void
     {
-        $defaultRenderer = new ReflectionMethod(Factory::class, "defaultRenderer");
-        $defaultRenderer->setAccessible(true);
-        $defaultRenderer = $defaultRenderer->getClosure();
-        $renderer        = $defaultRenderer();
-        self::assertInstanceOf(SixDigits::class, $renderer);
+        $xray = new StaticXRay(Factory::class);
+        self::assertInstanceOf(SixDigits::class, $xray->defaultRenderer());
     }
 
     /**

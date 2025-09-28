@@ -37,7 +37,7 @@ final class InvalidSecretExceptionTest extends TestCase
      *
      * @return array The test data.
      */
-    public function dataForTestConstructor(): array
+    public static function providerTestConstructor(): array
     {
         return [
             "typicalSecretOnly" => ["blah_:",],
@@ -58,7 +58,7 @@ final class InvalidSecretExceptionTest extends TestCase
     /**
      * Test for the InvalidSecretException constructor.
      *
-     * @dataProvider dataForTestConstructor
+     * @dataProvider providerTestConstructor
      *
      * @param mixed $secret The invalid secret for the test exception.
      * @param mixed $message The message for the test exception. Defaults to an empty string.
@@ -84,7 +84,7 @@ final class InvalidSecretExceptionTest extends TestCase
      *
      * @return Generator
      */
-    public function dataForTestGetSecret(): Generator
+    public static function providerTestGetSecret(): Generator
     {
         yield from [
             "typical" => ["fizzbuzz",],
@@ -100,7 +100,7 @@ final class InvalidSecretExceptionTest extends TestCase
     /**
      * Test the InvalidSecretException::getSecret() method.
      *
-     * @dataProvider dataForTestGetSecret
+     * @dataProvider providerTestGetSecret
      *
      * @param string $secret The secret to test with.
      */

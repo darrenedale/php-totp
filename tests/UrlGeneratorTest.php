@@ -92,7 +92,7 @@ final class UrlGeneratorTest extends TestCase
      *
      * @return array[]
      */
-    public static function dataForTestHasIssuer(): array
+    public static function providerTestHasIssuer(): array
     {
         return [
             "typical" => ["Equit", true,],
@@ -102,7 +102,7 @@ final class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestHasIssuer
+     * @dataProvider providerTestHasIssuer
      *
      * @param string|null $issuer The issuer to test with.
      * @param bool $expected What hasIssuer() is expected to return.
@@ -121,7 +121,7 @@ final class UrlGeneratorTest extends TestCase
      *
      * @return Generator
      */
-    public static function dataForTestIssuer(): Generator
+    public static function providerTestIssuer(): Generator
     {
         yield from [
             "typical" => ["Equit",],
@@ -136,7 +136,7 @@ final class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestIssuer
+     * @dataProvider providerTestIssuer
      *
      * @param string|null $issuer The issuer to test with.
      *
@@ -154,7 +154,7 @@ final class UrlGeneratorTest extends TestCase
      *
      * @return Generator
      */
-    public static function dataForTestSetIssuer(): Generator
+    public static function providerTestSetIssuer(): Generator
     {
         yield from [
             "typical" => ["Equit",],
@@ -175,7 +175,7 @@ final class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestSetIssuer
+     * @dataProvider providerTestSetIssuer
      *
      * @param string|null $issuer The issuer to test with.
      */
@@ -195,7 +195,7 @@ final class UrlGeneratorTest extends TestCase
      *
      * @return Generator
      */
-    public static function dataForTestUser(): Generator
+    public static function providerTestUser(): Generator
     {
         yield from [
             "typical" => ["darren",],
@@ -207,7 +207,7 @@ final class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestUser
+     * @dataProvider providerTestUser
      *
      * @param string $user The user to test with.
      */
@@ -223,7 +223,7 @@ final class UrlGeneratorTest extends TestCase
      *
      * @return Generator
      */
-    public static function dataForTestSetUser(): Generator
+    public static function providerTestSetUser(): Generator
     {
         yield from [
             "typical" => ["darren",],
@@ -243,7 +243,7 @@ final class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestSetUser
+     * @dataProvider providerTestSetUser
      *
      * @param mixed $user The user to test with.
      * @param string|null $exceptionClass The class of exception expected to be thrown, if any.
@@ -264,7 +264,7 @@ final class UrlGeneratorTest extends TestCase
      *
      * @return Generator The test data.
      */
-    public static function dataForTestUrlFor(): Generator
+    public static function providerTestUrlFor(): Generator
     {
         yield from [
             "typicalIssuerAndUser" => [
@@ -519,7 +519,7 @@ final class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestUrlFor
+     * @dataProvider providerTestUrlFor
      *
      * @param array $urlConfig Configuration for the UrlGenerator to test.
      * @param array $totpConfig Configuration for the Totp to use to test the UrlGenerator.
@@ -651,7 +651,7 @@ final class UrlGeneratorTest extends TestCase
      *
      * @return array
      */
-    public static function dataForTestOptionSwitchMethods(): array
+    public static function providerTestOptionSwitchMethods(): array
     {
         return [
             "typicalTrue" => [true,],
@@ -675,7 +675,7 @@ final class UrlGeneratorTest extends TestCase
     /**
      * Test for the setIncludePeriod() method.
      *
-     * @dataProvider dataForTestOptionSwitchMethods
+     * @dataProvider providerTestOptionSwitchMethods
      *
      * @param mixed $include The value to pass to the setIncludePeriod() method, and the expected return value from
      * includesPeriod().
@@ -695,7 +695,7 @@ final class UrlGeneratorTest extends TestCase
     /**
      * Test for the setIncludeDigits() method.
      *
-     * @dataProvider dataForTestOptionSwitchMethods
+     * @dataProvider providerTestOptionSwitchMethods
      *
      * @param mixed $include The value to pass to the setIncludeDigits() method, and the expected return value from
      * includesDigits().
@@ -715,7 +715,7 @@ final class UrlGeneratorTest extends TestCase
     /**
      * Test for the setIncludeAlgorithm() method.
      *
-     * @dataProvider dataForTestOptionSwitchMethods
+     * @dataProvider providerTestOptionSwitchMethods
      *
      * @param mixed $include The value to pass to the setIncludeAlgorithm() method, and the expected return value from
      * includesAlgorithm().
@@ -737,7 +737,7 @@ final class UrlGeneratorTest extends TestCase
      *
      * @return \Generator
      */
-    public static function dataForFluentBadMethodCallTests(): Generator
+    public static function providerFluentBadMethodCallTests(): Generator
     {
         yield from [
             // these are all likely confusions of actual static methods provided
@@ -770,7 +770,7 @@ final class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForFluentBadMethodCallTests
+     * @dataProvider providerFluentBadMethodCallTests
      *
      * Test the static/fluent interface throws the BadMethodCall exception with non-existent methods.
      *
@@ -784,7 +784,7 @@ final class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForFluentBadMethodCallTests
+     * @dataProvider providerFluentBadMethodCallTests
      *
      * Test the static/fluent interface throws the BadMethodCall exception with non-existent methods.
      *
@@ -800,7 +800,7 @@ final class UrlGeneratorTest extends TestCase
     /**
      * Test for() used as the initialising method in a fluent build of an UrlGenerator.
      *
-     * @dataProvider dataForTestSetUser
+     * @dataProvider providerTestSetUser
      *
      * @param mixed $user The user to test with.
      * @param string|null $exceptionClass The class of exception expected to be thrown, if any.
@@ -819,7 +819,7 @@ final class UrlGeneratorTest extends TestCase
     /**
      * Test for() used as a chained method in a fluent build of an UrlGenerator.
      *
-     * @dataProvider dataForTestSetUser
+     * @dataProvider providerTestSetUser
      *
      * @param mixed $user The user to test with.
      * @param string|null $exceptionClass The class of exception expected to be thrown, if any.
@@ -838,7 +838,7 @@ final class UrlGeneratorTest extends TestCase
     /**
      * Test from() used as the initialising method in a fluent build of an UrlGenerator.
      *
-     * @dataProvider dataForTestIssuer
+     * @dataProvider providerTestIssuer
      *
      * @param mixed $issuer The issuer to test with.
      * @param string|null $exceptionClass The class of exception expected to be thrown, if any.
@@ -857,7 +857,7 @@ final class UrlGeneratorTest extends TestCase
     /**
      * Test from() used as a chained method in a fluent build of an UrlGenerator.
      *
-     * @dataProvider dataForTestIssuer
+     * @dataProvider providerTestIssuer
      *
      * @param mixed $issuer The issuer to test with.
      * @param string|null $exceptionClass The class of exception expected to be thrown, if any.

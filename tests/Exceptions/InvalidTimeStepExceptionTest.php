@@ -38,7 +38,7 @@ final class InvalidTimeStepExceptionTest extends TestCase
      *
      * @return array The test data.
      */
-    public function dataForTestConstructor(): array
+    public static function providerTestConstructor(): array
     {
         return [
             "typical0" => [0],
@@ -59,7 +59,7 @@ final class InvalidTimeStepExceptionTest extends TestCase
     /**
      * Test for the InvalidTimeStepException constructor.
      *
-     * @dataProvider dataForTestConstructor
+     * @dataProvider providerTestConstructor
      *
      * @param mixed $timeStep The invalid time step for the test exception.
      * @param mixed $message The message for the test exception. Defaults to an empty string.
@@ -85,7 +85,7 @@ final class InvalidTimeStepExceptionTest extends TestCase
      *
      * @return \Generator
      */
-    public function dataForTestGetTimeStep(): Generator
+    public static function providerTestGetTimeStep(): Generator
     {
         yield from [
             "typical" => [0,],
@@ -101,7 +101,7 @@ final class InvalidTimeStepExceptionTest extends TestCase
     /**
      * Test the InvalidTimeStepException::getTimeStep() method.
      *
-     * @dataProvider dataForTestGetTimeStep
+     * @dataProvider providerTestGetTimeStep
      *
      * @param int $timeStep The time step to test with.
      */
