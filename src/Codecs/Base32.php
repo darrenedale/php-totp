@@ -120,7 +120,7 @@ class Base32 implements Codec
 
         if (0 !== ($length % 8)) {
             if (self::isStrict()) {
-                throw new InvalidBase32DataException($base32, "Base32 data must be padded to a multiple of 8 bytes.");
+                throw new InvalidBase32DataException($base32, "Base32 data must be padded to a multiple of 8 bytes");
             }
 
             // tolerate badly terminated encoded strings by padding with = to appropriate length
@@ -143,14 +143,14 @@ class Base32 implements Codec
 
             default:
                 // this isn't subject to strict mode - any other length of padding is a potential truncation
-                throw new InvalidBase32DataException($base32, "Base32 data must be padded with either 0, 1, 3, 4 or 6 '=' characters.");
+                throw new InvalidBase32DataException($base32, "Base32 data must be padded with either 0, 1, 3, 4 or 6 '=' characters");
         }
 
         // ensure all non-padding characters are from the Base32 dictionary
         $validLength = strspn($base32, self::Dictionary, 0, $length);
 
         if ($length !== $validLength) {
-            throw new InvalidBase32DataException($base32, "Invalid base32 character found at position {$validLength}.");
+            throw new InvalidBase32DataException($base32, "Invalid base32 character found at position {$validLength}");
         }
 
         $this->encodedData = $base32;

@@ -72,7 +72,7 @@ final class Secret
     private function __construct(string $secret)
     {
         if (self::MinimumSecretBytes > strlen($secret)) {
-            throw new InvalidSecretException($secret, "Raw secrets for TOTP are required to be 128 bits (16 bytes) or longer.");
+            throw new InvalidSecretException($secret, "Raw secrets for TOTP are required to be 128 bits (16 bytes) or longer");
         }
 
         $this->raw = $secret;

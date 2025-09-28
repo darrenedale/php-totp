@@ -118,7 +118,7 @@ class Base64 implements Codec
         $length = strlen($base64);
 
         if (self::isStrict() && 0 !== ($length % 4)) {
-            throw new InvalidBase64DataException($base64, "Base64 data must be padded to a multiple of 4 bytes.");
+            throw new InvalidBase64DataException($base64, "Base64 data must be padded to a multiple of 4 bytes");
         }
 
         // ensure any padding is a valid length
@@ -135,14 +135,14 @@ class Base64 implements Codec
                 break;
 
             default:
-                throw new InvalidBase64DataException($base64, "Base64 data must be padded with either 0, 1 or 2 '=' characters.");
+                throw new InvalidBase64DataException($base64, "Base64 data must be padded with either 0, 1 or 2 '=' characters");
         }
 
         // ensure all non-padding characters are from the Base64 dictionary
         $validLength = strspn($base64, self::Dictionary, 0, $length);
 
         if ($length !== $validLength) {
-            throw new InvalidBase64DataException($base64, "Invalid base64 character found at position {$validLength}.");
+            throw new InvalidBase64DataException($base64, "Invalid base64 character found at position {$validLength}");
         }
 
         $this->encodedData = $base64;
