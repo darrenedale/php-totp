@@ -8,6 +8,7 @@ use DateInterval;
 use Equit\Totp\Exceptions\InvalidTimeStepException;
 use Stringable;
 
+/** Named type for ensuring valid TOTP time steps. */
 final class TimeStep implements Stringable
 {
     /** The default update time step for passwords. */
