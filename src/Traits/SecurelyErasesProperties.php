@@ -31,7 +31,7 @@ trait SecurelyErasesProperties
     private function securelyEraseProperties(): void
     {
         foreach ((new ReflectionClass($this))->getProperties() as $property) {
-            if (is_string($this->{$property->name})) {
+            if (!$property->isStatic() && is_string($this->{$property->name})) {
                 scrubString($this->{$property->name});
             }
         }
