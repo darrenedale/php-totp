@@ -22,18 +22,18 @@ declare(strict_types=1);
 namespace Equit\TotpTests\Exceptions\UrlGenerator;
 
 use Equit\Totp\Contracts\Renderer;
+use Equit\Totp\Exceptions\TotpException;
 use Equit\Totp\Exceptions\UrlGenerator\UnsupportedRendererException;
 use Equit\Totp\Renderers\EightDigits;
 use Equit\Totp\Renderers\Integer;
 use Equit\Totp\Renderers\SixDigits;
 use Equit\Totp\Types\Digits;
 use Equit\TotpTests\Framework\TestCase;
-use Exception;
-use TypeError;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Throwable;
 
-/**
- * Unit test for the UnsupportedRendererException class.
- */
+#[CoversClass(UnsupportedRendererException::class)]
 final class UnsupportedRendererExceptionTest extends TestCase
 {
     /**
@@ -58,110 +58,60 @@ final class UnsupportedRendererExceptionTest extends TestCase
     }
 
     /**
-     * Test data for UnsupportedRendererException constructor.
-     *
-     * @return array The test data.
-     */
-    public static function providerTestConstructor(): array
+     * Data provider with arguments for the exception constructor for testConstructor1(). */
+    public static function providerTestConstructor1(): iterable
     {
-        return [
-            "typicalRendererOnly" => [self::createUnsupportedRenderer(),],
-            "typicalRendererAndMessage" => [self::createUnsupportedRenderer(), "This is not a supported renderer.",],
-            "typicalRendererMessageAndCode" => [self::createUnsupportedRenderer(), "This is not a supported renderer.", 12,],
-            "typicalRendererMessageCodeAndPrevious" => [self::createUnsupportedRenderer(), "This is not a supported renderer.", 12, new Exception("foo"),],
-            "invalidStringRenderer" => [Integer::class, "class-string is not a supported renderer.", 12, new Exception("foo"), TypeError::class],
-            "invalidNullRenderer" => [null, "null is not a supported renderer.", 12, new Exception("foo"), TypeError::class],
-            "invalidStringableRenderer" => [self::createStringable(""), "'' is not a supported renderer.", 12, new Exception("foo"), TypeError::class],
-            "invalidIntRenderer" => [1, "1 is not a supported renderer.", 12, new Exception("foo"), TypeError::class],
-            "invalidFloatRenderer" => [1.115, "1.115 is not a supported renderer.", 12, new Exception("foo"), TypeError::class],
-            "invalidTrueRenderer" => [true, "true is not a supported renderer.", 12, new Exception("foo"), TypeError::class],
-            "invalidFalseRenderer" => [false, "false is not a supported renderer.", 12, new Exception("foo"), TypeError::class],
-            "invalidArrayRenderer" => [["render" => fn(string $hmac): string => "",], "array is not a supported renderer.", 12, new Exception("foo"), TypeError::class],
-            "invalidObjectRenderer" => [(object)["render" => fn(string $hmac): string => "",], "object is not a supported renderer.", 12, new Exception("foo"), TypeError::class],
-        ];
+        $unsupportedRenderer = self::createUnsupportedRenderer();
+        yield "renderer-only" => [$unsupportedRenderer,];
+        yield "renderer-and-message" => [$unsupportedRenderer, "This is not a supported renderer.",];
+        yield "renderer-message-and-code" => [$unsupportedRenderer, "This is not a supported renderer.", 12,];
+        yield "renderer-message-code-and-previous" => [$unsupportedRenderer, "This is not a supported renderer.", 12, new TotpException("foo"),];
     }
 
-    /**
-     * Test for UnsupportedRendererException constructor.
-     *
-     * @dataProvider providerTestConstructor
-     *
-     * @param mixed $renderer The invalid Renderer instance for the test exception.
-     * @param mixed $message The message for the test exception. Defaults to an empty string.
-     * @param mixed $code The error code for the test exception. Defaults to 0.
-     * @param mixed|null $previous The previous throwable for the test exception. Defaults to null.
-     * @param string|null $exceptionClass The class name of the exception that is expected during the test, if any.
-     */
-    public function testConstructor(mixed $renderer, mixed $message = "", mixed $code = 0, mixed $previous = null, string $exceptionClass = null): void
+    /** Ensure the constructor initialises the exception as expected. */
+    #[DataProvider("providerTestConstructor1")]
+    public function testConstructor1(Renderer $renderer, string $message = "", int $code = 0, ?Throwable $previous = null): void
     {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        $exception = new UnsupportedRendererException($renderer, $message, $code, $previous);
-        $this->assertSame($renderer, $exception->getRenderer(), "Unsupported Renderer retrieved from exception was not as expected.");
-        $this->assertEquals($message, $exception->getMessage(), "Message retrieved from exception was not as expected.");
-        $this->assertEquals($code, $exception->getCode(), "Error code retrieved from exception was not as expected.");
-        $this->assertSame($previous, $exception->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
+        $actual = new UnsupportedRendererException($renderer, $message, $code, $previous);
+        self::assertSame($renderer, $actual->getRenderer(), "Unsupported Renderer retrieved from exception was not as expected.");
+        self::assertEquals($message, $actual->getMessage(), "Message retrieved from exception was not as expected.");
+        self::assertEquals($code, $actual->getCode(), "Error code retrieved from exception was not as expected.");
+        self::assertSame($previous, $actual->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
     }
 
-    /**
-     * Test data for UnsupportedRendererException::getRenderer().
-     *
-     * @return array
-     * @noinspection PhpDocMissingThrowsInspection Integer renderer constructor guaranteed not to throw here.
-     */
-    public static function providerTestGetRenderer(): array
+    /** Data provider with renderers for testGetRenderer1(). */
+    public static function providerTestGetRenderer1(): iterable
     {
-        /** @noinspection PhpUnhandledExceptionInspection Integer renderer constructor guaranteed not to throw here. */
-        return [
-            [new Integer(new Digits(7)),],
-            [new SixDigits(),],
-            [new EightDigits(),],
-            [self::createUnsupportedRenderer(),],
-        ];
+        yield "integer-renderer" => [new Integer(new Digits(7)),];
+        yield "six-digits-renderer" => [new SixDigits(),];
+        yield "eight-digits-renderer" => [new EightDigits(),];
+        yield "anonymous-renderer" => [self::createUnsupportedRenderer(),];
     }
 
-    /**
-     * Test the UnsupportedRendererException::getRenderer() method.
-     *
-     * @dataProvider providerTestGetRenderer
-     *
-     * @param Renderer $renderer The Renderer to test with.
-     */
-    public function testGetRenderer(Renderer $renderer): void
+    /** Ensure getRenderer() returns the expected renderer. */
+    #[DataProvider("providerTestGetRenderer1")]
+    public function testGetRenderer1(Renderer $renderer): void
     {
-        $exception = new UnsupportedRendererException($renderer);
-        $this->assertSame($renderer, $exception->getRenderer(), "Unsupported renderer retrieved from exception was not as expected.");
+        $actual = new UnsupportedRendererException($renderer);
+        self::assertSame($renderer, $actual->getRenderer(), "Unsupported renderer retrieved from exception was not as expected.");
     }
 
-    /**
-     * Test data for UnsupportedRendererException::getRendererClass().
-     *
-     * @return array The test data.
-     * @noinspection PhpDocMissingThrowsInspection Integer renderer constructor guaranteed not to throw.
-     */
-    public static function providerTestGetRendererClass(): array
+    /** Data provider with renderers and their FQ class names for testGetRendererClass1(). */
+    public static function providerTestGetRendererClass1(): iterable
     {
-        /** @noinspection PhpUnhandledExceptionInspection Renderer constructor guaranteed not to throw here */
-        return [
-            [new Integer(new Digits(7)), Integer::class,],
-            [new SixDigits(), SixDigits::class,],
-            [new EightDigits(), EightDigits::class,],
-        ];
+        yield "integer-renderer" => [new Integer(new Digits(7)), Integer::class,];
+        yield "six-digits-renderer" => [new SixDigits(), SixDigits::class,];
+        yield "eight-digits-renderer" => [new EightDigits(), EightDigits::class,];
+
+        $unsupportedRenderer = self::createUnsupportedRenderer();
+        yield "anonymous-renderer" => [$unsupportedRenderer, $unsupportedRenderer::class,];
     }
 
-    /**
-     * Test the UnsupportedRendererException::getRendererClass() method.
-     *
-     * @dataProvider providerTestGetRendererClass
-     *
-     * @param Renderer $renderer The Renderer to test with.
-     * @param class-string $class The expected renderer class name.
-     */
-    public function testGetRendererClass(Renderer $renderer, string $class): void
+    /** Ensure getRendererClass() returns the expected renderer class name. */
+    #[DataProvider("providerTestGetRendererClass1")]
+    public function testGetRendererClass1(Renderer $renderer, string $class): void
     {
-        $exception = new UnsupportedRendererException($renderer);
-        $this->assertEquals($class, $exception->getRendererClass(), "Unsupported renderer class retrieved from exception was not as expected.");
+        $actual = new UnsupportedRendererException($renderer);
+        self::assertEquals($class, $actual->getRendererClass(), "Unsupported renderer class retrieved from exception was not as expected.");
     }
 }

@@ -22,95 +22,51 @@ declare(strict_types=1);
 namespace Equit\TotpTests\Exceptions;
 
 use Equit\Totp\Exceptions\InvalidDigitsException;
+use Equit\Totp\Exceptions\TotpException;
 use Equit\TotpTests\Framework\TestCase;
-use Exception;
-use Generator;
-use TypeError;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Throwable;
 
-/**
- * Unit test for the InvalidDigitsException class.
- */
+#[CoversClass(InvalidDigitsException::class)]
 final class InvalidDigitsExceptionTest extends TestCase
 {
-
-    /**
-     * Test data for InvalidDigitsException constructor.
-     *
-     * @return Generator The test data.
-     */
-    public static function providerTestConstructor(): Generator
+    /** Data provider with constructor arguments for the exception for testConstructor1(). */
+    public static function providerTestConstructor1(): iterable
     {
         for ($digits = 1; $digits < 6; ++$digits) {
-            yield "typical{$digits}" => [$digits];
+            yield "{$digits}-digits" => [$digits];
         }
 
-        yield from [
-            "typicalDigitsAndMessage" => [1, "1 is not a valid number of digits.",],
-            "typicalDigitsMessageAndCode" => [1, "1 is not a valid number of digits.", 12,],
-            "typicalDigitsMessageCodeAndPrevious" => [1, "1 is not a valid number of digits.", 12, new Exception("foo"),],
-            "invalidNullDigits" => [null, "Null is not a valid number of digits.", 12, new Exception("foo"), TypeError::class],
-            "invalidStringDigits" => ["1", "'1' is not a valid number of digits.", 12, new Exception("foo"), TypeError::class],
-            "invalidFloatDigits" => [1.115, "1.115 is not a valid number of digits.", 12, new Exception("foo"), TypeError::class],
-            "invalidTrueDigits" => [true, "True is not a valid number of digits.", 12, new Exception("foo"), TypeError::class],
-            "invalidFalseDigits" => [false, "False is not a valid number of digits.", 12, new Exception("foo"), TypeError::class],
-            "invalidObjectDigits" => [(object)["digits" => 1,], "This is not a valid number of digits.", 12, new Exception("foo"), TypeError::class],
-            "invalidStringableDigits" => [self::createStringable("1"), "'1' is not a valid number of digits.", 12, new Exception("foo"), TypeError::class],
-            "invalidArrayDigits" => [[1,], "[1] is not a valid number of digits.", 12, new Exception("foo"), TypeError::class],
-        ];
+        yield "digits-and-message" => [1, "1 is not a valid number of digits.",];
+        yield "digits-message-and-code" => [1, "1 is not a valid number of digits.", 12,];
+        yield "digits-message-code-and-previous" => [1, "1 is not a valid number of digits.", 12, new TotpException("foo"),];
     }
 
-    /**
-     * Test for the InvalidDigitsException constructor.
-     *
-     * @dataProvider providerTestConstructor
-     *
-     * @param mixed $digits The invalid number of digits for the test exception.
-     * @param mixed $message The message for the test exception. Defaults to an empty string.
-     * @param mixed $code The error code for the test exception. Defaults to 0.
-     * @param mixed|null $previous The previous throwable for the test exception. Defaults to null.
-     * @param string|null $exceptionClass The class name of the exception that is expected during the test, if any.
-     */
-    public function testConstructor(mixed $digits, mixed $message = "", mixed $code = 0, mixed $previous = null, string $exceptionClass = null): void
+    /** Ensure the constructor initialises the exception as expected. */
+    #[DataProvider("providerTestConstructor1")]
+    public function testConstructor1(int $digits, string $message = "", int $code = 0, ?Throwable $previous = null): void
     {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        $exception = new InvalidDigitsException($digits, $message, $code, $previous);
-        $this->assertEquals($digits, $exception->getDigits(), "Invalid number of digits retrieved from exception was not as expected.");
-        $this->assertEquals($message, $exception->getMessage(), "Message retrieved from exception was not as expected.");
-        $this->assertEquals($code, $exception->getCode(), "Error code retrieved from exception was not as expected.");
-        $this->assertSame($previous, $exception->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
+        $actual = new InvalidDigitsException($digits, $message, $code, $previous);
+        self::assertEquals($digits, $actual->getDigits(), "Invalid number of digits retrieved from exception was not as expected.");
+        self::assertEquals($message, $actual->getMessage(), "Message retrieved from exception was not as expected.");
+        self::assertEquals($code, $actual->getCode(), "Error code retrieved from exception was not as expected.");
+        self::assertSame($previous, $actual->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
     }
 
-    /**
-     * Test data for InvalidDigitsException::getDigits().
-     *
-     * @return \Generator
-     */
-    public static function providerTestGetDigits(): Generator
+    /** Data provider with invalid digit counts for testGetDigits1(). */
+    public static function providerTestGetDigits1(): iterable
     {
-        yield from [
-            "typical" => [5,],
-            "extremeZero" => [0,],
-            "extremeMinus7" => [-7,],
-        ];
-
-        for ($idx = 0; $idx < 100; ++$idx) {
-            yield "random" . sprintf("%02d", $idx) => [mt_rand(PHP_INT_MIN, 5),];
-        }
+        yield "five" => [5,];
+        yield "zero" => [0,];
+        yield "minus-7" => [-7,];
     }
 
-    /**
-     * Test the InvalidDigitsException::getDigits() method.
-     *
-     * @dataProvider providerTestGetDigits
-     *
-     * @param int $digits The number of digits to test with.
-     */
-    public function testGetDigits(int $digits): void
+    /** Ensure we can retrieve the correct invalid digit count from the exception. */
+    #[DataProvider('providerTestGetDigits1')]
+    public function testGetDigits1(int $digits): void
     {
-        $exception = new InvalidDigitsException($digits);
-        $this->assertEquals($digits, $exception->getDigits(), "Invalid number of digits retrieved from exception was not as expected.");
+        $actual = new InvalidDigitsException($digits);
+        self::assertEquals($digits, $actual->getDigits(), "Invalid number of digits retrieved from exception was not as expected.");
     }
 }

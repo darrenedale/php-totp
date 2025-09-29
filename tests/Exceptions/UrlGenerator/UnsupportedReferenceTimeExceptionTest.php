@@ -78,11 +78,11 @@ final class UnsupportedReferenceTimeExceptionTest extends TestCase
             $time = new DateTime("@{$time}", new DateTimeZone("UTC"));
         }
 
-        $this->assertEquals($time, $exception->getTime(), "Unsupported DateTime retrieved from exception was not as expected.");
-        $this->assertEquals($timestamp, $exception->getTimestamp(), "Timestamp retrieved from exception was not as expected.");
-        $this->assertEquals($message, $exception->getMessage(), "Message retrieved from exception was not as expected.");
-        $this->assertEquals($code, $exception->getCode(), "Error code retrieved from exception was not as expected.");
-        $this->assertSame($previous, $exception->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
+        self::assertEquals($time, $exception->getTime(), "Unsupported DateTime retrieved from exception was not as expected.");
+        self::assertEquals($timestamp, $exception->getTimestamp(), "Timestamp retrieved from exception was not as expected.");
+        self::assertEquals($message, $exception->getMessage(), "Message retrieved from exception was not as expected.");
+        self::assertEquals($code, $exception->getCode(), "Error code retrieved from exception was not as expected.");
+        self::assertSame($previous, $exception->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
     }
 
     /**
@@ -112,7 +112,7 @@ final class UnsupportedReferenceTimeExceptionTest extends TestCase
     public function testGetTimestamp1(int|DateTime $time, int $expectedTimestamp): void
     {
         $exception = new UnsupportedReferenceTimeException($time);
-        $this->assertEquals($expectedTimestamp, $exception->getTimestamp(), "Unsupported reference timestamp retrieved from exception was not as expected.");
+        self::assertEquals($expectedTimestamp, $exception->getTimestamp(), "Unsupported reference timestamp retrieved from exception was not as expected.");
     }
 
     /**
@@ -142,6 +142,6 @@ final class UnsupportedReferenceTimeExceptionTest extends TestCase
     public function testGetTime1(int|DateTime $time, DateTime $expectedTime): void
     {
         $exception = new UnsupportedReferenceTimeException($time);
-        $this->assertEquals($expectedTime, $exception->getTime(), "Unsupported DateTime retrieved from exception was not as expected.");
+        self::assertEquals($expectedTime, $exception->getTime(), "Unsupported DateTime retrieved from exception was not as expected.");
     }
 }

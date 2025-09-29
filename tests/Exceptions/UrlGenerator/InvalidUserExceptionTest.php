@@ -45,10 +45,10 @@ final class InvalidUserExceptionTest extends TestCase
     public function testConstructor1(string $user, string $message = "", int $code = 0, ?Throwable $previous = null): void
     {
         $exception = new InvalidUserException($user, $message, $code, $previous);
-        $this->assertEquals($user, $exception->getUser(), "Invalid user retrieved from exception was not as expected.");
-        $this->assertEquals($message, $exception->getMessage(), "Message retrieved from exception was not as expected.");
-        $this->assertEquals($code, $exception->getCode(), "Error code retrieved from exception was not as expected.");
-        $this->assertSame($previous, $exception->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
+        self::assertEquals($user, $exception->getUser(), "Invalid user retrieved from exception was not as expected.");
+        self::assertEquals($message, $exception->getMessage(), "Message retrieved from exception was not as expected.");
+        self::assertEquals($code, $exception->getCode(), "Error code retrieved from exception was not as expected.");
+        self::assertSame($previous, $exception->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
     }
 
     /** Data provider with user names for testGetUser1(). */
@@ -64,6 +64,6 @@ final class InvalidUserExceptionTest extends TestCase
     public function testGetUser1(string $user): void
     {
         $exception = new InvalidUserException($user);
-        $this->assertEquals($user, $exception->getUser(), "Invalid user retrieved from exception was not as expected.");
+        self::assertEquals($user, $exception->getUser(), "Invalid user retrieved from exception was not as expected.");
     }
 }
