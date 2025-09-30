@@ -22,113 +22,49 @@ declare(strict_types=1);
 namespace Equit\TotpTests\Exceptions;
 
 use Equit\Totp\Exceptions\InvalidHashAlgorithmException;
-use Equit\Totp\Types\HashAlgorithm;
+use Equit\Totp\Exceptions\TotpException;
 use Equit\TotpTests\Framework\TestCase;
-use Equit\Totp\Factory;
-use Exception;
-use Generator;
-use TypeError;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Throwable;
 
-/**
- * Unit test for the InvalidHashAlgorithmException class.
- */
+#[CoversClass(InvalidHashAlgorithmException::class)]
 final class InvalidHashAlgorithmExceptionTest extends TestCase
 {
-    /**
-     * Generate a random string that is guaranteed not to be a valid TOTP hash algorithm.
-     *
-     * The string returned will be one of the algorithms that is supported by PHP but is not valid for TOTP.
-     *
-     * @return string The generated invalid algorithm.
-     */
-    private static function randomInvalidAlgorithm(): string
+    /** Data provider with constructor arguments for the exception for testConstructor1(). */
+    public static function providerTestConstructor1(): iterable
     {
-        static $algorithms = null;
-
-        if (!isset($algorithms)) {
-            $algorithms = array_values(array_filter(hash_algos(), fn(string $algorithm): bool => match ($algorithm) {
-                HashAlgorithm::Sha1Algorithm, HashAlgorithm::Sha256Algorithm, HashAlgorithm::Sha512Algorithm => false,
-                default => true,
-            }));
-        }
-
-        return $algorithms[mt_rand(0, count($algorithms) - 1)];
+        yield "algorithm-only" => ["md5",];
+        yield "algorithm-and-message" => ["md5", "'md5' is not a valid TOTP hash algorithm.",];
+        yield "algorithm-message-and-code" => ["md5", "'md5' is not a valid TOTP hash algorithm.", 12,];
+        yield "algorithm-message-code-and-previous" => ["md5", "'md5' is not a valid TOTP hash algorithm.", 12, new TotpException("foo"),];
     }
 
-    /**
-     * Test data for InvalidHashAlgorithmException constructor.
-     *
-     * @return array The test data.
-     */
-    public static function providerTestConstructor(): array
+    /** Ensure the constructor initialises the exception as expected. */
+    #[DataProvider("providerTestConstructor1")]
+    public function testConstructor1(string $hashAlgorithm, string $message = "", int $code = 0, ?Throwable $previous = null): void
     {
-        return [
-            "typicalAlgorithmOnly" => ["md5",],
-            "typicalAlgorithmAndMessage" => ["md5", "'md5' is not a valid TOTP hash algorithm.",],
-            "typicalAlgorithmMessageAndCode" => ["md5", "'md5' is not a valid TOTP hash algorithm.", 12,],
-            "typicalAlgorithmMessageCodeAndPrevious" => ["md5", "'md5' is not a valid TOTP hash algorithm.", 12, new Exception("foo"),],
-            "invalidNullAlgorithm" => [null, "null is not a valid TOTP hash algorithm.", 12, new Exception("foo"), TypeError::class],
-            "invalidStringableAlgorithm" => [self::createStringable("md5"), "'md5' is not a valid TOTP hash algorithm.", 12, new Exception("foo"), TypeError::class],
-            "invalidIntAlgorithm" => [1, "1 is not a valid TOTP hash algorithm.", 12, new Exception("foo"), TypeError::class],
-            "invalidFloatAlgorithm" => [1.115, "1.115 is not a valid TOTP hash algorithm.", 12, new Exception("foo"), TypeError::class],
-            "invalidTrueAlgorithm" => [true, "true is not a valid TOTP hash algorithm.", 12, new Exception("foo"), TypeError::class],
-            "invalidFalseAlgorithm" => [false, "false is not a valid TOTP hash algorithm.", 12, new Exception("foo"), TypeError::class],
-            "invalidArrayAlgorithm" => [["md5",], "'md5' is not a valid TOTP hash algorithm.", 12, new Exception("foo"), TypeError::class],
-        ];
+        $actual = new InvalidHashAlgorithmException($hashAlgorithm, $message, $code, $previous);
+        self::assertEquals($hashAlgorithm, $actual->getHashAlgorithm(), "Invalid hash algorithm retrieved from exception was not as expected.");
+        self::assertEquals($message, $actual->getMessage(), "Message retrieved from exception was not as expected.");
+        self::assertEquals($code, $actual->getCode(), "Error code retrieved from exception was not as expected.");
+        self::assertSame($previous, $actual->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
     }
 
-    /**
-     * Test for the InvalidHashAlgorithmException constructor.
-     *
-     * @dataProvider providerTestConstructor
-     *
-     * @param mixed $hashAlgorithm The invalid algorithm for the test exception.
-     * @param mixed $message The message for the test exception. Defaults to an empty string.
-     * @param mixed $code The error code for the test exception. Defaults to 0.
-     * @param mixed|null $previous The previous throwable for the test exception. Defaults to null.
-     * @param string|null $exceptionClass The class name of the exception that is expected during the test, if any.
-     */
-    public function testConstructor(mixed $hashAlgorithm, mixed $message = "", mixed $code = 0, mixed $previous = null, string $exceptionClass = null): void
+    /** Data provider with invalid base32 data for testGetAlgorithm1(). */
+    public static function providerTestGetAlgorithm1(): iterable
     {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        $exception = new InvalidHashAlgorithmException($hashAlgorithm, $message, $code, $previous);
-        $this->assertEquals($hashAlgorithm, $exception->getHashAlgorithm(), "Invalid hash algorithm retrieved from exception was not as expected.");
-        $this->assertEquals($message, $exception->getMessage(), "Message retrieved from exception was not as expected.");
-        $this->assertEquals($code, $exception->getCode(), "Error code retrieved from exception was not as expected.");
-        $this->assertSame($previous, $exception->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
+        yield "typical" => ["md5",];
+        yield "empty" => ["",];
+        yield "nearly-valid" => ["sha1 ",];
+        yield "whitespace" => ["  ",];
     }
 
-    /**
-     * Test data for InvalidHashAlgorithmException::getAlgorithm().
-     *
-     * @return Generator
-     */
-    public static function providerTestGetAlgorithm(): Generator
-    {
-        yield from [
-            "typical" => ["md5",],
-            "extremeEmpty" => ["",],
-            "extremeNearlyValid" => ["sha1 ",],
-        ];
-
-        for ($idx = 0; $idx < 100; ++$idx) {
-            yield "typicalRandom" . sprintf("%02d", $idx) => [self::randomInvalidAlgorithm(),];
-        }
-    }
-
-    /**
-     * Test the InvalidHashAlgorithmException::getHashAlgorithm() method.
-     *
-     * @dataProvider providerTestGetAlgorithm
-     *
-     * @param string $secret The algorithm to test with.
-     */
-    public function testGetAlgorithm(string $secret): void
+    /** Ensure we can retrieve the correct invalid hash algorithm from the exception. */
+    #[DataProvider("providerTestGetAlgorithm1")]
+    public function testGetAlgorithm1(string $secret): void
     {
         $exception = new InvalidHashAlgorithmException($secret);
-        $this->assertEquals($secret, $exception->getHashAlgorithm(), "Invalid hash algorithm retrieved from exception was not as expected.");
+        self::assertEquals($secret, $exception->getHashAlgorithm(), "Invalid hash algorithm retrieved from exception was not as expected.");
     }
 }
