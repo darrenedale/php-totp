@@ -25,6 +25,7 @@ use Equit\Totp\Exceptions\InvalidDigitsException;
 use Equit\TotpTests\Framework\TestCase;
 use Equit\Totp\Types\Digits;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 #[CoversClass(Digits::class)]
 final class DigitsTest extends TestCase
@@ -46,15 +47,12 @@ final class DigitsTest extends TestCase
     public static function providerTestConstructor1(): iterable
     {
         for ($digits = 6; $digits < 15; ++$digits) {
-            yield "{$digits} digits" => [$digits];
+            yield "{$digits}-digits" => [$digits];
         }
     }
 
-    /**
-     * Ensure constructor accepts valid digit counts.
-     *
-     * @dataProvider providerTestConstructor1
-     */
+    /** Ensure constructor accepts valid digit counts. */
+    #[DataProvider("providerTestConstructor1")]
     public function testConstructor1(int $digits): void
     {
         /** @noinspection PhpUnhandledExceptionInspection Constructor shouldn't throw with test data. */
@@ -66,17 +64,14 @@ final class DigitsTest extends TestCase
     public static function providerTestConstructor2(): iterable
     {
         for ($digits = -1; $digits < 6; ++$digits) {
-            yield "{$digits} digits" => [$digits];
+            yield "{$digits}-digits" => [$digits];
         }
 
-        yield "min int digits" => [PHP_INT_MIN];
+        yield "min-int-digits" => [PHP_INT_MIN];
     }
 
-    /**
-     * Ensure constructor throws with invalid digit counts.
-     *
-     * @dataProvider providerTestConstructor2
-     */
+    /** Ensure constructor throws with invalid digit counts. */
+    #[DataProvider("providerTestConstructor2")]
     public function testConstructor2(int $digits): void
     {
         self::expectException(InvalidDigitsException::class);

@@ -26,6 +26,7 @@ use Equit\Totp\Exceptions\InvalidTimeStepException;
 use Equit\TotpTests\Framework\TestCase;
 use Equit\Totp\Types\TimeStep;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 #[CoversClass(TimeStep::class)]
 final class TimeStepTest extends TestCase
@@ -42,89 +43,94 @@ final class TimeStepTest extends TestCase
         unset($this->timeStep);
     }
 
-    public static function providerTestConstructor1(): iterable
+    /** Data provider with valid time steps for testConstructor1(). */
+    public static function providerValidSeconds(): iterable
     {
         for ($seconds = 1; $seconds < 600; ++$seconds) {
-            yield "{$seconds} seconds" => [$seconds];
+            yield "{$seconds}-seconds" => [$seconds];
         }
     }
 
-    /**
-     * Ensure we can construct TimeSteps with valid time steps in seconds.
-     * @dataProvider providerTestConstructor1
-     */
+    /** Ensure we can construct TimeSteps with valid time steps in seconds. */
+    #[DataProvider("providerValidSeconds")]
     public function testConstructor1(int $seconds): void
     {
         $timeStep = new TimeStep($seconds);
         self::assertSame($seconds, $timeStep->seconds());
     }
 
-    public static function providerTestConstructor2(): iterable
+    /** Data provider with invalid time steps for testConstructor2(). */
+    public static function providerInvalidSeconds(): iterable
     {
         for ($seconds = 0; $seconds >= -100; --$seconds) {
-            yield "{$seconds} seconds" => [$seconds];
+            yield "{$seconds}-seconds" => [$seconds];
         }
 
         yield "php-int-min" => [PHP_INT_MIN];
     }
 
-    /**
-     * Ensure the constructor throws with invalid time steps.
-     * @dataProvider providerTestConstructor2
-     */
+    /** Ensure the constructor throws with invalid time steps. */
+    #[DataProvider("providerInvalidSeconds")]
     public function testConstructor2(int $seconds): void
     {
-        self::expectException(InvalidTimeStepException::class);
-        self::expectExceptionMessage("Expected valid TOTP time step, found {$seconds}");
+        $this->expectException(InvalidTimeStepException::class);
+        $this->expectExceptionMessage("Expected valid TOTP time step, found {$seconds}");
         new TimeStep($seconds);
     }
 
+    /** Ensure we can retrieve the correct number of seconds. */
     public function testSeconds1(): void
     {
         self::assertSame(TimeStep::DefaultTimeStep, $this->timeStep->seconds());
     }
 
-    /** @dataProvider providerTestConstructor1 */
+    /** Ensure the fromSeconds() convenience factory creates a TimeStep with the correct number of seconds. */
+    #[DataProvider("providerValidSeconds")]
     public function testFromSeconds1(int $seconds): void
     {
         $timeStep = TimeStep::fromSeconds($seconds);
         self::assertSame($seconds, $timeStep->seconds());
     }
 
-    /** @dataProvider providerTestConstructor2 */
+    /** Ensure the fromSeconds() convenience factory throws with invalid numbers of seconds. */
+    #[DataProvider('providerInvalidSeconds')]
     public function testFromSeconds2(int $seconds): void
     {
-        self::expectException(InvalidTimeStepException::class);
-        self::expectExceptionMessage("Expected valid TOTP time step, found {$seconds}");
+        $this->expectException(InvalidTimeStepException::class);
+        $this->expectExceptionMessage("Expected valid TOTP time step, found {$seconds}");
         TimeStep::fromSeconds($seconds);
     }
 
+    /** Data provider with valid minutes for testFromMinutes1(). */
     public static function providerTestFromMinutes1(): iterable
     {
         for ($minutes = 1; $minutes <= 60; ++$minutes) {
-            yield "{$minutes} minutes" => [$minutes, 60 * $minutes,];
+            yield "{$minutes}-minutes" => [$minutes, 60 * $minutes,];
         }
     }
 
-    /** @dataProvider providerTestFromMinutes1 */
+    /** Ensure the fromMinutes() convenience factory creates a TimeStep with the correct number of seconds. */
+    #[DataProvider("providerTestFromMinutes1")]
     public function testFromMinutes1(int $minutes, int $expectedSeconds): void
     {
         $timeStep = TimeStep::fromMinutes($minutes);
         self::assertSame($expectedSeconds, $timeStep->seconds());
     }
 
+    /** Data provider with invalid numbers of minutes for testFromMinutes2(). */
     public static function providerTestFromMinutes2(): iterable
     {
         for ($minutes = 0; $minutes >= -60; --$minutes) {
-            yield "{$minutes} minutes" => [$minutes, 60 * $minutes];
+            yield "{$minutes}-minutes" => [$minutes, 60 * $minutes];
         }
     }
 
-    /** @dataProvider providerTestFromMinutes2 */
+    /** Ensure the fromMinutes() convenience factory throws with invalid numbers of minutes. */
+    #[DataProvider("providerTestFromMinutes2")]
     public function testFromMinutes2(int $minutes, $invalidSeconds): void
     {
-        self::expectException(InvalidTimeStepException::class);
-        self::expectExceptionMessage("Expected valid TOTP time step, found {$invalidSeconds}");
+        $this->expectException(InvalidTimeStepException::class);
+        $this->expectExceptionMessage("Expected valid TOTP time step, found {$invalidSeconds}");
         TimeStep::fromMinutes($minutes);
     }
 
@@ -134,6 +140,7 @@ final class TimeStepTest extends TestCase
         self::assertSame("30", $this->timeStep->__toString());
     }
 
+    /** Data provider with valid DateIntervals for testFromDateInterval1(). */
     public static function providerTestFromDateInterval1(): iterable
     {
         yield "one-second" => [new DateInterval("PT1S"), 1,];
@@ -145,30 +152,27 @@ final class TimeStepTest extends TestCase
         yield "one-day" => [new DateInterval("P1D"), 86400,];
     }
 
-    /**
-     * Ensure we can successfully create a TimeStep from a DateInterval.
-     * @dataProvider providerTestFromDateInterval1
-     */
+    /** Ensure we can successfully create a TimeStep from a DateInterval. */
+    #[DataProvider("providerTestFromDateInterval1")]
     public function testFromDateInterval1(DateInterval $interval, int $expectedSeconds): void
     {
         $timeStep = TimeStep::fromDateInterval($interval);
         self::assertSame($expectedSeconds, $timeStep->seconds());
     }
 
+    /** Data provider with invalid DateIntervals for testFromDateInterval2(). */
     public static function providerTestFromDateInterval2(): iterable
     {
         yield "has-month" => [new DateInterval("P1MT1S"), 1,];
         yield "has-year" => [new DateInterval("P1YT1S"), 10,];
     }
 
-    /**
-     * Ensure we can successfully create a TimeStep from a DateInterval.
-     * @dataProvider providerTestFromDateInterval2
-     */
+    /** Ensure the fromDateInterval() convenience factory throws with invalid intervals. */
+    #[DataProvider("providerTestFromDateInterval2")]
     public function testFromDateInterval2(DateInterval $interval): void
     {
-        self::expectException(InvalidTimeStepException::class);
-        self::expectExceptionMessage("Expected DateInterval without years or months, found {$interval->y} year(s), {$interval->m} month(s)");
+        $this->expectException(InvalidTimeStepException::class);
+        $this->expectExceptionMessage("Expected DateInterval without years or months, found {$interval->y} year(s), {$interval->m} month(s)");
         TimeStep::fromDateInterval($interval);
     }
 }
