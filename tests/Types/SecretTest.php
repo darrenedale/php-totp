@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace Equit\TotpTests\Types;
 
+use Equit\Totp\Codecs\Base32;
+use Equit\Totp\Codecs\Base64;
 use Equit\Totp\Exceptions\InvalidBase32DataException;
 use Equit\Totp\Exceptions\InvalidBase64DataException;
 use Equit\Totp\Exceptions\InvalidSecretException;
@@ -33,6 +35,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 #[CoversClass(Secret::class)]
 final class SecretTest extends TestCase
 {
+    public function setUp(): void
+    {
+        Base32::setStrict();
+        Base64::setStrict();
+    }
+
     /** Data provider with valid secrets for testDestructor1(). */
     public static function providerTestDestructor1(): iterable
     {
