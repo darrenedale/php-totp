@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,9 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Renderers;
+namespace CitrusLab\Totp\Renderers;
 
-use Equit\Totp\Exceptions\InvalidDigitsException;
+use CitrusLab\Totp\Contracts\IntegerRenderer;
+use CitrusLab\Totp\Renderers\Traits\RendersStandardIntegerPasswords;
+use CitrusLab\Totp\Types\Digits;
 
 /**
  * Render a TOTP with an arbitrary number of decimal digits.
@@ -28,36 +31,33 @@ use Equit\Totp\Exceptions\InvalidDigitsException;
  * This renders the truncation of the computed HMAC as a number of decimal digits, as specified by the HOTP
  * specification (see RFC 4226, https://datatracker.ietf.org/doc/html/rfc4226). The number of digits must be 6 or more
  * and should ordinarily be 9 or lower.
+ *
+ * Instances of this class model immutability.
  */
 class Integer implements IntegerRenderer
 {
     use RendersStandardIntegerPasswords;
 
-    /**
-     * The minimum number of digits, as per RFC 6238.
-     */
-    public const MinimumDigits = 6;
-
-    /**
-     * The default number of digits.
-     */
+    /** The default number of digits. */
     public const DefaultDigits = 6;
 
-    /**
-     * @var int The number of digits.
-     */
-    protected int $digitCount;
+    /** @var Digits The number of digits. */
+    protected Digits $digitCount;
 
     /**
      * Initialise a new renderer for a given number of digits.
      *
-     * @param int $digits The digit count for rendered passwords. Defaults to 6.
-     *
-     * @throws \Equit\Totp\Exceptions\InvalidDigitsException if the number of digits is < 6.
+     * @param Digits|null $digits The digit count for rendered passwords. Defaults to 6.
      */
-    public function __construct(int $digits = self::DefaultDigits)
+    public function __construct(?Digits $digits = null)
     {
-        $this->setDigits($digits);
+        $this->digitCount = $digits ?? new Digits(self::DefaultDigits);
+    }
+
+    /** @return Digits The number of digits in rendered passwords. */
+    public function digits(): Digits
+    {
+        return $this->digitCount;
     }
 
     /**
@@ -67,16 +67,15 @@ class Integer implements IntegerRenderer
      * specifying more than 9 digits since you're likely to just be adding extra 0 pad characters on the left of the
      * 9-digit rendering.
      *
-     * @param int $digits The number of digits.
+     * The renderer is cloned, the digits are set on the clone, and the clone is returned.
      *
-     * @throws \Equit\Totp\Exceptions\InvalidDigitsException if the number of digits is < 6.
+     * @param Digits $digits The number of digits.
+     * @return $this
      */
-    public function setDigits(int $digits)
+    public function withDigits(Digits $digits): self
     {
-        if (self::MinimumDigits > $digits) {
-            throw new InvalidDigitsException($digits, "Integer renderers must have at least six digits in the password.");
-        }
-
-        $this->digitCount = $digits;
+        $clone = clone $this;
+        $clone->digitCount = $digits;
+        return $clone;
     }
 }

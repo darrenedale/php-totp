@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,19 +19,17 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Exceptions;
+namespace CitrusLab\Totp\Exceptions;
 
-use Exception;
+use RuntimeException;
 use Throwable;
 
 /**
  * Exception thrown when data that is expected to be base32 encoded is not valid.
  */
-class InvalidBase32DataException extends Exception
+class InvalidBase32DataException extends RuntimeException
 {
-    /**
-     * @var string The data that was found to be invalid.
-     */
+    /** @var string The data that was found to be invalid. */
     private string $m_data;
 
     /**

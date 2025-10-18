@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,64 +19,33 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Tests;
+namespace CitrusLab\TotpTests;
 
-use Generator;
-use TypeError;
-use function Equit\Totp\scrubString;
+use PHPUnit\Framework\Attributes\CoversFunction;
+use PHPUnit\Framework\Attributes\DataProvider;
 
-/**
- * Tests for standalone functions included in the library.
- */
-class FunctionsTest extends Framework\TestCase
+use function CitrusLab\Totp\scrubString;
+
+#[CoversFunction("Equit\Totp\scrubString")]
+final class FunctionsTest extends Framework\TestCase
 {
-    /**
-     * Test data for scrubString()
-     *
-     * @return \Generator
-     */
-    public function dataForTestScrubString(): Generator
+    /** Data provider with strings to scrub for testScrubString1(). */
+    public static function providerTestScrubString1(): iterable
     {
-        yield from [
-            "typical" => ["foobarfizzbuzz",],
-            "typicalWhitespace" => ["        ",],
-            "typicalNulls" => ["\0\0\0\0\0\0\0\0",],
-            "extremeEmpty" => ["",],
-            "extremeVeryLong" => [str_repeat("foobarfizzbuzz", 10000),],
-            "invalidNull" => [null, TypeError::class,],
-            "invalidInt" => [12345, TypeError::class,],
-            "invalidFloat" => [12345.6789, TypeError::class,],
-            "invalidTrue" => [true, TypeError::class,],
-            "invalidFalse" => [false, TypeError::class,],
-            "invalidStringable" => [self::createStringable("foobarfizzbuzz"), TypeError::class,],
-            "invalidArray" => [["foobarfizzbuzz",], TypeError::class,],
-            "invalidObject" => [new class
-            {
-            }, TypeError::class,],
-        ];
-
-        // 1000 random binary strings
-        for ($idx = 0; $idx < 1000; ++$idx) {
-            yield sprintf("%s%02d", "randomString", $idx) => [self::randomBinaryString(),];
-        }
+        yield "typical" => ["foobarfizzbuzz",];
+        yield "whitespace" => ["        ",];
+        yield "nulls" => ["\0\0\0\0\0\0\0\0",];
+        yield "empty" => ["",];
+        yield "very-long" => [str_repeat("foobarfizzbuzz", 10000),];
     }
 
-
-    /**
-     * @dataProvider dataForTestScrubString
-     *
-     * @param mixed $str The string to test with.
-     * @param string|null $expectedException The class name of the Throwable that is expected, if any.
-     */
-    public function testScrubString(mixed $str, ?string $expectedException = null): void
+    /** Ensure strings are successfully scrubbed. */
+    #[DataProvider("providerTestScrubString1")]
+    public function testScrubString1(mixed $str): void
     {
-        if (isset($expectedException)) {
-            $this->expectException($expectedException);
-        }
-
         $before = $str;
         scrubString($str);
-        $this->assertIsString($str, "Shredding the string changed its type.");
-        $this->assertAllCharactersHaveChanged($before, $str, "Not all the characters in the string were changed by Totp::shred().");
+        self::assertIsString($str, "Scrubbing the string changed its type.");
+        self::assertAllCharactersHaveChanged($before, $str, "Not all the characters in the string were changed by scrubString().");
     }
 }

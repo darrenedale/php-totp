@@ -1,6 +1,8 @@
+#! /usr/bin/env php
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,25 +20,29 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Tools\Totp;
+namespace CitrusLab\Totp\Tools\Totp;
 
 require_once(__DIR__ . "/bootstrap.php");
 
+use CitrusLab\Totp\Codecs\Base32;
+use CitrusLab\Totp\Codecs\Base64;
+use CitrusLab\Totp\Exceptions\InvalidBase32DataException;
+use CitrusLab\Totp\Exceptions\InvalidBase64DataException;
+use CitrusLab\Totp\Exceptions\InvalidSecretException;
+use CitrusLab\Totp\Exceptions\SecureRandomDataUnavailableException;
+use CitrusLab\Totp\Factory;
+use CitrusLab\Totp\Renderers\EightDigits;
+use CitrusLab\Totp\Renderers\SixDigits;
+use CitrusLab\Totp\Renderers\Steam;
+use CitrusLab\Totp\Types\HashAlgorithm;
+use CitrusLab\Totp\Types\Secret;
+use CitrusLab\Totp\Types\TimeStep;
 use DateTime;
 use DateTimeZone;
-use Equit\Totp\Base32;
-use Equit\Totp\Base64;
-use Equit\Totp\Exceptions\InvalidBase32DataException;
-use Equit\Totp\Exceptions\InvalidBase64DataException;
-use Equit\Totp\Exceptions\InvalidSecretException;
-use Equit\Totp\Exceptions\SecureRandomDataUnavailableException;
-use Equit\Totp\Renderers\EightDigits;
-use Equit\Totp\Renderers\SixDigits;
-use Equit\Totp\Renderers\Steam;
-use Equit\Totp\Totp;
 use Exception;
 use Throwable;
-use function Equit\Totp\Tools\toPhpHexString;
+
+use function CitrusLab\Totp\Tools\toPhpHexString;
 
 /**
  * Process exit code when the script has run successfully.
@@ -103,11 +109,11 @@ const ErrCannotGenerateRandomSecret = 11;
  */
 class Options
 {
-    public int $referenceTime = Totp::DefaultReferenceTime; // The TOTP reference time (T0)
-    public int $timeStep = Totp::DefaultTimeStep;           // The TOTP time step
+    public int $referenceTime = Factory::DefaultReferenceTime; // The TOTP reference time (T0)
+    public int $timeStep = TimeStep::DefaultTimeStep;           // The TOTP time step
     public ?int $totpTime = null;                           // The time at which to calculate the TOTP
     public ?string $secret = null;                          // The raw TOTP secret
-    public string $algorithm = Totp::DefaultAlgorithm;      // The TOTP hash algorithm
+    public string $algorithm = HashAlgorithm::DefaultAlgorithm;      // The TOTP hash algorithm
     public string $renderer = SixDigits::class;             // The class of the TOTP renderer
     public bool $explain = false;                           // Flag indicating whether to explain all steps
 
@@ -222,17 +228,17 @@ class Options
 
                 case "--sha1":
                 case "--SHA1":
-                    $options->algorithm = Totp::Sha1Algorithm;
+                    $options->algorithm = HashAlgorithm::Sha1Algorithm;
                     break;
 
                 case "--sha256":
                 case "--SHA256":
-                    $options->algorithm = Totp::Sha256Algorithm;
+                    $options->algorithm = HashAlgorithm::Sha256Algorithm;
                     break;
 
                 case "--sha512":
                 case "--SHA512":
-                    $options->algorithm = Totp::Sha512Algorithm;
+                    $options->algorithm = HashAlgorithm::Sha512Algorithm;
                     break;
 
                 case "--steam":
@@ -259,7 +265,7 @@ class Options
         // fill in the blanks for those options that the user has not supplied, and for which we use late population
         if (!isset($options->secret)) {
             try {
-                $options->secret = Totp::randomSecret();
+                $options->secret = Factory::randomSecret()->raw();
             }
             catch (SecureRandomDataUnavailableException $err) {
                 throw new Exception("It has not been possible to generate cryptographically-secure random secrets - you must provide a secret using the command-line options.", ErrCannotGenerateRandomSecret, $err);
@@ -493,7 +499,12 @@ EOT;
              * - InvalidHashAlgorithmException
              * - SecureRandomDataUnavailableException
              */
-            $totp = new Totp(secret: $options->secret, renderer: new $options->renderer, timeStep: $options->timeStep, referenceTime: $options->referenceTime, hashAlgorithm: $options->algorithm);
+            $totp = (new Factory(
+                renderer: new $options->renderer,
+                timeStep: new TimeStep($options->timeStep),
+                referenceTime: $options->referenceTime,
+                hashAlgorithm: new HashAlgorithm($options->algorithm),
+            ))->totp(Secret::fromRaw($options->secret));
         }
         catch (InvalidSecretException $err) {
             fputs(STDERR, "The provided secret is not valid: {$err->getMessage()}\n");
@@ -504,10 +515,10 @@ EOT;
             echo "Secret         : '" . toPhpHexString($options->secret) . "'\n";
             echo "Secret (base32): '" . Base32::encode($options->secret) . "'\n";
             echo "Secret (base64): '" . base64::encode($options->secret) . "'\n";
-            echo "Reference Time : {$totp->referenceTimestamp()} - {$totp->referenceDateTime()->format("Y-m-d H:i:s")} UTC\n";
+            echo "Reference Time : {$totp->referenceTimestamp()} [{$totp->referenceTime()->format("Y-m-d H:i:s")} UTC]\n";
             echo "Time step      : {$totp->timeStep()} seconds\n";
             /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with Unix timestamp. */
-            echo "TOTP time      : {$options->totpTime} - " . (new DateTime("@{$options->totpTime}", new DateTimeZone("UTC")))->format("Y-m-d H:i:s") . "\n";
+            echo "TOTP time      : {$options->totpTime} [" . (new DateTime("@{$options->totpTime}", new DateTimeZone("UTC")))->format("Y-m-d H:i:s") . " UTC]\n";
             /** @noinspection PhpUnhandledExceptionInspection We validate above that the time is not before the reference time. */
             echo "Counter        : {$totp->counterAt($options->totpTime)}\n";
             /** @noinspection PhpUnhandledExceptionInspection We validate above that the time is not before the reference time. */

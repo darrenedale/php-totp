@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,9 +19,9 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Tests\Framework\Constraints;
+namespace CitrusLab\TotpTests\Framework\Constraints;
 
-use Equit\Totp\Tests\Framework\Exceptions\InvalidOtpUrlException;
+use CitrusLab\TotpTests\Framework\Exceptions\InvalidOtpUrlException;
 use PHPUnit\Framework\Constraint\Constraint;
 use RuntimeException;
 
@@ -62,7 +63,7 @@ class EquivalentOtpAuthUrl extends Constraint
     /**
      * @param string $referenceUrl The URL that tested URLs are expected to match.
      *
-     * @throws \Equit\Totp\Tests\Framework\Exceptions\InvalidOtpUrlException
+     * @throws \CitrusLab\TotpTests\Framework\Exceptions\InvalidOtpUrlException
      */
     public function __construct(string $referenceUrl)
     {

@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -24,11 +25,11 @@ declare(strict_types=1);
  * The string literal is output without surrounding "".
  */
 
-namespace Equit\Totp\Tools\Dev\RandomBinaryString;
+namespace CitrusLab\Totp\Tools\Dev\RandomBinaryString;
 
 require_once(__DIR__ . "/../bootstrap.php");
 
-use function Equit\Totp\Tools\toPhpHexString;
+use function CitrusLab\Totp\Tools\toPhpHexString;
 
 /**
  * Show the help/usage message.

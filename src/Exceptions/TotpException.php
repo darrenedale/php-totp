@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,13 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Exceptions;
+namespace CitrusLab\Totp\Exceptions;
 
 use Exception;
 
-/**
- * Base class for all exceptions related to Totp instances.
- */
+/** Base class for all exceptions related to Totp instances. */
 class TotpException extends Exception
 {
 }

@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,9 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp;
+namespace CitrusLab\Totp\Codecs;
 
-use Equit\Totp\Exceptions\InvalidBase64DataException;
+use CitrusLab\Totp\Contracts\Codec;
+use CitrusLab\Totp\Exceptions\InvalidBase64DataException;
+use CitrusLab\Totp\Traits\SecurelyErasesProperties;
 
 /**
  * Codec class for Base64 data.
@@ -28,18 +31,19 @@ use Equit\Totp\Exceptions\InvalidBase64DataException;
  * Thin wrapper around PHP's built-in base64 encoding/decoding, for consistency with Base32 interface.
  *
  * Encoding/decoding is only performed when required, so the class is relatively lightweight.
+ *
+ * Instances are immutable.
  */
-class Base64
+class Base64 implements Codec
 {
-    /**
-     * Import the trait that securely erases all string properties on destruction.
-     */
+    /** Ensure all string properties are securely erased on destruction. */
     use SecurelyErasesProperties;
 
-    /**
-     * The base64 dictionary.
-     */
+    /** The base64 dictionary. */
     protected const Dictionary = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    /** @var bool Whether objects employ strict rules when receiving encoded Base64 data. */
+    private static bool $strict = true;
 
     /**
      * @var string|null The raw data.
@@ -47,7 +51,7 @@ class Base64
      * Always use raw() instead of accessing this - due to decode-on-demand, the member will be null after the encoded
      * data has been set until decode() is called.
      */
-    private ?string $m_rawData;
+    private ?string $rawData;
 
     /**
      * @var string|null The Base64 encoded data.
@@ -55,7 +59,7 @@ class Base64
      * Always use encoded() instead of accessing this - due to encode-on-demand, the member will be null after the raw
      * data has been set until encode() is called.
      */
-    private ?string $m_encodedData;
+    private ?string $encodedData;
 
     /**
      * Initialise a new object, optionally with some specified raw data.
@@ -64,19 +68,38 @@ class Base64
      */
     public function __construct(string $rawData = "")
     {
-        $this->m_rawData     = $rawData;
-        $this->m_encodedData = null;
+        $this->rawData = $rawData;
+        $this->encodedData = null;
+    }
+
+    /**
+     * Set whether Base64 instances are strict about the encoded content when decoding.
+     *
+     * When in strict mode, all encoded Base64 data must be of the correct length and be correctly padded with =
+     * characters.
+     *
+     * @param bool $strict Whether to enable or disable strict mode.
+     */
+    public static function setStrict(bool $strict = true): void
+    {
+        self::$strict = $strict;
+    }
+
+    /** Whether Base64 instances are in strict mode. */
+    public static function isStrict(): bool
+    {
+        return self::$strict;
     }
 
     /**
      * Set the raw data.
      *
-     * @param string $rawData The raw data to encode.
+     * @param string $raw The raw data to encode.
      */
-    public function setRaw(string $rawData): void
+    public function setRaw(string $raw): void
     {
-        $this->m_rawData     = $rawData;
-        $this->m_encodedData = null;
+        $this->rawData = $raw;
+        $this->encodedData = null;
     }
 
     /**
@@ -94,8 +117,8 @@ class Base64
         // false being returned from base64_decode()
         $length = strlen($base64);
 
-        if (0 !== ($length % 4)) {
-            throw new InvalidBase64DataException($base64, "Base64 data must be padded to a multiple of 4 bytes.");
+        if (self::isStrict() && 0 !== ($length % 4)) {
+            throw new InvalidBase64DataException($base64, "Base64 data must be padded to a multiple of 4 bytes");
         }
 
         // ensure any padding is a valid length
@@ -112,18 +135,18 @@ class Base64
                 break;
 
             default:
-                throw new InvalidBase64DataException($base64, "Base64 data must be padded with either 0, 1 or 2 '=' characters.");
+                throw new InvalidBase64DataException($base64, "Base64 data must be padded with either 0, 1 or 2 '=' characters");
         }
 
         // ensure all non-padding characters are from the Base64 dictionary
         $validLength = strspn($base64, self::Dictionary, 0, $length);
 
         if ($length !== $validLength) {
-            throw new InvalidBase64DataException($base64, "Invalid base64 character found at position {$validLength}.");
+            throw new InvalidBase64DataException($base64, "Invalid base64 character found at position {$validLength}");
         }
 
-        $this->m_encodedData = $base64;
-        $this->m_rawData     = null;
+        $this->encodedData = $base64;
+        $this->rawData = null;
     }
 
     /**
@@ -133,11 +156,11 @@ class Base64
      */
     public function raw(): string
     {
-        if (!isset($this->m_rawData)) {
+        if (null === $this->rawData) {
             $this->decodeBase64Data();
         }
 
-        return $this->m_rawData;
+        return $this->rawData;
     }
 
     /**
@@ -149,11 +172,11 @@ class Base64
      */
     public function encoded(): string
     {
-        if (!isset($this->m_encodedData)) {
+        if (null === $this->encodedData) {
             $this->encodeRawData();
         }
 
-        return $this->m_encodedData;
+        return $this->encodedData;
     }
 
     /**
@@ -190,7 +213,7 @@ class Base64
      */
     protected function decodeBase64Data(): void
     {
-        $this->m_rawData = base64_decode($this->m_encodedData);
+        $this->rawData = base64_decode($this->encodedData);
     }
 
     /**
@@ -201,6 +224,6 @@ class Base64
      */
     protected function encodeRawData(): void
     {
-        $this->m_encodedData = base64_encode($this->m_rawData);
+        $this->encodedData = base64_encode($this->rawData);
     }
 }

@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,7 +19,10 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Renderers;
+namespace CitrusLab\Totp\Renderers;
+
+use CitrusLab\Totp\Contracts\Renderer;
+use CitrusLab\Totp\Renderers\Traits\ExtractsStandard31BitInteger;
 
 /**
  * Renderer for Steam authenticator passwords.
@@ -29,19 +33,25 @@ class Steam implements Renderer
 {
     use ExtractsStandard31BitInteger;
 
-	/**
-	 * The Steam authenticator alphabet.
-	 */
+	/** The Steam authenticator alphabet. */
 	public const ValidCharacters = "23456789BCDFGHJKMNPQRTVWXY";
 
-	/**
-	 * The number of characters in the rendered passwords.
-	 */
+	/** The number of characters in the rendered passwords. */
 	protected const CharacterCount = 5;
 
-	/**
-	 * @inheritDoc
-	 */
+    /** @return string "Steam" */
+    public function name(): string
+    {
+        return "Steam";
+    }
+
+    /**
+     * Render the Steam one-time password from a given HMAC.
+     *
+     * @param string $hmac The HMAC to process.
+     *
+     * @return string The characters of the generated password.
+     */
 	public function render(string $hmac): string
 	{
         $passwordValue = self::extractIntegerFromHmac($hmac);

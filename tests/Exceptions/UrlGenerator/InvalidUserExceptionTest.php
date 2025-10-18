@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,109 +19,51 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Tests\Exceptions\UrlGenerator;
+namespace CitrusLab\TotpTests\Exceptions\UrlGenerator;
 
-use Equit\Totp\Exceptions\UrlGenerator\InvalidUserException;
-use Equit\Totp\Tests\Framework\TestCase;
-use Exception;
-use Generator;
-use TypeError;
+use CitrusLab\Totp\Exceptions\TotpException;
+use CitrusLab\Totp\Exceptions\UrlGenerator\InvalidUserException;
+use CitrusLab\TotpTests\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Throwable;
 
-/**
- * Unit test for the InvalidUserException class.
- */
-class InvalidUserExceptionTest extends TestCase
+#[CoversClass(InvalidUserException::class)]
+final class InvalidUserExceptionTest extends TestCase
 {
-    /**
-     * Generate a random user string.
-     *
-     * @return string The generated user.
-     */
-    private static function randomUser(): string
+    /** Data provider with arguments for the exception constructor for testConstructor1(). */
+    public static function providerTestConstructor1(): iterable
     {
-        static $users = [
-            "darren", "Susan", "clive", "mo.iqbal", "peggy-sue", "Art.Garfunkel", "david", "superuser", "administrator", "COLIN",
-            "MARK", "abney", "Abbey", "abi", "sami", "Usman", "imran", "urma", "Ootha", "forbes",
-            "ruariadh", "conor", "chuck", "Chet", "mowgli", "abu", "Herman", "FRANCOISE", "cortana", "siri",
-            "alexa", "mortimer", "zbigniew", "Alasdair", "Michael", "filip", "Sven", "jacqui", "peter", "petra",
-        ];
-
-        return $users[mt_rand(0, count($users) - 1)];
+        yield "user-only" => ["darren",];
+        yield "user-and-message" => ["clifford", "'clifford' is not a valid user.",];
+        yield "user-message-and-code" => ["artemis", "'artemis' is not a valid user.", 12,];
+        yield "user-message-code-and-previous" => ["roxy", "'roxy' is not a valid user.", 12, new TotpException("foo"),];
     }
 
-    /**
-     * Test data for InvalidUserException constructor.
-     *
-     * @return array The test data.
-     */
-    public function dataForTestConstructor(): array
+    /** Ensure the constructor processes all arguments as expected. */
+    #[DataProvider("providerTestConstructor1")]
+    public function testConstructor1(string $user, string $message = "", int $code = 0, ?Throwable $previous = null): void
     {
-        return [
-            "typicalUserOnly" => ["",],
-            "typicalUserAndMessage" => ["", "'' is not a valid user.",],
-            "typicalUserMessageAndCode" => ["", "'' is not a valid user.", 12,],
-            "typicalUserMessageCodeAndPrevious" => ["", "'' is not a valid user.", 12, new Exception("foo"),],
-            "invalidNullUser" => [null, "null is not a valid user.", 12, new Exception("foo"), TypeError::class],
-            "invalidStringableUser" => [self::createStringable(""), "'' is not a valid user.", 12, new Exception("foo"), TypeError::class],
-            "invalidIntUser" => [1, "1 is not a valid user.", 12, new Exception("foo"), TypeError::class],
-            "invalidFloatUser" => [1.115, "1.115 is not a valid user.", 12, new Exception("foo"), TypeError::class],
-            "invalidTrueUser" => [true, "true is not a valid user.", 12, new Exception("foo"), TypeError::class],
-            "invalidFalseUser" => [false, "false is not a valid user.", 12, new Exception("foo"), TypeError::class],
-            "invalidArrayUser" => [["",], "[''] is not a valid user.", 12, new Exception("foo"), TypeError::class],
-        ];
-    }
-
-    /**
-     * Test for the InvalidUserException constructor.
-     *
-     * @dataProvider dataForTestConstructor
-     *
-     * @param mixed $user The invalid user for the test exception.
-     * @param mixed $message The message for the test exception. Defaults to an empty string.
-     * @param mixed $code The error code for the test exception. Defaults to 0.
-     * @param mixed|null $previous The previous throwable for the test exception. Defaults to null.
-     * @param string|null $exceptionClass The class name of the exception that is expected during the test, if any.
-     */
-    public function testConstructor(mixed $user, mixed $message = "", mixed $code = 0, mixed $previous = null, string $exceptionClass = null): void
-    {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
         $exception = new InvalidUserException($user, $message, $code, $previous);
-        $this->assertEquals($user, $exception->getUser(), "Invalid user retrieved from exception was not as expected.");
-        $this->assertEquals($message, $exception->getMessage(), "Message retrieved from exception was not as expected.");
-        $this->assertEquals($code, $exception->getCode(), "Error code retrieved from exception was not as expected.");
-        $this->assertSame($previous, $exception->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
+        self::assertEquals($user, $exception->getUser(), "Invalid user retrieved from exception was not as expected.");
+        self::assertEquals($message, $exception->getMessage(), "Message retrieved from exception was not as expected.");
+        self::assertEquals($code, $exception->getCode(), "Error code retrieved from exception was not as expected.");
+        self::assertSame($previous, $exception->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
     }
 
-    /**
-     * Test data for InvalidUserException::getUser().
-     *
-     * @return Generator
-     */
-    public function dataForTestGetUser(): Generator
+    /** Data provider with user names for testGetUser1(). */
+    public static function providerTestGetUser1(): iterable
     {
-        yield from [
-            "typicalEmpty" => ["",],
-            "typicalFilled" => ["darren",],
-        ];
-
-        for ($idx = 0; $idx < 100; ++$idx) {
-            yield "typicalRandom" . sprintf("%02d", $idx) => [self::randomUser(),];
-        }
+        yield "empty" => ["",];
+        yield "whitespace" => ["  ",];
+        yield "filled" => ["darren",];
     }
 
-    /**
-     * Test the InvalidUserException::getUser() method.
-     *
-     * @dataProvider dataForTestGetUser
-     *
-     * @param string $user The user to test with.
-     */
-    public function testGetUser(string $user): void
+    /** Ensure we can retrieve the correct user from the exception. */
+    #[DataProvider("providerTestGetUser1")]
+    public function testGetUser1(string $user): void
     {
         $exception = new InvalidUserException($user);
-        $this->assertEquals($user, $exception->getUser(), "Invalid user retrieved from exception was not as expected.");
+        self::assertEquals($user, $exception->getUser(), "Invalid user retrieved from exception was not as expected.");
     }
 }

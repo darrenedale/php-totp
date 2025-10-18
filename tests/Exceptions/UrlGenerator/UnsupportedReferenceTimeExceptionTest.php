@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,212 +19,127 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Tests\Exceptions\UrlGenerator;
+namespace CitrusLab\TotpTests\Exceptions\UrlGenerator;
 
-use Equit\Totp\Exceptions\UrlGenerator\UnsupportedReferenceTimeException;
-use Equit\Totp\Tests\Framework\TestCase;
+use CitrusLab\Totp\Exceptions\TotpException;
+use CitrusLab\Totp\Exceptions\UrlGenerator\UnsupportedReferenceTimeException;
+use CitrusLab\TotpTests\Framework\TestCase;
 use DateTime;
 use DateTimeZone;
-use Exception;
-use Generator;
-use InvalidArgumentException;
-use TypeError;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Throwable;
 
-/**
- * Unit test for the UnsupportedReferenceTimeException class.
- */
-class UnsupportedReferenceTimeExceptionTest extends TestCase
+#[CoversClass(UnsupportedReferenceTimeException::class)]
+final class UnsupportedReferenceTimeExceptionTest extends TestCase
 {
-    /**
-     * When generating random timestamps, the earliest will be 80 years before the Unix epoch.
-     */
+    /** Unix timestamp of a very early time (80 years before the epoch started). */
     private const MinTimestamp = -80 * 365 * 24 * 60 * 60;
 
-    /**
-     * When generating random timestamps, the latest will be 80 years after the Unix epoch.
-     */
+    /** Unix timestamp of a very late time (80 years after the epoch started). */
     private const MaxTimestamp = 80 * 365 * 24 * 60 * 60;
 
     /**
-     * Test data for UnsupportedReferenceTimeException constructor.
+     * Data provider with arguments for the exception constructor for testConstructor1().
      *
-     * @return array The test data.
-     * @noinspection PhpDocMissingThrowsInspection DateTime constructor should not throw with timestamp argument.
+     * @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with timestamp argument.
      */
-    public function dataForTestConstructor(): array
+    public static function providerTestConstructor1(): iterable
     {
-        /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with timestamp argument. */
-        return [
-            "typicalTimestamp60" => [60,],
-            "typicalTimestamp120" => [120,],
-            "typicalTimestampNow" => [time(),],
-            "typicalDateTime60" => [new DateTime("@60", new DateTimeZone("UTC")),],
-            "typicalDateTime120" => [new DateTime("@120", new DateTimeZone("UTC")),],
-            "typicalDateTimeNow" => [new DateTime("@" . time(), new DateTimeZone("UTC")),],
-            "typicalTimestampAndMessage" => [60, "60 is not a valid reference time.",],
-            "typicalTimestampMessageAndCode" => [60, "60 is not a valid reference time.", 12,],
-            "typicalTimestampMessageCodeAndPrevious" => [60, "60 is not a valid reference time.", 12, new Exception("foo"),],
-            "typicalDateTimeAndMessage" => [new DateTime("@60", new DateTimeZone("UTC")), "60 is not a valid reference time.",],
-            "typicalDateTimeMessageAndCode" => [new DateTime("@60", new DateTimeZone("UTC")), "60 is not a valid reference time.", 12,],
-            "typicalDateTimeMessageCodeAndPrevious" => [new DateTime("@60", new DateTimeZone("UTC")), "60 is not a valid reference time.", 12, new Exception("foo"),],
-            "extremeVeryEarly" => [self::MinTimestamp,],
-            "extremeVeryLate" => [self::MaxTimestamp,],
-            "invalidNullTime" => [null, "null is not a valid reference time.", 12, new Exception("foo"), TypeError::class],
-            "invalidStringTime" => ["1970-01-01 00:01:00", "'1970-01-01 00:01:00' is not a valid reference time.", 12, new Exception("foo"), TypeError::class],
-            "invalidStringableTimestamp" => [self::createStringable("0"), "'0' is not a valid reference time.", 12, new Exception("foo"), TypeError::class],
-            "invalidStringableDateTime" => [self::createStringable("1970-01-01 00:01:00"), "'1970-01-01 00:01:00' is not a valid reference time.", 12, new Exception("foo"), TypeError::class],
-            "invalidFloatTime" => [0.15, "0.15 is not a valid reference time.", 12, new Exception("foo"), TypeError::class],
-            "invalidTrueTime" => [true, "true is not a valid reference time.", 12, new Exception("foo"), TypeError::class],
-            "invalidFalseTime" => [false, "false is not a valid reference time.", 12, new Exception("foo"), TypeError::class],
-            "invalidObjectTimeastamp" => [(object)["time" => 60,], "object is not a valid reference time.", 12, new Exception("foo"), TypeError::class],
-            "invalidObjectDateTime" => [(object)["time" => "1970-01-01 00:01:00",], "object is not a valid reference time.", 12, new Exception("foo"), TypeError::class],
-            "invalidArrayTimestamp" => [[60,], "[60] is not a valid reference time.", 12, new Exception("foo"), TypeError::class],
-            "invalidArrayTime" => [["1970-01-01 00:01:00",], "'1970-01-01 00:01:00' is not a valid reference time.", 12, new Exception("foo"), TypeError::class],
-        ];
+        yield "timestamp-60" => [60,];
+        yield "timestamp-120" => [120,];
+        yield "timestamp-now" => [time(),];
+        yield "date-time-60" => [new DateTime("@60", new DateTimeZone("UTC")),];
+        yield "date-time-120" => [new DateTime("@120", new DateTimeZone("UTC")),];
+        yield "date-time-now" => [new DateTime("@" . time(), new DateTimeZone("UTC")),];
+        yield "timestamp-andMessage" => [60, "60 is not a valid reference time.",];
+        yield "timestamp-message-and-code" => [60, "60 is not a valid reference time.", 12,];
+        yield "timestamp-message-code-and-previous" => [60, "60 is not a valid reference time.", 12, new TotpException("foo"),];
+        yield "dateTime-and-message" => [new DateTime("@60", new DateTimeZone("UTC")), "60 is not a valid reference time.",];
+        yield "date-time-message-and-code" => [new DateTime("@60", new DateTimeZone("UTC")), "60 is not a valid reference time.", 12,];
+        yield "date-time-message-code-and-previous" => [new DateTime("@60", new DateTimeZone("UTC")), "60 is not a valid reference time.", 12, new TotpException("foo"),];
+        yield "very-early" => [self::MinTimestamp,];
+        yield "very-late" => [self::MaxTimestamp,];
     }
 
-    /**
-     * Test for the UnsupportedReferenceTimeException constructor.
-     *
-     * @dataProvider dataForTestConstructor
-     *
-     * @param mixed $time The invalid time for the test exception.
-     * @param mixed $message The message for the test exception. Defaults to an empty string.
-     * @param mixed $code The error code for the test exception. Defaults to 0.
-     * @param mixed|null $previous The previous throwable for the test exception. Defaults to null.
-     * @param string|null $exceptionClass The class name of the exception that is expected during the test, if any.
-     *
-     * @noinspection PhpDocMissingThrowsInspection DateTime constructor should not throw with timestamp argument.
-     */
-    public function testConstructor(mixed $time, mixed $message = "", mixed $code = 0, mixed $previous = null, string $exceptionClass = null): void
+    /** Ensure the constructor processes all arguments as expected. */
+    #[DataProvider("providerTestConstructor1")]
+    public function testConstructor1(int|DateTime $time, string $message = "", int $code = 0, ?Throwable $previous = null): void
     {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
         $exception = new UnsupportedReferenceTimeException($time, $message, $code, $previous);
 
         if ($time instanceof DateTime) {
             $timestamp = $time->getTimestamp();
         } else {
-            if (is_int($time)) {
-                $timestamp = $time;
-                /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with a timestamp argument. */
-                $time = new DateTime("@{$time}", new DateTimeZone("UTC"));
-            } else {
-                if (!isset($exceptionClass)) {
-                    throw new InvalidArgumentException("\$time is not a timestamp nor a DateTime - we should be expecting an exception but we're not.");
-                }
-            }
+            $timestamp = $time;
+            /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with a timestamp argument. */
+            $time = new DateTime("@{$time}", new DateTimeZone("UTC"));
         }
 
-        $this->assertEquals($time, $exception->getTime(), "Unsupported DateTime retrieved from exception was not as expected.");
-        /** @noinspection PhpUndefinedVariableInspection We know $timestamp is defined because the only branch that doesn't define it throws */
-        $this->assertEquals($timestamp, $exception->getTimestamp(), "Timestamp retrieved from exception was not as expected.");
-        $this->assertEquals($message, $exception->getMessage(), "Message retrieved from exception was not as expected.");
-        $this->assertEquals($code, $exception->getCode(), "Error code retrieved from exception was not as expected.");
-        $this->assertSame($previous, $exception->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
+        self::assertEquals($time, $exception->getTime(), "Unsupported DateTime retrieved from exception was not as expected.");
+        self::assertEquals($timestamp, $exception->getTimestamp(), "Timestamp retrieved from exception was not as expected.");
+        self::assertEquals($message, $exception->getMessage(), "Message retrieved from exception was not as expected.");
+        self::assertEquals($code, $exception->getCode(), "Error code retrieved from exception was not as expected.");
+        self::assertSame($previous, $exception->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
     }
 
     /**
-     * Test data for UnsupportedReferenceTimeException::getTimestamp().
+     * Data provider with reference times or timestamps and expected timestamps for testGetTimestamp1().
      *
-     * @return \Generator
-     * @noinspection PhpDocMissingThrowsInspection DateTime constructor should not throw with a timestamp argument.
+     * @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with timestamp argument.
      */
-    public function dataForTestGetTimestamp(): Generator
+    public static function providerTestGetTimestamp1(): iterable
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with a timestamp argument. */
-        yield from [
-            "typicalTimestamp60" => [60, 60,],
-            "extremeVeryEarly" => [self::MinTimestamp, self::MinTimestamp,],
-            "extremeVeryLate" => [self::MaxTimestamp, self::MaxTimestamp,],
-            "typicalDateTime60" => [new DateTime("@60", new DateTimeZone("UTC")), 60,],
-            "extremeDateTimeVeryEarly" => [new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")), self::MinTimestamp,],
-            "extremeDateTimeVeryLate" => [new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")), self::MaxTimestamp,],
-        ];
+        yield "timestamp-60" => [60, 60,];
+        yield "very-early" => [self::MinTimestamp, self::MinTimestamp,];
+        yield "very-late" => [self::MaxTimestamp, self::MaxTimestamp,];
+        yield "date-time-60" => [new DateTime("@60", new DateTimeZone("UTC")), 60,];
+        yield "date-time-very-early" => [new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")), self::MinTimestamp,];
+        yield "date-time-very-late" => [new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")), self::MaxTimestamp,];
 
         $nowTimestamp = time();
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with a timestamp argument. */
         $nowTime = new DateTime("@{$nowTimestamp}", new DateTimeZone("UTC"));
-        yield "typicalNow" => [$nowTimestamp, $nowTimestamp,];
-        yield "typicalDateTimeNow" => [$nowTime, $nowTimestamp,];
-
-        for ($idx = 0; $idx < 100; ++$idx) {
-            do {
-                $timestamp = mt_rand(-60 * 365 * 24 * 60 * 60, 60 * 365 * 24 * 60 * 60);
-            } while (0 === $timestamp);
-
-            /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with a timestamp argument. */
-            $time = new DateTime("@{$timestamp}", new DateTimeZone("UTC"));
-
-            yield "randomTimestamp" . sprintf("%02d", $idx) => [$timestamp, $timestamp,];
-            yield "randomDateTime" . sprintf("%02d", $idx) => [$time, $timestamp,];
-        }
+        yield "now" => [$nowTimestamp, $nowTimestamp,];
+        yield "date-time-now" => [$nowTime, $nowTimestamp,];
     }
 
-    /**
-     * Test the UnsupportedReferenceTimeException::getTimestamp() method.
-     *
-     * @dataProvider dataForTestGetTimestamp
-     *
-     * @param int|\DateTime $time The time to use to initialise the test exception.
-     * @param int $expectedTimestamp The expected value returned from getTimestamp().
-     */
-    public function testGetTimestamp(int|DateTime $time, int $expectedTimestamp): void
+    /** Ensure we get the correct reference timestamp from the exception. */
+    #[DataProvider("providerTestGetTimestamp1")]
+    public function testGetTimestamp1(int|DateTime $time, int $expectedTimestamp): void
     {
         $exception = new UnsupportedReferenceTimeException($time);
-        $this->assertEquals($expectedTimestamp, $exception->getTimestamp(), "Unsupported reference timestamp retrieved from exception was not as expected.");
+        self::assertEquals($expectedTimestamp, $exception->getTimestamp(), "Unsupported reference timestamp retrieved from exception was not as expected.");
     }
 
     /**
-     * Test data for UnsupportedReferenceTimeException::getTimestamp().
+     * Data provider with reference times or timestamps and expected times for testGetTime1().
      *
-     * @return \Generator
-     * @noinspection PhpDocMissingThrowsInspection DateTime constructor should not throw with a timestamp argument.
+     * @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with timestamp argument.
      */
-    public function dataForTestGetTime(): Generator
+    public static function providerTestGetTime1(): iterable
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with a timestamp argument. */
-        yield from [
-            "typicalTimestamp60" => [60, new DateTime("@60", new DateTimeZone("UTC")),],
-            "extremeVeryEarly" => [self::MinTimestamp, new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")),],
-            "extremeVeryLate" => [self::MaxTimestamp, new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")),],
-            "typicalDateTime60" => [new DateTime("@60", new DateTimeZone("UTC")), new DateTime("@60", new DateTimeZone("UTC")),],
-            "extremeDateTimeVeryEarly" => [new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")), new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")),],
-            "extremeDateTimeVeryLate" => [new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")), new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")),],
-        ];
+        yield "timestamp-60" => [60, new DateTime("@60", new DateTimeZone("UTC")),];
+        yield "very-early" => [self::MinTimestamp, new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")),];
+        yield "very-late" => [self::MaxTimestamp, new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")),];
+        yield "date-time-60" => [new DateTime("@60", new DateTimeZone("UTC")), new DateTime("@60", new DateTimeZone("UTC")),];
+        yield "date-time-very-early" => [new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")), new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")),];
+        yield "date-time-very-late" => [new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")), new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")),];
 
         $nowTimestamp = time();
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with a timestamp argument. */
         $nowTime = new DateTime("@{$nowTimestamp}", new DateTimeZone("UTC"));
-        yield "typicalNow" => [$nowTimestamp, $nowTime,];
-        yield "typicalDateTimeNow" => [$nowTime, $nowTime,];
-
-        for ($idx = 0; $idx < 100; ++$idx) {
-            do {
-                $timestamp = mt_rand(self::MinTimestamp, self::MaxTimestamp);
-            } while (0 === $timestamp);
-
-            /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with a timestamp argument. */
-            $time = new DateTime("@{$timestamp}", new DateTimeZone("UTC"));
-
-            yield "randomTimestamp" . sprintf("%02d", $idx) => [$timestamp, $time,];
-            yield "randomDateTime" . sprintf("%02d", $idx) => [$time, $time,];
-        }
+        yield "now" => [$nowTimestamp, $nowTime,];
+        yield "date-time-now" => [$nowTime, $nowTime,];
     }
 
-    /**
-     * Test the UnsupportedReferenceTimeException::getTime() method.
-     *
-     * @dataProvider dataForTestGetTime
-     *
-     * @param int|\DateTime $time The time to use to initialise the test exception.
-     * @param \DateTime $expectedTime The expected value returned from getDateTime().
-     */
-    public function testGetTime(int|DateTime $time, DateTime $expectedTime): void
+    /** Ensure we get the correct reference time from the exception. */
+    #[DataProvider("providerTestGetTime1")]
+    public function testGetTime1(int|DateTime $time, DateTime $expectedTime): void
     {
         $exception = new UnsupportedReferenceTimeException($time);
-        $this->assertEquals($expectedTime, $exception->getTime(), "Unsupported DateTime retrieved from exception was not as expected.");
+        self::assertEquals($expectedTime, $exception->getTime(), "Unsupported DateTime retrieved from exception was not as expected.");
     }
 }

@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,26 +19,30 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Tests;
+namespace CitrusLab\TotpTests;
 
 use BadMethodCallException;
-use Equit\Totp\Base32;
-use Equit\Totp\Exceptions\UrlGenerator\InvalidUserException;
-use Equit\Totp\Exceptions\UrlGenerator\UnsupportedReferenceTimeException;
-use Equit\Totp\Exceptions\UrlGenerator\UnsupportedRendererException;
-use Equit\Totp\Renderers\Renderer;
-use Equit\Totp\Tests\Framework\Exceptions\InvalidOtpUrlException;
-use Equit\Totp\Tests\Framework\TestCase;
-use Equit\Totp\Totp;
-use Equit\Totp\UrlGenerator;
+use CitrusLab\Totp\Codecs\Base32;
+use CitrusLab\Totp\Contracts\Renderer;
+use CitrusLab\Totp\Exceptions\UrlGenerator\InvalidUserException;
+use CitrusLab\Totp\Exceptions\UrlGenerator\UnsupportedReferenceTimeException;
+use CitrusLab\Totp\Exceptions\UrlGenerator\UnsupportedRendererException;
+use CitrusLab\Totp\Factory;
+use CitrusLab\Totp\Types\Digits;
+use CitrusLab\Totp\Types\HashAlgorithm;
+use CitrusLab\Totp\Types\Secret;
+use CitrusLab\Totp\Types\TimeStep;
+use CitrusLab\TotpTests\Framework\Exceptions\InvalidOtpUrlException;
+use CitrusLab\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\UrlGenerator;
 use Generator;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use TypeError;
 
-/**
- * Test for the UrlGenerator class.
- */
-class UrlGeneratorTest extends TestCase
+#[CoversClass(UrlGenerator::class)]
+final class UrlGeneratorTest extends TestCase
 {
     /**
      * Seed data for random issuers.
@@ -87,7 +92,7 @@ class UrlGeneratorTest extends TestCase
      *
      * @return array[]
      */
-    public function dataForTestHasIssuer(): array
+    public static function providerTestHasIssuer(): array
     {
         return [
             "typical" => ["Equit", true,],
@@ -97,26 +102,21 @@ class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestHasIssuer
-     *
      * @param string|null $issuer The issuer to test with.
      * @param bool $expected What hasIssuer() is expected to return.
      *
      * @return void
      */
+    #[DataProvider('providerTestHasIssuer')]
     public function testHasIssuer(string | null $issuer, bool $expected): void
     {
         $generator = new UrlGenerator();
         $generator->setIssuer($issuer);
-        $this->assertEquals($expected,$generator->hasIssuer(), "UrlGenerator did not correctly report that it " . ($expected ? "has" : "does not have") . " an issuer.");
+        self::assertEquals($expected,$generator->hasIssuer(), "UrlGenerator did not correctly report that it " . ($expected ? "has" : "does not have") . " an issuer.");
     }
 
-    /**
-     * Test data for testHasIssuer().
-     *
-     * @return Generator
-     */
-    public function dataForTestIssuer(): Generator
+    /** Test data for testHasIssuer(). */
+    public static function providerTestIssuer(): iterable
     {
         yield from [
             "typical" => ["Equit",],
@@ -131,25 +131,20 @@ class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestIssuer
-     *
      * @param string|null $issuer The issuer to test with.
      *
      * @return void
      */
+    #[DataProvider('providerTestIssuer')]
     public function testIssuer(string | null $issuer): void
     {
         $generator = new UrlGenerator();
         $generator->setIssuer($issuer);
-        $this->assertEquals($issuer, $generator->issuer(), "UrlGenerator did not correctly report the issuer.");
+        self::assertEquals($issuer, $generator->issuer(), "UrlGenerator did not correctly report the issuer.");
     }
 
-    /**
-     * Test data for testHasIssuer().
-     *
-     * @return Generator
-     */
-    public function dataForTestSetIssuer(): Generator
+    /** Test data for testHasIssuer(). */
+    public static function providerTestSetIssuer(): iterable
     {
         yield from [
             "typical" => ["Equit",],
@@ -170,10 +165,9 @@ class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestSetIssuer
-     *
      * @param string|null $issuer The issuer to test with.
      */
+    #[DataProvider('providerTestSetIssuer')]
     public function testSetIssuer(mixed $issuer, string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
@@ -182,15 +176,11 @@ class UrlGeneratorTest extends TestCase
 
         $generator = new UrlGenerator();
         $generator->setIssuer($issuer);
-        $this->assertEquals($issuer, $generator->issuer(), "UrlGenerator did not correctly set the issuer.");
+        self::assertEquals($issuer, $generator->issuer(), "UrlGenerator did not correctly set the issuer.");
     }
 
-    /**
-     * Test data for testHasIssuer().
-     *
-     * @return Generator
-     */
-    public function dataForTestUser(): Generator
+    /** Test data for testHasIssuer(). */
+    public static function providerTestUser(): iterable
     {
         yield from [
             "typical" => ["darren",],
@@ -202,23 +192,18 @@ class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestUser
-     *
      * @param string $user The user to test with.
      */
+    #[DataProvider('providerTestUser')]
     public function testUser(string $user): void
     {
         $generator = new UrlGenerator();
         $generator->setUser($user);
-        $this->assertEquals($user, $generator->user(), "UrlGenerator did not correctly report the user.");
+        self::assertEquals($user, $generator->user(), "UrlGenerator did not correctly report the user.");
     }
 
-    /**
-     * Test data for testHasIssuer().
-     *
-     * @return Generator
-     */
-    public function dataForTestSetUser(): Generator
+    /** Test data for testHasIssuer(). */
+    public static function providerTestSetUser(): iterable
     {
         yield from [
             "typical" => ["darren",],
@@ -238,11 +223,10 @@ class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestSetUser
-     *
      * @param mixed $user The user to test with.
      * @param string|null $exceptionClass The class of exception expected to be thrown, if any.
      */
+    #[DataProvider('providerTestSetUser')]
     public function testSetUser(mixed $user, ?string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
@@ -251,15 +235,11 @@ class UrlGeneratorTest extends TestCase
 
         $generator = new UrlGenerator();
         $generator->setUser($user);
-        $this->assertEquals($user, $generator->user(), "UrlGenerator did not correctly set the user.");
+        self::assertEquals($user, $generator->user(), "UrlGenerator did not correctly set the user.");
     }
 
-    /**
-     * Test data for testUrlFor();.
-     *
-     * @return Generator The test data.
-     */
-    public function dataForTestUrlFor(): Generator
+    /** Test data for testUrlFor();. */
+    public static function providerTestUrlFor(): iterable
     {
         yield from [
             "typicalIssuerAndUser" => [
@@ -368,7 +348,7 @@ class UrlGeneratorTest extends TestCase
                 ],
                 [
                     "secret" => "password-password",
-                    "hashAlgorithm" => Totp::Sha512Algorithm,
+                    "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,
                 ],
                 "otpauth://totp/arthur.dent/?secret=OBQXG43XN5ZGILLQMFZXG53POJSA====&algorithm=SHA512",
             ],
@@ -389,7 +369,7 @@ class UrlGeneratorTest extends TestCase
                 ],
                 [
                     "secret" => "password-password",
-                    "hashAlgorithm" => Totp::Sha512Algorithm,
+                    "hashAlgorithm" => HashAlgorithm::Sha512Algorithm,
                 ],
                 "otpauth://totp/arthur.dent/?secret=OBQXG43XN5ZGILLQMFZXG53POJSA====&algorithm=SHA512",
             ],
@@ -467,6 +447,11 @@ class UrlGeneratorTest extends TestCase
                     "secret" => "password-password",
                     "renderer" => new class implements Renderer
                     {
+                        public function name(): string
+                        {
+                            return "Spong Renderer";
+                        }
+
                         public function render(string $hmac): string
                         {
                             return "spong";
@@ -509,8 +494,6 @@ class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestUrlFor
-     *
      * @param array $urlConfig Configuration for the UrlGenerator to test.
      * @param array $totpConfig Configuration for the Totp to use to test the UrlGenerator.
      * @param string $expectedUrl The URL the generator is expected to produce.
@@ -518,7 +501,8 @@ class UrlGeneratorTest extends TestCase
      *
      * @throws InvalidArgumentException if the renderer in the TOTP config is not valid.
      */
-    public function testUrlFor(array $urlConfig, array $totpConfig, string $expectedUrl,  string $exceptionClass = null): void
+    #[DataProvider('providerTestUrlFor')]
+    public function testUrlFor(array $urlConfig, array $totpConfig, string $expectedUrl, string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
             $this->expectException($exceptionClass);
@@ -531,19 +515,23 @@ class UrlGeneratorTest extends TestCase
         }
 
         if (isset($totpConfig["renderer"])) {
-            $totp = new Totp(secret: $totpConfig["secret"], timeStep: $totpConfig["time-step"] ?? Totp::DefaultTimeStep, referenceTime: $totpConfig["referenceTime"] ?? 0, hashAlgorithm: $totpConfig["hashAlgorithm"] ?? Totp::DefaultAlgorithm);
+            $factory = new Factory(timeStep: new TimeStep($totpConfig["time-step"] ?? TimeStep::DefaultTimeStep), referenceTime: $totpConfig["referenceTime"] ?? 0, hashAlgorithm: new HashAlgorithm($totpConfig["hashAlgorithm"] ?? HashAlgorithm::DefaultAlgorithm));
 
-            if (is_string($totpConfig["renderer"])) {
-                $totp->setRenderer(new $totpConfig["renderer"]());
-            } else if (is_callable($totpConfig["renderer"])) {
-                $totp->setRenderer($totpConfig["renderer"]());
-            } else if ($totpConfig["renderer"] instanceof Renderer) {
-                $totp->setRenderer($totpConfig["renderer"]);
-            } else {
-                throw new InvalidArgumentException("The renderer provided in the TOTP config is not valid.");
-            }
+            $factory = match (true) {
+                is_string($totpConfig["renderer"]) => $factory->withRenderer(new $totpConfig["renderer"]()),
+                is_callable($totpConfig["renderer"]) => $factory->withRenderer($totpConfig["renderer"]()),
+                $totpConfig["renderer"] instanceof Renderer => $factory->withRenderer($totpConfig["renderer"]),
+                default => throw new InvalidArgumentException("The renderer provided in the TOTP config is not valid."),
+            };
+
+            $totp = $factory->totp(Secret::fromRaw($totpConfig["secret"]));
         } else {
-            $totp = Totp::integer(digits: $totpConfig["digits"] ?? 6, secret: $totpConfig["secret"], timeStep: $totpConfig["time-step"] ?? Totp::DefaultTimeStep, referenceTime: $totpConfig["referenceTime"] ?? 0, hashAlgorithm: $totpConfig["hashAlgorithm"] ?? Totp::DefaultAlgorithm);
+            $totp = Factory::integer(
+                digits: new Digits($totpConfig["digits"] ?? 6),
+                timeStep: new TimeStep($totpConfig["time-step"] ?? TimeStep::DefaultTimeStep),
+                referenceTime: $totpConfig["referenceTime"] ?? 0,
+                hashAlgorithm: new HashAlgorithm($totpConfig["hashAlgorithm"] ?? HashAlgorithm::DefaultAlgorithm),
+            )->totp(Secret::fromRaw($totpConfig["secret"]));
         }
 
         if ($urlConfig["withDigits"] ?? false) {
@@ -570,7 +558,7 @@ class UrlGeneratorTest extends TestCase
     public function testProtocol(): void
     {
         $generator = new UrlGenerator();
-        $this->assertEquals("otpauth", $generator->protocol());
+        self::assertEquals("otpauth", $generator->protocol());
     }
 
     /**
@@ -579,7 +567,7 @@ class UrlGeneratorTest extends TestCase
     public function testAuthenticationType(): void
     {
         $generator = new UrlGenerator();
-        $this->assertEquals("totp", $generator->authenticationType());
+        self::assertEquals("totp", $generator->authenticationType());
     }
 
     /**
@@ -637,7 +625,7 @@ class UrlGeneratorTest extends TestCase
      *
      * @return array
      */
-    public function dataForTestOptionSwitchMethods(): array
+    public static function providerTestOptionSwitchMethods(): array
     {
         return [
             "typicalTrue" => [true,],
@@ -661,12 +649,11 @@ class UrlGeneratorTest extends TestCase
     /**
      * Test for the setIncludePeriod() method.
      *
-     * @dataProvider dataForTestOptionSwitchMethods
-     *
      * @param mixed $include The value to pass to the setIncludePeriod() method, and the expected return value from
      * includesPeriod().
      * @param class-string|null $exceptionClass The class of the exception that is expected to tbe thrown, if any.
      */
+    #[DataProvider('providerTestOptionSwitchMethods')]
     public function testSetIncludesPeriod(mixed $include, string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
@@ -675,18 +662,17 @@ class UrlGeneratorTest extends TestCase
 
         $generator = new UrlGenerator();
         $generator->setIncludePeriod($include);
-        $this->assertEquals($include, $generator->includesPeriod(), "includesPeriod() did not report the correct state.");
+        self::assertEquals($include, $generator->includesPeriod(), "includesPeriod() did not report the correct state.");
     }
 
     /**
      * Test for the setIncludeDigits() method.
      *
-     * @dataProvider dataForTestOptionSwitchMethods
-     *
      * @param mixed $include The value to pass to the setIncludeDigits() method, and the expected return value from
      * includesDigits().
      * @param class-string|null $exceptionClass The class of the exception that is expected to tbe thrown, if any.
      */
+    #[DataProvider('providerTestOptionSwitchMethods')]
     public function testSetIncludesDigits(mixed $include, string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
@@ -695,18 +681,17 @@ class UrlGeneratorTest extends TestCase
 
         $generator = new UrlGenerator();
         $generator->setIncludeDigits($include);
-        $this->assertEquals($include, $generator->includesDigits(), "includesPeriod() did not report the correct state.");
+        self::assertEquals($include, $generator->includesDigits(), "includesPeriod() did not report the correct state.");
     }
 
     /**
      * Test for the setIncludeAlgorithm() method.
      *
-     * @dataProvider dataForTestOptionSwitchMethods
-     *
      * @param mixed $include The value to pass to the setIncludeAlgorithm() method, and the expected return value from
      * includesAlgorithm().
      * @param class-string|null $exceptionClass The class of the exception that is expected to tbe thrown, if any.
      */
+    #[DataProvider('providerTestOptionSwitchMethods')]
     public function testSetIncludesAlgorithm(mixed $include, string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
@@ -715,15 +700,11 @@ class UrlGeneratorTest extends TestCase
 
         $generator = new UrlGenerator();
         $generator->setIncludeAlgorithm($include);
-        $this->assertEquals($include, $generator->includesAlgorithm(), "includesPeriod() did not report the correct state.");
+        self::assertEquals($include, $generator->includesAlgorithm(), "includesPeriod() did not report the correct state.");
     }
 
-    /**
-     * Test data for testStaticBadMethodCall().
-     *
-     * @return \Generator
-     */
-    public function dataForFluentBadMethodCallTests(): Generator
+    /** Test data for testStaticBadMethodCall(). */
+    public static function providerFluentBadMethodCallTests(): iterable
     {
         yield from [
             // these are all likely confusions of actual static methods provided
@@ -756,13 +737,12 @@ class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForFluentBadMethodCallTests
-     *
      * Test the static/fluent interface throws the BadMethodCall exception with non-existent methods.
      *
      * @param string $methodName The invalid method name.
      * @param array $args The optional args for the call.
      */
+    #[DataProvider('providerFluentBadMethodCallTests')]
     public function testStaticBadMethodCall(string $methodName, array $args = []): void
     {
         $this->expectException(BadMethodCallException::class);
@@ -770,13 +750,12 @@ class UrlGeneratorTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForFluentBadMethodCallTests
-     *
      * Test the static/fluent interface throws the BadMethodCall exception with non-existent methods.
      *
      * @param string $methodName The invalid method name.
      * @param array $args The optional args for the call.
      */
+    #[DataProvider('providerFluentBadMethodCallTests')]
     public function testDynamicBadMethodCall(string $methodName, array $args = []): void
     {
         $this->expectException(BadMethodCallException::class);
@@ -786,11 +765,10 @@ class UrlGeneratorTest extends TestCase
     /**
      * Test for() used as the initialising method in a fluent build of an UrlGenerator.
      *
-     * @dataProvider dataForTestSetUser
-     *
      * @param mixed $user The user to test with.
      * @param string|null $exceptionClass The class of exception expected to be thrown, if any.
      */
+    #[DataProvider('providerTestSetUser')]
     public function testStaticFor(mixed $user, ?string $exceptionClass = null): void
     {
         if ($exceptionClass) {
@@ -799,17 +777,16 @@ class UrlGeneratorTest extends TestCase
 
         $generator = UrlGenerator::for($user);
         $this->assertInstanceOf(UrlGenerator::class, $generator, "UrlGenerator::for() did not return an UrlGenerator.");
-        $this->assertEquals($user, $generator->user(), "The created generator did not report the expected user.");
+        self::assertEquals($user, $generator->user(), "The created generator did not report the expected user.");
     }
 
     /**
      * Test for() used as a chained method in a fluent build of an UrlGenerator.
      *
-     * @dataProvider dataForTestSetUser
-     *
      * @param mixed $user The user to test with.
      * @param string|null $exceptionClass The class of exception expected to be thrown, if any.
      */
+    #[DataProvider('providerTestSetUser')]
     public function testDynamicFor(mixed $user, ?string $exceptionClass = null): void
     {
         if ($exceptionClass) {
@@ -818,17 +795,16 @@ class UrlGeneratorTest extends TestCase
 
         $generator = UrlGenerator::from("Equit")->for($user);
         $this->assertInstanceOf(UrlGenerator::class, $generator, "UrlGenerator::for() did not return an UrlGenerator.");
-        $this->assertEquals($user, $generator->user(), "The created generator did not report the expected user.");
+        self::assertEquals($user, $generator->user(), "The created generator did not report the expected user.");
     }
 
     /**
      * Test from() used as the initialising method in a fluent build of an UrlGenerator.
      *
-     * @dataProvider dataForTestIssuer
-     *
      * @param mixed $issuer The issuer to test with.
      * @param string|null $exceptionClass The class of exception expected to be thrown, if any.
      */
+    #[DataProvider('providerTestIssuer')]
     public function testStaticFrom(mixed $issuer, ?string $exceptionClass = null): void
     {
         if ($exceptionClass) {
@@ -843,11 +819,10 @@ class UrlGeneratorTest extends TestCase
     /**
      * Test from() used as a chained method in a fluent build of an UrlGenerator.
      *
-     * @dataProvider dataForTestIssuer
-     *
      * @param mixed $issuer The issuer to test with.
      * @param string|null $exceptionClass The class of exception expected to be thrown, if any.
      */
+    #[DataProvider('providerTestIssuer')]
     public function testDynamicFrom(mixed $issuer, ?string $exceptionClass = null): void
     {
         if ($exceptionClass) {

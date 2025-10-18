@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,110 +19,51 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Tests\Exceptions;
+namespace CitrusLab\TotpTests\Exceptions;
 
-use Equit\Totp\Exceptions\InvalidBase32DataException;
-use Equit\Totp\Tests\Framework\TestCase;
-use Exception;
-use Generator;
-use TypeError;
+use CitrusLab\Totp\Exceptions\InvalidBase32DataException;
+use CitrusLab\Totp\Exceptions\TotpException;
+use CitrusLab\TotpTests\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Throwable;
 
-/**
- * Unit test for the InvalidBase32DataException class.
- */
-class InvalidBase32DataExceptionTest extends TestCase
+#[CoversClass(InvalidBase32DataException::class)]
+final class InvalidBase32DataExceptionTest extends TestCase
 {
-    /**
-     * Generate a random string that is guaranteed not to be a valid Base32 string.
-     *
-     * @return string The generated string.
-     */
-    private static function randomInvalidBase32String(): string
+    /** Data provider with constructor arguments for the exception for testConstructor1(). */
+    public static function providerTestConstructor1(): iterable
     {
-        static $alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
-
-        $str = "_";
-
-        for ($length = mt_rand(4, 24); 0 !== $length; --$length) {
-            $str .= $alphabet[mt_rand(0, strlen($alphabet) - 1)];
-        }
-
-        return $str;
+        yield "data-only" => ["blah",];
+        yield "data-and-message" => ["blah", "'blah' is not valid base32 content.",];
+        yield "data-message-and-code" => ["blah", "'blah' is not valid base32 content.", 12,];
+        yield "data-message-code-and-previous" => ["blah", "'blah' is not valid base32 content.", 12, new TotpException("foo"),];
     }
 
-    /**
-     * Test data for InvalidBase32DataException constructor.
-     *
-     * @return array The test data.
-     */
-    public function dataForTestConstructor(): array
+    /** Ensure the constructor initialises the exception as expected. */
+    #[DataProvider("providerTestConstructor1")]
+    public function testConstructor1(string $data, string $message = "", int $code = 0, Throwable $previous = null): void
     {
-        return [
-            "typicalDataOnly" => ["blah",],
-            "typicalDataAndMessage" => ["blah", "'blah' is not valid base32 content.",],
-            "typicalDataMessageAndCode" => ["blah", "'blah' is not valid base32 content.", 12,],
-            "typicalDataMessageCodeAndPrevious" => ["blah", "'blah' is not valid base32 content.", 12, new Exception("foo"),],
-            "invalidNullData" => [null, "null is not valid base32 content.", 12, new Exception("foo"), TypeError::class],
-            "invalidStringableData" => [self::createStringable("blah"), "'blah' is not valid base32 content.", 12, new Exception("foo"), TypeError::class],
-            "invalidIntData" => [1, "1 is not valid base32 content.", 12, new Exception("foo"), TypeError::class],
-            "invalidFloatData" => [1.115, "1.115 is not valid base32 content.", 12, new Exception("foo"), TypeError::class],
-            "invalidTrueData" => [true, "true is not valid base32 content.", 12, new Exception("foo"), TypeError::class],
-            "invalidFalseData" => [false, "false is not valid base32 content.", 12, new Exception("foo"), TypeError::class],
-            "invalidArrayData" => [["blah",], "['blah'] is not valid base32 content.", 12, new Exception("foo"), TypeError::class],
-        ];
-    }
-
-    /**
-     * Test for the InvalidBase32DataException constructor.
-     *
-     * @dataProvider dataForTestConstructor
-     *
-     * @param mixed $data The invalid base32 data for the test exception.
-     * @param mixed $message The message for the test exception. Defaults to an empty string.
-     * @param mixed $code The error code for the test exception. Defaults to 0.
-     * @param mixed|null $previous The previous throwable for the test exception. Defaults to null.
-     * @param string|null $exceptionClass The class name of the exception that is expected during the test, if any.
-     */
-    public function testConstructor(mixed $data, mixed $message = "", mixed $code = 0, mixed $previous = null, string $exceptionClass = null): void
-    {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
         $exception = new InvalidBase32DataException($data, $message, $code, $previous);
-        $this->assertEquals($data, $exception->getData(), "Invalid Base32 data retrieved from exception was not as expected.");
-        $this->assertEquals($message, $exception->getMessage(), "Message retrieved from exception was not as expected.");
-        $this->assertEquals($code, $exception->getCode(), "Error code retrieved from exception was not as expected.");
-        $this->assertSame($previous, $exception->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
+        self::assertEquals($data, $exception->getData(), "Invalid Base32 data retrieved from exception was not as expected.");
+        self::assertEquals($message, $exception->getMessage(), "Message retrieved from exception was not as expected.");
+        self::assertEquals($code, $exception->getCode(), "Error code retrieved from exception was not as expected.");
+        self::assertSame($previous, $exception->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
     }
 
-    /**
-     * Test data for InvalidBase32DataException::getData().
-     *
-     * @return \Generator
-     */
-    public function dataForTestGetData(): Generator
+    /** Data provider with invalid base32 data for testGetData1(). */
+    public static function providerTestGetData1(): iterable
     {
-        yield from [
-            "typical" => ["fizzbuzz",],
-            "extremeEmpty" => ["",],
-        ];
-
-        for ($idx = 0; $idx < 100; ++$idx) {
-            yield "typicalRandom" . sprintf("%02d", $idx) => [self::randomInvalidBase32String(),];
-        }
+        yield "typical" => ["fizzbuzz",];
+        yield "empty" => ["",];
+        yield "whitespace" => ["  ",];
     }
 
-    /**
-     * Test the InvalidBase32DataException::getData() method.
-     *
-     * @dataProvider dataForTestGetData
-     *
-     * @param string $data The data to test with.
-     */
-    public function testGetData(string $data): void
+    /** Ensure we can retrieve the correct invalid data from the exception. */
+    #[DataProvider("providerTestGetData1")]
+    public function testGetData1(string $data): void
     {
-        $exception = new InvalidBase32DataException($data);
-        $this->assertEquals($data, $exception->getData(), "Invalid Base32 data retrieved from exception was not as expected.");
+        $actual = new InvalidBase32DataException($data);
+        self::assertEquals($data, $actual->getData(), "Invalid Base32 data retrieved from exception was not as expected.");
     }
 }

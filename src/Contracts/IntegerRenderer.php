@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,15 +19,13 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Renderers;
+namespace CitrusLab\Totp\Contracts;
 
-/**
- * Interface for renderers that produce a fixed-width integer one-time password.
- */
+use CitrusLab\Totp\Types\Digits;
+
+/** Interface for renderers that produce a fixed-width integer one-time password. */
 interface IntegerRenderer extends Renderer
 {
-    /**
-     * @return int The number of digits to render.
-     */
-    public function digits(): int;
+    /** @return Digits The number of digits to render. */
+    public function digits(): Digits;
 }

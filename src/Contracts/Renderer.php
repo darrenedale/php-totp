@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,13 +19,14 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Renderers;
+namespace CitrusLab\Totp\Contracts;
 
-/**
- * Interface for renderers that turn TOTP HMACs into the actual one-time passwords required.
- */
+/** Contract for renderers that turn TOTP HMACs into the actual one-time passwords required. */
 interface Renderer
 {
+    /** The name of the rendering scheme used to turn the TOTP HMAC into a password. */
+    public function name(): string;
+
     /**
      * Produce the one-time password for an HMAC.
      *

@@ -1,0 +1,313 @@
+<?php
+
+/*
+ * Copyright 2025 Darren Edale
+ *
+ * This file is part of the php-totp package.
+ *
+ * php-totp is free software: you can redistribute it and/or modify
+ * it under the terms of the Apache License v2.0.
+ *
+ * php-totp is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * Apache License for more details.
+ *
+ * You should have received a copy of the Apache License v2.0
+ * along with php-totp. If not, see <http://www.apache.org/licenses/>.
+ */
+
+declare(strict_types=1);
+
+namespace CitrusLab\TotpTests\Types;
+
+use CitrusLab\Totp\Codecs\Base32;
+use CitrusLab\Totp\Codecs\Base64;
+use CitrusLab\Totp\Exceptions\InvalidBase32DataException;
+use CitrusLab\Totp\Exceptions\InvalidBase64DataException;
+use CitrusLab\Totp\Exceptions\InvalidSecretException;
+use CitrusLab\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Types\Secret;
+use Equit\XRay\XRay;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+
+#[CoversClass(Secret::class)]
+final class SecretTest extends TestCase
+{
+    public function setUp(): void
+    {
+        Base32::setStrict();
+        Base64::setStrict();
+    }
+
+    /** Data provider with valid secrets for testDestructor1(). */
+    public static function providerTestDestructor1(): iterable
+    {
+        yield "typicalAsciiSecret" => ["password-password"];
+        yield "nullBytes16Secret" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"];
+        yield "nullBytes20Secret" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"];
+    }
+
+    /** Ensure the destructor scrubs the secret strings. */
+    #[DataProvider("providerTestDestructor1")]
+    public function testDestructor1(string $secret): void
+    {
+        /** @noinspection PhpUnhandledExceptionInspection Secret::fromRaw() shouldn't throw with test data. */
+        $totpSecret = Secret::fromRaw($secret);
+        $base32 = $totpSecret->base32();
+        $base64 = $totpSecret->base64();
+        $xray = new XRay($totpSecret);
+
+        $totpSecret->__destruct();
+        self::assertAllCharactersHaveChanged($secret, $xray->raw, "The raw secret was not overwritten with random data.");
+        self::assertAllCharactersHaveChanged($base32, $xray->base32, "The base32 secret was not overwritten with random data.");
+        self::assertAllCharactersHaveChanged($base64, $xray->base64, "The base64 secret was not overwritten with random data.");
+    }
+
+    /** Data provider with valid raw secrets for testFromRaw1(). */
+    public static function providerTestFromRaw1(): iterable
+    {
+        yield "ascii" => ["password-password",];
+        yield "binary-01" => ["\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b\x23\x3f\x40\x55\x5a",];
+        yield "binary-02" => ["\xca\x1e\x10\xfa\x3d\x56\x65\xb7\x21\x3c\x36\xb6\x7d\x35\xa5\xa9\xa0\x08\x61\x53",];
+        yield "binary-03" => ["\x99\x7e\x5e\xb4\x9e\x2e\x13\x5d\x59\xd3\xbf\x22\xa3\x45\xa0\x37\x7c\x0e\x58\xb9\x60\x5a\x09\xcb\xd9\xee\x4d\xc1\x22\xbd\x6d\xfc",];
+        yield "binary-04" => ["\xb4\x73\x19\xa7\x82\xa0\x95\x91\x96\x61\xd1\x94\x1b\x49\xae\xa5\xc4\x48\x1b\xbb\x38\x5f\x73\xc7\x27\xd1\xae\x78\x2b\xe6\xc9\x82\x2e\x56\xa6\x6a\xc0\xe8\xe6\xde\x36\xaf\x0c\x0c\x5f\x91\xfb\x21\x79\xcb\xfd\x0e\xda\xb3\x31\x8b\x08\xfb\xe5\x33\x3f\x24\xeb\xe0",];
+        yield "binary-05" => ["\x22\x71\x3e\xa7\xb1\x30\x3c\x28\x33\xe7\xd7\xea\x86\x35\x50\x8a\xf0\x3d\xf2\xff\xb2\xff\x74\x60\x9d\x0d\x3a\x94\xbf\xe0\xc2\x56\x4c\x75\x35\x52\xd5\x25\x5f\x58\xbd\x12\xff\xc9\x61\x31\x98\x0e\xc8\xe5\x20\x51\x9d\x27\x2d\x77\xd9\xca\xfa\xc0\x37\x6f\x02\x85",];
+        yield "binary-06" => ["\xf9\xee\xee\x58\xa0\x90\xcc\xcf\xda\xa1\x42\x9a\xd9\xd2\x24\x88\x98\xe4\x26\x03\xdd\xb3\xe6\x1a\xeb\x25\x22\x4a\x58\x73\x41\x92",];
+        yield "binary-07" => ["\x8b\x81\xf7\xb0\xf5\x0a\x2b\x6e\x15\x98\x15\x62\xd6\x92\x73\xf5\x79\xa0\x2f\xdf",];
+        yield "binary-08" => ["\xfa\xc7\xac\x80\x81\x3d\xf7\x3c\xa7\x8e\xc9\x49\x17\x9b\x52\x64\x89\x79\xe1\x11",];
+        yield "binary-09" => ["\x8b\xd8\x91\x02\x35\x45\xbb\x16\xbc\x58\x4a\xb6\x73\x14\x3b\x61\xb0\x54\xba\xe7",];
+        yield "binary-10" => ["\x1b\x9a\xef\x5d\x2e\xfb\x82\x11\xf6\x48\xe4\x5a\x4f\x54\x1c\xf5\x1e\x55\xa5\x6a",];
+        yield "binary-11" => ["\x08\xc5\x71\xe6\xbc\xd5\xbf\x51\x28\x0c\x2b\xf3\x79\xf9\x20\x0e\x0a\x5e\x5c\xb1\x0b\x09\x17\x9e\xff\xd6\x95\xb1\x7f\x92\x3c\xa1",];
+        yield "binary-12" => ["\xaa\x63\xac\x40\x62\x0b\xcc\xde\xcd\x75\xe9\x81\x8b\x26\xca\xfd\x57\x99\xb3\x7e\xa6\x7b\xb9\x4b\x4a\x23\xcf\x34\x2f\xd0\xcc\x63",];
+        yield "binary-13" => ["\x5d\x72\x22\xbd\x2b\x02\x74\x51\x7e\xe2\x35\x89\x08\xeb\x42\x53\xfa\x1c\x44\x6c\x35\x6d\xaf\xd2\xe0\xf7\x64\x83\x07\xa8\x6c\x0e\x06\x4e\x0f\xbb\xd1\x5b\x07\x46\xe4\x3d\x9c\x37\x01\x07\x73\x69\x26\x53\xbd\x63\x56\xca\xc1\x18\x89\x6f\x0d\x2a\xfb\x41\xed\x44",];
+        yield "binary-14" => ["\x89\xd0\x16\xd5\x98\x35\xef\xcd\x4d\xeb\x02\xe9\x0c\x19\x33\xe0\x6a\x8b\xb2\x9d\xfc\xd3\x15\x30\x5f\x06\xc8\x63\xcb\x34\xab\x41\x93\xc7\x39\x16\x38\x96\x45\x96\xd4\xc1\xf1\x3e\x7a\x9a\xff\xce\xb5\x06\x56\xad\x84\xaf\xec\x60\x91\xad\xc6\x65\xb7\xfe\x7d\x94",];
+        yield "binary-15" => ["\x5d\xbf\x15\x97\x77\x17\xab\x94\xc7\xa7\x30\xd6\x8b\x70\xb6\x2f\x06\xb6\xca\xcb",];
+        yield "binary-16" => ["\xb1\x02\x74\xa3\x2f\x08\xcc\x71\xfe\x54\x2f\x49\x2b\x6e\xb5\xb7\xf6\x43\x85\x70\x8c\x1a\xe2\xde\x94\x9c\xd2\x13\x24\xec\x8c\x37",];
+        yield "shortest-ascii" => ["!sixteen--bytes!",];
+        yield "null-binary-16" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",];
+        yield "null-binary-20" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",];
+        yield "null-binary-32" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",];
+        yield "null-binary-64" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",];
+	}
+
+    /** Ensure we can create Secret instances from valid raw strings. */
+    #[DataProvider("providerTestFromRaw1")]
+    public function testFromRaw1(mixed $raw): void
+	{
+		$secret = Secret::fromRaw($raw);
+        self::assertEquals($raw, $secret->raw(), "Raw bytes in Secret are not as expected.");
+	}
+
+    /** Data provider with invalid raw secrets for testFromRaw2(). */
+    public static function providerTestFromRaw2(): iterable
+    {
+        yield "15-chars-ascii" => ["!fifteen-bytes!",];
+        yield "15-chars-binary" => ["\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b",];
+        yield "15-chars-null-binary" => ["\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",];
+    }
+
+    /** Ensure invalid raw secrets throw the expected exception. */
+    #[DataProvider("providerTestFromRaw2")]
+    public function testFromRaw2(mixed $raw): void
+    {
+        $this->expectException(InvalidSecretException::class);
+        $this->expectExceptionMessage("Raw secrets for TOTP are required to be 128 bits (16 bytes) or longer");
+        Secret::fromRaw($raw);
+    }
+
+    /** Data provider with base32-encoded valid secrets for testFromBase321(). */
+    public static function providerTestFromBase321(): iterable
+	{
+        yield "ascii" => ["OBQXG43XN5ZGILLQMFZXG53POJSA====", "password-password",];
+        yield "binary-01" => ["CBZEOM3Q2FNNPLPOHCZURH3LEM7UAVK2", "\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b\x23\x3f\x40\x55\x5a",];
+        yield "binary-02" => ["ZIPBB6R5KZS3OIJ4G23H2NNFVGQAQYKT", "\xca\x1e\x10\xfa\x3d\x56\x65\xb7\x21\x3c\x36\xb6\x7d\x35\xa5\xa9\xa0\x08\x61\x53",];
+        yield "binary-03" => ["TF7F5NE6FYJV2WOTX4RKGRNAG56A4WFZMBNATS6Z5ZG4CIV5NX6A====", "\x99\x7e\x5e\xb4\x9e\x2e\x13\x5d\x59\xd3\xbf\x22\xa3\x45\xa0\x37\x7c\x0e\x58\xb9\x60\x5a\x09\xcb\xd9\xee\x4d\xc1\x22\xbd\x6d\xfc",];
+        yield "binary-04" => ["WRZRTJ4CUCKZDFTB2GKBWSNOUXCEQG53HBPXHRZH2GXHQK7GZGBC4VVGNLAORZW6G2XQYDC7SH5SC6OL7UHNVMZRRMEPXZJTH4SOXYA=", "\xb4\x73\x19\xa7\x82\xa0\x95\x91\x96\x61\xd1\x94\x1b\x49\xae\xa5\xc4\x48\x1b\xbb\x38\x5f\x73\xc7\x27\xd1\xae\x78\x2b\xe6\xc9\x82\x2e\x56\xa6\x6a\xc0\xe8\xe6\xde\x36\xaf\x0c\x0c\x5f\x91\xfb\x21\x79\xcb\xfd\x0e\xda\xb3\x31\x8b\x08\xfb\xe5\x33\x3f\x24\xeb\xe0",];
+        yield "binary-05" => ["EJYT5J5RGA6CQM7H27VIMNKQRLYD34X7WL7XIYE5BU5JJP7AYJLEY5JVKLKSKX2YXUJP7SLBGGMA5SHFEBIZ2JZNO7M4V6WAG5XQFBI=", "\x22\x71\x3e\xa7\xb1\x30\x3c\x28\x33\xe7\xd7\xea\x86\x35\x50\x8a\xf0\x3d\xf2\xff\xb2\xff\x74\x60\x9d\x0d\x3a\x94\xbf\xe0\xc2\x56\x4c\x75\x35\x52\xd5\x25\x5f\x58\xbd\x12\xff\xc9\x61\x31\x98\x0e\xc8\xe5\x20\x51\x9d\x27\x2d\x77\xd9\xca\xfa\xc0\x37\x6f\x02\x85",];
+        yield "binary-06" => ["7HXO4WFASDGM7WVBIKNNTURERCMOIJQD3WZ6MGXLEUREUWDTIGJA====", "\xf9\xee\xee\x58\xa0\x90\xcc\xcf\xda\xa1\x42\x9a\xd9\xd2\x24\x88\x98\xe4\x26\x03\xdd\xb3\xe6\x1a\xeb\x25\x22\x4a\x58\x73\x41\x92",];
+        yield "binary-07" => ["ROA7PMHVBIVW4FMYCVRNNETT6V42AL67", "\x8b\x81\xf7\xb0\xf5\x0a\x2b\x6e\x15\x98\x15\x62\xd6\x92\x73\xf5\x79\xa0\x2f\xdf",];
+        yield "binary-08" => ["7LD2ZAEBHX3TZJ4OZFERPG2SMSEXTYIR", "\xfa\xc7\xac\x80\x81\x3d\xf7\x3c\xa7\x8e\xc9\x49\x17\x9b\x52\x64\x89\x79\xe1\x11",];
+	}
+
+    /** Ensure we can create Secret instances from valid base32-encoded secret strings. */
+    #[DataProvider("providerTestFromBase321")]
+    public function testFromBase321(mixed $base32, string $expectedRaw): void
+	{
+		$secret = Secret::fromBase32($base32);
+        self::assertEquals($base32, $secret->base32(), "Base32 in Secret is not as expected.");
+        self::assertEquals($expectedRaw, $secret->raw(), "Raw bytes in Secret are not as expected.");
+	}
+
+    /** Data provider with base32-encoded invalid secrets for testFromBase322(). */
+    public static function providerTestFromBase322(): iterable
+    {
+        yield "just-too-short-ascii" => ["EFTGSZTUMVSW4LLCPF2GK4ZB",];
+        yield "just-too-short-binary" => ["CBZEOM3Q2FNNPLPOHCZURH3L",];
+        yield "just-too-short-null-binary" => ["AAAAAAAAAAAAAAAAAAAAAAAA",];
+    }
+
+    /** Ensure invalid secrets that are base32-encoded throw the expected exception. */
+    #[DataProvider("providerTestFromBase322")]
+    public function testFromBase322(mixed $base32): void
+    {
+        $this->expectException(InvalidSecretException::class);
+        $this->expectExceptionMessage("Raw secrets for TOTP are required to be 128 bits (16 bytes) or longer");
+        Secret::fromBase32($base32);
+    }
+
+    /** Data provider with invalid base32-encodings of secrets for testFromBase323(). */
+    public static function providerTestFromBase323(): iterable
+    {
+        yield "invalid-base32-at-0" => ["cBZEOM3Q2FNNPLPOHCZURH3L", "Invalid base32 character found at position 0",];
+        yield "invalid-base32-at-9" => ["CBZEOM3Q2fNNPLPOHCZURH3L", "Invalid base32 character found at position 9",];
+        yield "invalid-base32-length" => ["7HXO4WFASDGM7WVBIKNNTURERCMOIJQD3WZ6MGXLEUREUWDTIGJA===", "Base32 data must be padded to a multiple of 8 bytes",];
+        yield "invalid-base32-padding" => ["7HXO4WFASDGM7WVBIKNNTURERCMOIJQD3WZ6MGXLEUREUWDTIGJ=====", "Base32 data must be padded with either 0, 1, 3, 4 or 6 '=' characters",];
+    }
+
+    /** Ensure invalid base32-encodings of secrets throw the expected exception. */
+    #[DataProvider("providerTestFromBase323")]
+    public function testFromBase323(mixed $base32, string $expectedExceptionMessage): void
+    {
+        $this->expectException(InvalidBase32DataException::class);
+        $this->expectExceptionMessage($expectedExceptionMessage);
+        Secret::fromBase32($base32);
+    }
+
+    /** Data provider with base64-encoded valid secrets for testFromBase641(). */
+    public static function providerTestFromBase641(): iterable
+	{
+        yield "ascii" => ["cGFzc3dvcmQtcGFzc3dvcmQ=", "password-password",];
+        yield "binary-01" => ["i9iRAjVFuxa8WEq2cxQ7YbBUuuc=", "\x8b\xd8\x91\x02\x35\x45\xbb\x16\xbc\x58\x4a\xb6\x73\x14\x3b\x61\xb0\x54\xba\xe7",];
+        yield "binary-02" => ["G5rvXS77ghH2SORaT1Qc9R5VpWo=", "\x1b\x9a\xef\x5d\x2e\xfb\x82\x11\xf6\x48\xe4\x5a\x4f\x54\x1c\xf5\x1e\x55\xa5\x6a",];
+        yield "binary-03" => ["CMVx5rzVv1EoDCvzefkgDgpeXLELCRee/9aVsX+SPKE=", "\x08\xc5\x71\xe6\xbc\xd5\xbf\x51\x28\x0c\x2b\xf3\x79\xf9\x20\x0e\x0a\x5e\x5c\xb1\x0b\x09\x17\x9e\xff\xd6\x95\xb1\x7f\x92\x3c\xa1",];
+        yield "binary-04" => ["qmOsQGILzN7NdemBiybK/VeZs36me7lLSiPPNC/QzGM=", "\xaa\x63\xac\x40\x62\x0b\xcc\xde\xcd\x75\xe9\x81\x8b\x26\xca\xfd\x57\x99\xb3\x7e\xa6\x7b\xb9\x4b\x4a\x23\xcf\x34\x2f\xd0\xcc\x63",];
+        yield "binary-05" => ["XXIivSsCdFF+4jWJCOtCU/ocRGw1ba/S4PdkgweobA4GTg+70VsHRuQ9nDcBB3NpJlO9Y1bKwRiJbw0q+0HtRA==", "\x5d\x72\x22\xbd\x2b\x02\x74\x51\x7e\xe2\x35\x89\x08\xeb\x42\x53\xfa\x1c\x44\x6c\x35\x6d\xaf\xd2\xe0\xf7\x64\x83\x07\xa8\x6c\x0e\x06\x4e\x0f\xbb\xd1\x5b\x07\x46\xe4\x3d\x9c\x37\x01\x07\x73\x69\x26\x53\xbd\x63\x56\xca\xc1\x18\x89\x6f\x0d\x2a\xfb\x41\xed\x44",];
+        yield "binary-06" => ["idAW1Zg1781N6wLpDBkz4GqLsp380xUwXwbIY8s0q0GTxzkWOJZFltTB8T56mv/OtQZWrYSv7GCRrcZlt/59lA==", "\x89\xd0\x16\xd5\x98\x35\xef\xcd\x4d\xeb\x02\xe9\x0c\x19\x33\xe0\x6a\x8b\xb2\x9d\xfc\xd3\x15\x30\x5f\x06\xc8\x63\xcb\x34\xab\x41\x93\xc7\x39\x16\x38\x96\x45\x96\xd4\xc1\xf1\x3e\x7a\x9a\xff\xce\xb5\x06\x56\xad\x84\xaf\xec\x60\x91\xad\xc6\x65\xb7\xfe\x7d\x94",];
+        yield "binary-07" => ["Xb8Vl3cXq5THpzDWi3C2Lwa2yss=", "\x5d\xbf\x15\x97\x77\x17\xab\x94\xc7\xa7\x30\xd6\x8b\x70\xb6\x2f\x06\xb6\xca\xcb",];
+        yield "binary-08" => ["sQJ0oy8IzHH+VC9JK261t/ZDhXCMGuLelJzSEyTsjDc=", "\xb1\x02\x74\xa3\x2f\x08\xcc\x71\xfe\x54\x2f\x49\x2b\x6e\xb5\xb7\xf6\x43\x85\x70\x8c\x1a\xe2\xde\x94\x9c\xd2\x13\x24\xec\x8c\x37",];
+	}
+
+    /** Ensure we can create Secret instances from valid base64-encoded secret strings. */
+    #[DataProvider("providerTestFromBase641")]
+    public function testFromBase641(mixed $base64, string $raw): void
+	{
+		$secret = Secret::fromBase64($base64);
+        self::assertEquals($base64, $secret->base64(), "Base64 in Secret is not as expected.");
+        self::assertEquals($raw, $secret->raw(), "Raw bytes in Secret are not as expected.");
+	}
+
+    /** Data provider with base64-encoded invalid secrets for testFromBase642(). */
+    public static function providerTestFromBase642(): iterable
+    {
+        yield "just-too-short-ascii" => ["IWZpZnRlZW4tYnl0ZXMh",];
+        yield "just-too-short-binary" => ["EHJHM3DRWtet7jizSJ9r",];
+        yield "just-too-short-null-binary" => ["AAAAAAAAAAAAAAAAAAAA",];
+    }
+
+    /** Ensure invalid secrets that are base64-encoded throw the expected exception. */
+    #[DataProvider("providerTestFromBase642")]
+    public function testFromBase642(mixed $base64): void
+    {
+        $this->expectException(InvalidSecretException::class);
+        $this->expectExceptionMessage("Raw secrets for TOTP are required to be 128 bits (16 bytes) or longer");
+        Secret::fromBase64($base64);
+    }
+
+    /** Data provider with invalid base64-encoded secrets for testFromBase643(). */
+    public static function providerTestFromBase643(): iterable
+    {
+        yield "invalid-base64-at-0" => ["_HJHM3DRWtet7jizSJ9r", "Invalid base64 character found at position 0",];
+        yield "invalid-base64-at-11" => ["HJHM3DRWtet_7jizSJ9r", "Invalid base64 character found at position 11",];
+        yield "invalid-base64-length" => ["cGFzc3dvcmQtcGFzc3dvcmQ", "Base64 data must be padded to a multiple of 4 bytes",];
+        yield "invalid-base64-padding" => ["cGFzc3dvcmQtcGFzc3dvc===", "Base64 data must be padded with either 0, 1 or 2 '=' characters",];
+    }
+
+    /** Ensure invalid base64-encodings of secrets throw the expected exception. */
+    #[DataProvider("providerTestFromBase643")]
+    public function testFromBase643(mixed $base64, string $expectedExceptionMessage): void
+    {
+        $this->expectException(InvalidBase64DataException::class);
+        $this->expectExceptionMessage($expectedExceptionMessage);
+        Secret::fromBase64($base64);
+    }
+
+    /**
+	 * Test data for testRaw1().
+	 *
+	 * @return iterable
+	 */
+    public static function providerTestRaw1(): iterable
+	{
+        yield ["password-password"];
+        yield ["\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b\x23\x3f\x40\x55\x5a",];
+        yield ["\xca\x1e\x10\xfa\x3d\x56\x65\xb7\x21\x3c\x36\xb6\x7d\x35\xa5\xa9\xa0\x08\x61\x53",];
+        yield ["\x99\x7e\x5e\xb4\x9e\x2e\x13\x5d\x59\xd3\xbf\x22\xa3\x45\xa0\x37\x7c\x0e\x58\xb9\x60\x5a\x09\xcb\xd9\xee\x4d\xc1\x22\xbd\x6d\xfc",];
+        yield ["\xb4\x73\x19\xa7\x82\xa0\x95\x91\x96\x61\xd1\x94\x1b\x49\xae\xa5\xc4\x48\x1b\xbb\x38\x5f\x73\xc7\x27\xd1\xae\x78\x2b\xe6\xc9\x82\x2e\x56\xa6\x6a\xc0\xe8\xe6\xde\x36\xaf\x0c\x0c\x5f\x91\xfb\x21\x79\xcb\xfd\x0e\xda\xb3\x31\x8b\x08\xfb\xe5\x33\x3f\x24\xeb\xe0",];
+        yield ["\x22\x71\x3e\xa7\xb1\x30\x3c\x28\x33\xe7\xd7\xea\x86\x35\x50\x8a\xf0\x3d\xf2\xff\xb2\xff\x74\x60\x9d\x0d\x3a\x94\xbf\xe0\xc2\x56\x4c\x75\x35\x52\xd5\x25\x5f\x58\xbd\x12\xff\xc9\x61\x31\x98\x0e\xc8\xe5\x20\x51\x9d\x27\x2d\x77\xd9\xca\xfa\xc0\x37\x6f\x02\x85",];
+        yield ["\xf9\xee\xee\x58\xa0\x90\xcc\xcf\xda\xa1\x42\x9a\xd9\xd2\x24\x88\x98\xe4\x26\x03\xdd\xb3\xe6\x1a\xeb\x25\x22\x4a\x58\x73\x41\x92",];
+        yield ["\x8b\x81\xf7\xb0\xf5\x0a\x2b\x6e\x15\x98\x15\x62\xd6\x92\x73\xf5\x79\xa0\x2f\xdf",];
+        yield ["\xfa\xc7\xac\x80\x81\x3d\xf7\x3c\xa7\x8e\xc9\x49\x17\x9b\x52\x64\x89\x79\xe1\x11",];
+        yield ["\x8b\xd8\x91\x02\x35\x45\xbb\x16\xbc\x58\x4a\xb6\x73\x14\x3b\x61\xb0\x54\xba\xe7",];
+        yield ["\x1b\x9a\xef\x5d\x2e\xfb\x82\x11\xf6\x48\xe4\x5a\x4f\x54\x1c\xf5\x1e\x55\xa5\x6a",];
+        yield ["\x08\xc5\x71\xe6\xbc\xd5\xbf\x51\x28\x0c\x2b\xf3\x79\xf9\x20\x0e\x0a\x5e\x5c\xb1\x0b\x09\x17\x9e\xff\xd6\x95\xb1\x7f\x92\x3c\xa1",];
+        yield ["\xaa\x63\xac\x40\x62\x0b\xcc\xde\xcd\x75\xe9\x81\x8b\x26\xca\xfd\x57\x99\xb3\x7e\xa6\x7b\xb9\x4b\x4a\x23\xcf\x34\x2f\xd0\xcc\x63",];
+        yield ["\x5d\x72\x22\xbd\x2b\x02\x74\x51\x7e\xe2\x35\x89\x08\xeb\x42\x53\xfa\x1c\x44\x6c\x35\x6d\xaf\xd2\xe0\xf7\x64\x83\x07\xa8\x6c\x0e\x06\x4e\x0f\xbb\xd1\x5b\x07\x46\xe4\x3d\x9c\x37\x01\x07\x73\x69\x26\x53\xbd\x63\x56\xca\xc1\x18\x89\x6f\x0d\x2a\xfb\x41\xed\x44",];
+        yield ["\x89\xd0\x16\xd5\x98\x35\xef\xcd\x4d\xeb\x02\xe9\x0c\x19\x33\xe0\x6a\x8b\xb2\x9d\xfc\xd3\x15\x30\x5f\x06\xc8\x63\xcb\x34\xab\x41\x93\xc7\x39\x16\x38\x96\x45\x96\xd4\xc1\xf1\x3e\x7a\x9a\xff\xce\xb5\x06\x56\xad\x84\xaf\xec\x60\x91\xad\xc6\x65\xb7\xfe\x7d\x94",];
+        yield ["\x5d\xbf\x15\x97\x77\x17\xab\x94\xc7\xa7\x30\xd6\x8b\x70\xb6\x2f\x06\xb6\xca\xcb",];
+        yield ["\xb1\x02\x74\xa3\x2f\x08\xcc\x71\xfe\x54\x2f\x49\x2b\x6e\xb5\xb7\xf6\x43\x85\x70\x8c\x1a\xe2\xde\x94\x9c\xd2\x13\x24\xec\x8c\x37",];
+	}
+
+    /** Ensure we can read the raw secret correctly. */
+    #[DataProvider("providerTestRaw1")]
+	public function testRaw1(string $raw): void
+	{
+		$secret = Secret::fromRaw($raw);
+        self::assertEquals($raw, $secret->raw(), "The secret did not contain the expected raw bytes.");
+	}
+
+    /** Data provider with valid secrets and their base32 encodings for testBase321() */
+    public static function providerTestBase321(): iterable
+	{
+        yield ["password-password", "OBQXG43XN5ZGILLQMFZXG53POJSA====",];
+        yield ["\x10\x72\x47\x33\x70\xd1\x5a\xd7\xad\xee\x38\xb3\x48\x9f\x6b\x23\x3f\x40\x55\x5a", "CBZEOM3Q2FNNPLPOHCZURH3LEM7UAVK2",];
+        yield ["\xca\x1e\x10\xfa\x3d\x56\x65\xb7\x21\x3c\x36\xb6\x7d\x35\xa5\xa9\xa0\x08\x61\x53", "ZIPBB6R5KZS3OIJ4G23H2NNFVGQAQYKT",];
+        yield ["\x99\x7e\x5e\xb4\x9e\x2e\x13\x5d\x59\xd3\xbf\x22\xa3\x45\xa0\x37\x7c\x0e\x58\xb9\x60\x5a\x09\xcb\xd9\xee\x4d\xc1\x22\xbd\x6d\xfc", "TF7F5NE6FYJV2WOTX4RKGRNAG56A4WFZMBNATS6Z5ZG4CIV5NX6A====",];
+        yield ["\xb4\x73\x19\xa7\x82\xa0\x95\x91\x96\x61\xd1\x94\x1b\x49\xae\xa5\xc4\x48\x1b\xbb\x38\x5f\x73\xc7\x27\xd1\xae\x78\x2b\xe6\xc9\x82\x2e\x56\xa6\x6a\xc0\xe8\xe6\xde\x36\xaf\x0c\x0c\x5f\x91\xfb\x21\x79\xcb\xfd\x0e\xda\xb3\x31\x8b\x08\xfb\xe5\x33\x3f\x24\xeb\xe0", "WRZRTJ4CUCKZDFTB2GKBWSNOUXCEQG53HBPXHRZH2GXHQK7GZGBC4VVGNLAORZW6G2XQYDC7SH5SC6OL7UHNVMZRRMEPXZJTH4SOXYA=",];
+        yield ["\x22\x71\x3e\xa7\xb1\x30\x3c\x28\x33\xe7\xd7\xea\x86\x35\x50\x8a\xf0\x3d\xf2\xff\xb2\xff\x74\x60\x9d\x0d\x3a\x94\xbf\xe0\xc2\x56\x4c\x75\x35\x52\xd5\x25\x5f\x58\xbd\x12\xff\xc9\x61\x31\x98\x0e\xc8\xe5\x20\x51\x9d\x27\x2d\x77\xd9\xca\xfa\xc0\x37\x6f\x02\x85", "EJYT5J5RGA6CQM7H27VIMNKQRLYD34X7WL7XIYE5BU5JJP7AYJLEY5JVKLKSKX2YXUJP7SLBGGMA5SHFEBIZ2JZNO7M4V6WAG5XQFBI=",];
+        yield ["\xf9\xee\xee\x58\xa0\x90\xcc\xcf\xda\xa1\x42\x9a\xd9\xd2\x24\x88\x98\xe4\x26\x03\xdd\xb3\xe6\x1a\xeb\x25\x22\x4a\x58\x73\x41\x92", "7HXO4WFASDGM7WVBIKNNTURERCMOIJQD3WZ6MGXLEUREUWDTIGJA====",];
+        yield ["\x8b\x81\xf7\xb0\xf5\x0a\x2b\x6e\x15\x98\x15\x62\xd6\x92\x73\xf5\x79\xa0\x2f\xdf", "ROA7PMHVBIVW4FMYCVRNNETT6V42AL67",];
+        yield ["\xfa\xc7\xac\x80\x81\x3d\xf7\x3c\xa7\x8e\xc9\x49\x17\x9b\x52\x64\x89\x79\xe1\x11", "7LD2ZAEBHX3TZJ4OZFERPG2SMSEXTYIR",];
+	}
+
+    /** Ensure we can read the base32-encoded secret correctly. */
+    #[DataProvider("providerTestBase321")]
+    public function testBase321(string $raw, string $expectedBase32): void
+	{
+		$secret = Secret::fromRaw($raw);
+        self::assertEquals($expectedBase32, $secret->base32(), "The base32 provided by the Secret object is not the same as the expected base32.");
+	}
+
+    /** Data provider with valid secrets and their base64 encodings for testBase641() */
+    public static function providerTestBase641(): iterable
+	{
+        yield ["password-password", "cGFzc3dvcmQtcGFzc3dvcmQ=",];
+        yield ["\x8b\xd8\x91\x02\x35\x45\xbb\x16\xbc\x58\x4a\xb6\x73\x14\x3b\x61\xb0\x54\xba\xe7", "i9iRAjVFuxa8WEq2cxQ7YbBUuuc=",];
+        yield ["\x1b\x9a\xef\x5d\x2e\xfb\x82\x11\xf6\x48\xe4\x5a\x4f\x54\x1c\xf5\x1e\x55\xa5\x6a", "G5rvXS77ghH2SORaT1Qc9R5VpWo=",];
+        yield ["\x08\xc5\x71\xe6\xbc\xd5\xbf\x51\x28\x0c\x2b\xf3\x79\xf9\x20\x0e\x0a\x5e\x5c\xb1\x0b\x09\x17\x9e\xff\xd6\x95\xb1\x7f\x92\x3c\xa1", "CMVx5rzVv1EoDCvzefkgDgpeXLELCRee/9aVsX+SPKE=",];
+        yield ["\xaa\x63\xac\x40\x62\x0b\xcc\xde\xcd\x75\xe9\x81\x8b\x26\xca\xfd\x57\x99\xb3\x7e\xa6\x7b\xb9\x4b\x4a\x23\xcf\x34\x2f\xd0\xcc\x63", "qmOsQGILzN7NdemBiybK/VeZs36me7lLSiPPNC/QzGM=",];
+        yield ["\x5d\x72\x22\xbd\x2b\x02\x74\x51\x7e\xe2\x35\x89\x08\xeb\x42\x53\xfa\x1c\x44\x6c\x35\x6d\xaf\xd2\xe0\xf7\x64\x83\x07\xa8\x6c\x0e\x06\x4e\x0f\xbb\xd1\x5b\x07\x46\xe4\x3d\x9c\x37\x01\x07\x73\x69\x26\x53\xbd\x63\x56\xca\xc1\x18\x89\x6f\x0d\x2a\xfb\x41\xed\x44", "XXIivSsCdFF+4jWJCOtCU/ocRGw1ba/S4PdkgweobA4GTg+70VsHRuQ9nDcBB3NpJlO9Y1bKwRiJbw0q+0HtRA==",];
+        yield ["\x89\xd0\x16\xd5\x98\x35\xef\xcd\x4d\xeb\x02\xe9\x0c\x19\x33\xe0\x6a\x8b\xb2\x9d\xfc\xd3\x15\x30\x5f\x06\xc8\x63\xcb\x34\xab\x41\x93\xc7\x39\x16\x38\x96\x45\x96\xd4\xc1\xf1\x3e\x7a\x9a\xff\xce\xb5\x06\x56\xad\x84\xaf\xec\x60\x91\xad\xc6\x65\xb7\xfe\x7d\x94", "idAW1Zg1781N6wLpDBkz4GqLsp380xUwXwbIY8s0q0GTxzkWOJZFltTB8T56mv/OtQZWrYSv7GCRrcZlt/59lA==",];
+        yield ["\x5d\xbf\x15\x97\x77\x17\xab\x94\xc7\xa7\x30\xd6\x8b\x70\xb6\x2f\x06\xb6\xca\xcb", "Xb8Vl3cXq5THpzDWi3C2Lwa2yss=",];
+        yield ["\xb1\x02\x74\xa3\x2f\x08\xcc\x71\xfe\x54\x2f\x49\x2b\x6e\xb5\xb7\xf6\x43\x85\x70\x8c\x1a\xe2\xde\x94\x9c\xd2\x13\x24\xec\x8c\x37", "sQJ0oy8IzHH+VC9JK261t/ZDhXCMGuLelJzSEyTsjDc=",];
+	}
+
+    /** Ensure we can read the base64-encoded secret correctly. */
+    #[DataProvider("providerTestBase641")]
+	public function testBase641(string $raw, string $expectedBase64): void
+	{
+		$secret = Secret::fromRaw($raw);
+        self::assertEquals($expectedBase64, $secret->base64(), "The base64 provided by the Secret object is not the same as the expected base64.");
+	}
+}

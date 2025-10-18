@@ -1,5 +1,5 @@
 {
-  "name": "equit/totp",
+  "name": "citruslab/totp",
   "description": "TOTP generator for PHP",
   "readme": "README.md",
   "keywords": [
@@ -13,19 +13,21 @@
   "authors": [
     {
       "name": "Darren Edale",
-      "email": "packagist@equituk.net"
+      "email": "packagist@equit.dev"
     }
   ],
   "require": {
-    "php": ">=8.0"
+    "php": ">=8.2"
   },
   "require-dev": {
-    "phpunit/phpunit": "^9.5",
-    "ext-mbstring": "*"
+    "phpunit/phpunit": "^10",
+    "ext-mbstring": "*",
+    "equit/xray": "dev-main",
+    "citruslab/mokkd": "0.0.*"
   },
   "autoload": {
     "psr-4": {
-      "Equit\\Totp\\": "src/"
+      "CitrusLab\\Totp\\": "src/"
     },
     "files": [
       "src/functions.php"
@@ -33,7 +35,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "Equit\\Totp\\Tests\\": "tests/"
+      "CitrusLab\\TotpTests\\": "tests/"
     }
   },
   "scripts": {

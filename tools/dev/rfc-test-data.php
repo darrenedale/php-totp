@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -27,14 +28,14 @@ declare(strict_types=1);
  * The oathtool command is expected to be in your path. If it is not, this script will fail.
  */
 
-namespace Equit\Totp\Tools\Dev\RfcTestData;
+namespace CitrusLab\Totp\Tools\Dev\RfcTestData;
 
 require_once(__DIR__ . "/../bootstrap.php");
 
+use CitrusLab\Totp\Codecs\Base32;
+use CitrusLab\Totp\Codecs\Base64;
 use DateTime;
 use DateTimeZone;
-use Equit\Totp\Base32;
-use Equit\Totp\Base64;
 
 /**
  * Show the usage/help message.
@@ -78,7 +79,7 @@ foreach (["sha1", "sha256", "sha512"] as $algorithm) {
         // NOTE the secret is ASCII-safe, so we can output it without escaping any binary
         echo <<<EOT
     "rfcTestData-{$algorithm}-{$timestamp}" => [
-      "algorithm" => "${algorithm}",
+      "algorithm" => "{$algorithm}",
       "referenceTimestamp" => 0,
       "referenceTime" => new DateTime("1970-01-01 00:00:00", new DateTimeZone("UTC")),
       "time-step" => 30,

@@ -1,6 +1,6 @@
 # Generating your own secure secrets
 
-The `Totp` class can generate secrets that are as cryptographically strong as is possible for all hash algorithms
+The `Factory` class can generate secrets that are as cryptographically strong as is possible for all hash algorithms
 supported by TOTP. However, if you can't or don't want to use this method, this document describes how to generate
 strong secrets.
 

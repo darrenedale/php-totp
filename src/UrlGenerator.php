@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,14 +19,16 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp;
+namespace CitrusLab\Totp;
 
 use BadMethodCallException;
-use Equit\Totp\Exceptions\UrlGenerator\UnsupportedRendererException;
-use Equit\Totp\Exceptions\UrlGenerator\InvalidUserException;
-use Equit\Totp\Exceptions\UrlGenerator\UnsupportedReferenceTimeException;
-use Equit\Totp\Renderers\Integer;
-use Equit\Totp\Renderers\IntegerRenderer;
+use CitrusLab\Totp\Contracts\IntegerRenderer;
+use CitrusLab\Totp\Exceptions\UrlGenerator\InvalidUserException;
+use CitrusLab\Totp\Exceptions\UrlGenerator\UnsupportedReferenceTimeException;
+use CitrusLab\Totp\Exceptions\UrlGenerator\UnsupportedRendererException;
+use CitrusLab\Totp\Renderers\Integer;
+use CitrusLab\Totp\Types\HashAlgorithm;
+use CitrusLab\Totp\Types\TimeStep;
 
 /**
  * Generate provisioning URLs for services that have OTP 2FA.
@@ -73,7 +76,7 @@ use Equit\Totp\Renderers\IntegerRenderer;
  * @method static self withoutAlgorithm() Initialise a generator that never includes the algorithm parameter in URLs it
  * generates.
  */
-class UrlGenerator
+final class UrlGenerator
 {
     /**
      * The protocol for URLs.
@@ -179,7 +182,7 @@ class UrlGenerator
      *
      * @param string $user The user.
      *
-     * @throws \Equit\Totp\Exceptions\UrlGenerator\InvalidUserException If the provided user is empty.
+     * @throws InvalidUserException If the provided user is empty.
      */
     public function setUser(string $user): void
     {
@@ -222,7 +225,7 @@ class UrlGenerator
      *
      * @return bool|null Whether the period will be included.
      */
-    public function includesPeriod(): bool | null
+    public function includesPeriod(): ?bool
     {
         return $this->m_includePeriod;
     }
@@ -235,7 +238,7 @@ class UrlGenerator
      *
      * @param bool|null $include Whether to include the period.
      */
-    public function setIncludePeriod(bool | null $include): void
+    public function setIncludePeriod(?bool $include): void
     {
         $this->m_includePeriod = $include;
     }
@@ -247,7 +250,7 @@ class UrlGenerator
      *
      * @return bool|null Whether the digits will be included.
      */
-    public function includesDigits(): bool | null
+    public function includesDigits(): ?bool
     {
         return $this->m_includeDigits;
     }
@@ -263,7 +266,7 @@ class UrlGenerator
      *
      * @param bool|null $include Whether to include the number of digits.
      */
-    public function setIncludeDigits(bool | null $include): void
+    public function setIncludeDigits(?bool $include): void
     {
         $this->m_includeDigits = $include;
     }
@@ -275,7 +278,7 @@ class UrlGenerator
      *
      * @return bool|null Whether the algorithm will be included.
      */
-    public function includesAlgorithm(): bool | null
+    public function includesAlgorithm(): ?bool
     {
         return $this->m_includeAlgorithm;
     }
@@ -288,7 +291,7 @@ class UrlGenerator
      *
      * @param bool|null $include Whether to include the algorithm.
      */
-    public function setIncludeAlgorithm(bool | null $include): void
+    public function setIncludeAlgorithm(?bool $include): void
     {
         $this->m_includeAlgorithm = $include;
     }
@@ -299,14 +302,14 @@ class UrlGenerator
      * @param Totp $totp The TOTP for which to generate the provisioning URL.
      *
      * @return string The URL.
-     * @throws \Equit\Totp\Exceptions\UrlGenerator\UnsupportedRendererException if the Totp's renderer is not an
+     * @throws UnsupportedRendererException if the Totp's renderer is not an
      *     Integer renderer.
-     * @throws \Equit\Totp\Exceptions\UrlGenerator\InvalidUserException if no user has been set in the generator.
-     * @throws \Equit\Totp\Exceptions\UrlGenerator\UnsupportedReferenceTimeException if the provided Totp's reference time is not 0.
+     * @throws InvalidUserException if no user has been set in the generator.
+     * @throws UnsupportedReferenceTimeException if the provided Totp's reference time is not 0.
      */
     public function urlFor(Totp $totp): string
     {
-        if (empty($this->user())) {
+        if ("" === $this->user()) {
             throw new InvalidUserException($this->user(), "It is not possible to generate a URL with an empty user.");
         }
 
@@ -332,17 +335,15 @@ class UrlGenerator
             $url .= "&issuer=" . urlencode($this->issuer());
         }
 
-        /** @noinspection PhpPossiblePolymorphicInvocationInspection digits() is only called after checking we have on
-         * instance of IntegerRenderer */
-        if (true === $this->includesDigits() || (is_null($this->includesDigits()) && $totp->renderer() instanceof IntegerRenderer && Integer::DefaultDigits !== $totp->renderer()->digits())) {
+        if ($totp->renderer() instanceof IntegerRenderer && (true === $this->includesDigits() || (null === $this->includesDigits() && Integer::DefaultDigits !== $totp->renderer()->digits()->quantity()))) {
             $url .= "&digits={$totp->renderer()->digits()}";
         }
 
-        if (true === $this->includesAlgorithm() || (is_null($this->includesAlgorithm()) && Totp::DefaultAlgorithm !== $totp->hashAlgorithm())) {
-            $url .= "&algorithm=" . strtoupper($totp->hashAlgorithm());
+        if (true === $this->includesAlgorithm() || (null === $this->includesAlgorithm() && HashAlgorithm::DefaultAlgorithm !== $totp->hashAlgorithm()->algorithm())) {
+            $url .= "&algorithm=" . strtoupper($totp->hashAlgorithm()->algorithm());
         }
 
-        if (true === $this->includesPeriod() || (is_null($this->includesPeriod()) && Totp::DefaultTimeStep !== $totp->timeStep())) {
+        if (true === $this->includesPeriod() || (null === $this->includesPeriod() && TimeStep::DefaultTimeStep !== $totp->timeStep()->seconds())) {
             $url .= "&period={$totp->timeStep()}";
         }
 
@@ -350,7 +351,7 @@ class UrlGenerator
     }
 
     /**
-     * @method static self for (string $user)
+     * @method self for (string $user)
      * Fluently configure an UrlGenerator for a specified user.
      *
      * This method can be invoked both statically and on an UrlGenerator instance. If invoked on an instance the return
@@ -362,7 +363,7 @@ class UrlGenerator
      */
 
     /**
-     * @method static self from(string $issuer)
+     * @method self from(string $issuer)
      * Fluently configure an UrlGenerator for a specified issuer.
      *
      * This method can be invoked both statically and on an UrlGenerator instance. If invoked on an instance the return
@@ -374,7 +375,7 @@ class UrlGenerator
      */
 
     /**
-     * @method static self withPeriod()
+     * @method self withPeriod()
      * Fluently configure an UrlGenerator to include the period in the generated URL.
      *
      * This method can be invoked both statically and on an UrlGenerator instance. If invoked on an instance the return
@@ -384,7 +385,7 @@ class UrlGenerator
      */
 
     /**
-     * @method static self withoutPeriod()
+     * @method self withoutPeriod()
      * Fluently configure an UrlGenerator to exclude the period in the generated URL.
      *
      * This method can be invoked both statically and on an UrlGenerator instance. If invoked on an instance the return
@@ -394,7 +395,7 @@ class UrlGenerator
      */
 
     /**
-     * @method static self withDigits()
+     * @method self withDigits()
      * Fluently configure an UrlGenerator to include the password digit count in the generated URL.
      *
      * In order to include the digits, any Totp instance provided to the urlFor() method MUST use an IntegerRenderer or
@@ -407,7 +408,7 @@ class UrlGenerator
      */
 
     /**
-     * @method static self withoutDigits()
+     * @method self withoutDigits()
      * Fluently configure an UrlGenerator to exclude the password digit count in the generated URL.
      *
      * This method can be invoked both statically and on an UrlGenerator instance. If invoked on an instance the return
@@ -417,7 +418,7 @@ class UrlGenerator
      */
 
     /**
-     * @method static self withAlgorithm()
+     * @method self withAlgorithm()
      * Fluently configure an UrlGenerator to include the hash algorithm name in the generated URL.
      *
      * This method can be invoked both statically and on an UrlGenerator instance. If invoked on an instance the return
@@ -427,7 +428,7 @@ class UrlGenerator
      */
 
     /**
-     * @method static self withoutAlgorithm()
+     * @method self withoutAlgorithm()
      * Fluently configure an UrlGenerator to exclude the hash algorithm name in the generated URL.
      *
      * This method can be invoked both statically and on an UrlGenerator instance. If invoked on an instance the return
@@ -439,15 +440,15 @@ class UrlGenerator
     /**
      * Magic method to handle calls to methods in the fluent interface.
      *
-     * The UrlGenerator class provides a fluent interface that can be used statically. This magic method is required to
-     * enable URL generation to be done statically. It implements all the fluent methods for the class. The methods
-     * are documented above.
+     * The UrlGenerator class provides a fluent interface that can be initiated statically. This magic method is
+     * required to enable the setup methods to be called both statically and dynamically without generating PHP errors.
+     * The methods are documented above.
      *
      * @param string $method The method called.
      * @param array $args The arguments provided in the call.
      *
      * @return $this
-     * @throws \Equit\Totp\Exceptions\UrlGenerator\InvalidUserException if for() is called with an empty user.
+     * @throws InvalidUserException if for() is called with an empty user.
      */
     public function __call(string $method, array $args): self
     {
@@ -503,23 +504,15 @@ class UrlGenerator
     /**
      * Magic method to enable the static fluent interface.
      *
-     * Putative example using the fluent interface (bulk provision some users):
-     *
-     *     $generator = UrlGenerator::from($service)->withDigits();
-     *
-     *     foreach ($users as $user) {
-     *         $totp = Totp::eightDigitTotp();
-     *         $user->setTotpSecret(encrypt($totp->base32Secret()));
-     *         $user->sendTotpNotification($generator->for($user->userName())->urlFor($totp));
-     *     }
-     *
-     * Any subclasses you create must have a default constructor for the static fluent interface to work.
+     * The UrlGenerator class provides a fluent interface that can be initiated statically. This magic method is
+     * required to enable the setup methods to be called both statically and dynamically without generating PHP errors.
+     * The methods are documented above.
      *
      * @param string $method The method called.
      * @param array $args The arguments provided in the call.
      *
      * @return static
-     * @throws \Equit\Totp\Exceptions\UrlGenerator\InvalidUserException if for() is called with an empty user.
+     * @throws InvalidUserException if for() is called with an empty user.
      */
     public static function __callStatic(string $method, array $args): static
     {

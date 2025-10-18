@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,92 +19,50 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Tests\Exceptions;
+namespace CitrusLab\TotpTests\Exceptions;
 
-use Equit\Totp\Exceptions\InvalidVerificationWindowException;
-use Equit\Totp\Tests\Framework\TestCase;
-use Exception;
-use Generator;
-use TypeError;
+use CitrusLab\Totp\Exceptions\InvalidVerificationWindowException;
+use CitrusLab\Totp\Exceptions\TotpException;
+use CitrusLab\TotpTests\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Throwable;
 
-/**
- * Unit test for the InvalidVerificationWindowException class.
- */
-class InvalidVerificationWindowExceptionTest extends TestCase
+#[CoversClass(InvalidVerificationWindowException::class)]
+final class InvalidVerificationWindowExceptionTest extends TestCase
 {
-    /**
-     * Test data for InvalidVerificationWindowException constructor.
-     *
-     * @return array The test data.
-     */
-    public function dataForTestConstructor(): array
+    /** Data provider with constructor arguments for the exception for testConstructor1(). */
+    public static function providerTestConstructor1(): iterable
     {
-        return [
-            "typicalMinus1" => [-1],
-            "typicalWindowMessageAndCode" => [-1, "-1 is not a valid verification window.", 12,],
-            "typicalWindowMessageCodeAndPrevious" => [-1, "-1 is not a valid verification window.", 12, new Exception("foo"),],
-            "extremeIntMin" => [PHP_INT_MIN,],
-            "invalidNullWindow" => [null, "null is not a valid verification window.", 12, new Exception("foo"), TypeError::class],
-            "invalidStringWindow" => ["-1", "'-1' is not a valid verification window.", 12, new Exception("foo"), TypeError::class],
-            "invalidFloatWindow" => [0.15, "0.15 is not a valid verification window.", 12, new Exception("foo"), TypeError::class],
-            "invalidTrueWindow" => [true, "true is not a valid verification window.", 12, new Exception("foo"), TypeError::class],
-            "invalidFalseWindow" => [false, "false is not a valid verification window.", 12, new Exception("foo"), TypeError::class],
-            "invalidObjectWindow" => [(object)["window" => -1,], "object is not a valid verification window.", 12, new Exception("foo"), TypeError::class],
-            "invalidArrayWindow" => [[-1,], "[-1] is not a valid verification window.", 12, new Exception("foo"), TypeError::class],
-        ];
+        yield "window-only" => [-1];
+        yield "window-message-and-code" => [-1, "-1 is not a valid verification window.", 12,];
+        yield "window-message-code-and-previous" => [-1, "-1 is not a valid verification window.", 12, new TotpException("foo"),];
+        yield "window-only-int-min" => [PHP_INT_MIN,];
     }
 
-    /**
-     * Test for InvalidVerificationWindowException constructor.
-     *
-     * @dataProvider dataForTestConstructor
-     *
-     * @param mixed $window The invalid window for the test exception.
-     * @param mixed $message The message for the test exception. Defaults to an empty string.
-     * @param mixed $code The error code for the test exception. Defaults to 0.
-     * @param mixed|null $previous The previous throwable for the test exception. Defaults to null.
-     * @param string|null $exceptionClass The class name of the exception that is expected during the test, if any.
-     */
-    public function testConstructor(mixed $window, mixed $message = "", mixed $code = 0, mixed $previous = null, string $exceptionClass = null): void
+    /** Ensure the constructor initialises the exception as expected. */
+    #[DataProvider("providerTestConstructor1")]
+    public function testConstructor1(int $window, string $message = "", int $code = 0, ?Throwable $previous = null): void
     {
-        if (isset($exceptionClass)) {
-            $this->expectException($exceptionClass);
-        }
-
-        $exception = new InvalidVerificationWindowException($window, $message, $code, $previous);
-        $this->assertEquals($window, $exception->getWindow(), "Invalid window retrieved from exception was not as expected.");
-        $this->assertEquals($message, $exception->getMessage(), "Message retrieved from exception was not as expected.");
-        $this->assertEquals($code, $exception->getCode(), "Error code retrieved from exception was not as expected.");
-        $this->assertSame($previous, $exception->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
+        $actual = new InvalidVerificationWindowException($window, $message, $code, $previous);
+        self::assertEquals($window, $actual->getWindow(), "Invalid window retrieved from exception was not as expected.");
+        self::assertEquals($message, $actual->getMessage(), "Message retrieved from exception was not as expected.");
+        self::assertEquals($code, $actual->getCode(), "Error code retrieved from exception was not as expected.");
+        self::assertSame($previous, $actual->getPrevious(), "Previous throwable retrieved from exception was not as expected.");
     }
 
-    /**
-     * Test data for InvalidVerificationWindowException::getWindow().
-     *
-     * @return \Generator
-     */
-    public function dataForTestGetWindow(): Generator
+    /** Data provider with invalid windows for testGetWindow1(). */
+    public static function providerTestGetWindow1(): iterable
     {
-        yield from [
-            "typicalMinus1" => [-1,],
-            "extremeIntMin" => [PHP_INT_MIN,],
-        ];
-
-        for ($idx = 0; $idx < 100; ++$idx) {
-            yield "random" . sprintf("%02d", $idx) => [mt_rand(PHP_INT_MIN, -1),];
-        }
+        yield "negative" => [-1,];
+        yield "int-min" => [PHP_INT_MIN,];
     }
 
-    /**
-     * Test the InvalidVerificationWindowException::getWindow() method.
-     *
-     * @dataProvider dataForTestGetWindow
-     *
-     * @param int $window The window to test with.
-     */
-    public function testGetWindow(int $window): void
+    /** Ensure we can retrieve the correct invalid window from the exception. */
+    #[DataProvider("providerTestGetWindow1")]
+    public function testGetWindow1(int $window): void
     {
-        $exception = new InvalidVerificationWindowException($window);
-        $this->assertEquals($window, $exception->getWindow(), "Invalid window retrieved from exception was not as expected.");
+        $actual = new InvalidVerificationWindowException($window);
+        self::assertEquals($window, $actual->getWindow(), "Invalid window retrieved from exception was not as expected.");
     }
 }

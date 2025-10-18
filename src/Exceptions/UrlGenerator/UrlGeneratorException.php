@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Exceptions\UrlGenerator;
+namespace CitrusLab\Totp\Exceptions\UrlGenerator;
 
 use Exception;
 

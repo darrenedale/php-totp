@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,7 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Renderers;
+namespace CitrusLab\Totp\Renderers;
+
+use CitrusLab\Totp\Contracts\IntegerRenderer;
+use CitrusLab\Totp\Renderers\Traits\RendersStandardIntegerPasswords;
+use CitrusLab\Totp\Types\Digits;
 
 /**
  * Render a TOTP of eight decimal digits.
@@ -27,9 +32,23 @@ namespace Equit\Totp\Renderers;
  * significant 8 digits of which are used as the password. The password is padded to the left with 0s if it has fewer
  * than 8 digits.
  */
-class EightDigits implements IntegerRenderer
+final class EightDigits implements IntegerRenderer
 {
     use RendersStandardIntegerPasswords;
 
-    protected int $digitCount = 8;
+    /**
+     * @return Digits 8
+     * @noinspection PhpDocMissingThrowsInspection Digits constructor won't throw with 8.
+     */
+    public function digits(): Digits
+    {
+        static $digits = null;
+
+        if (null === $digits) {
+            /** @noinspection PhpUnhandledExceptionInspection 8 is a known valid number of digits. */
+            $digits = new Digits(8);
+        }
+
+        return $digits;
+    }
 }

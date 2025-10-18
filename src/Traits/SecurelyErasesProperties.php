@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,32 +19,25 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp;
+namespace CitrusLab\Totp\Traits;
 
 use ReflectionClass;
+use function CitrusLab\Totp\scrubString;
 
-/**
- * Import this trait to have your class automatically scrub all string properties on destruction.
- */
+/** Import this trait to have your class automatically scrub all string properties on destruction. */
 trait SecurelyErasesProperties
 {
-    /**
-     * Scrub all string properties by overwriting them with random data.
-     */
+    /** Scrub all string properties by overwriting them with random data. */
     private function securelyEraseProperties(): void
     {
         foreach ((new ReflectionClass($this))->getProperties() as $property) {
-            if (!is_string($this->{$property->name})) {
-                continue;
+            if (!$property->isStatic() && is_string($this->{$property->name})) {
+                scrubString($this->{$property->name});
             }
-
-            scrubString($this->{$property->name});
         }
     }
 
-    /**
-     * Overwrite all string members on destruction.
-     */
+    /** Overwrite all string members on destruction. */
     public function __destruct()
     {
         $this->securelyEraseProperties();

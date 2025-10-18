@@ -1,6 +1,7 @@
 <?php
+
 /*
- * Copyright 2022 Darren Edale
+ * Copyright 2025 Darren Edale
  *
  * This file is part of the php-totp package.
  *
@@ -18,7 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Renderers;
+namespace CitrusLab\Totp\Renderers;
+
+use CitrusLab\Totp\Contracts\IntegerRenderer;
+use CitrusLab\Totp\Renderers\Traits\RendersStandardIntegerPasswords;
+use CitrusLab\Totp\Types\Digits;
 
 /**
  * Render a TOTP of six decimal digits.
@@ -31,5 +36,19 @@ class SixDigits implements IntegerRenderer
 {
     use RendersStandardIntegerPasswords;
 
-    protected int $digitCount = 6;
+    /**
+     * @return Digits 6
+     * @noinspection PhpDocMissingThrowsInspection Digits constructor won't throw with 6.
+     */
+    public function digits(): Digits
+    {
+        static $digits = null;
+
+        if (null === $digits) {
+            /** @noinspection PhpUnhandledExceptionInspection 6 is a known valid number of digits. */
+            $digits = new Digits(6);
+        }
+
+        return $digits;
+    }
 }
