@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Framework\Exceptions;
+namespace CitrusLab\TotpTests\Framework\Exceptions;
 
 use Exception;
 use Throwable;

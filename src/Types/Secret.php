@@ -19,14 +19,14 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Types;
+namespace CitrusLab\Totp\Types;
 
-use Equit\Totp\Codecs\Base32;
-use Equit\Totp\Codecs\Base64;
-use Equit\Totp\Exceptions\InvalidBase32DataException;
-use Equit\Totp\Exceptions\InvalidBase64DataException;
-use Equit\Totp\Exceptions\InvalidSecretException;
-use Equit\Totp\Traits\SecurelyErasesProperties;
+use CitrusLab\Totp\Codecs\Base32;
+use CitrusLab\Totp\Codecs\Base64;
+use CitrusLab\Totp\Exceptions\InvalidBase32DataException;
+use CitrusLab\Totp\Exceptions\InvalidBase64DataException;
+use CitrusLab\Totp\Exceptions\InvalidSecretException;
+use CitrusLab\Totp\Traits\SecurelyErasesProperties;
 
 /**
  * Named type for secrets used in TOTP.

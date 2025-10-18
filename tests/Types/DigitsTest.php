@@ -19,11 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Types;
+namespace CitrusLab\TotpTests\Types;
 
-use Equit\Totp\Exceptions\InvalidDigitsException;
-use Equit\TotpTests\Framework\TestCase;
-use Equit\Totp\Types\Digits;
+use CitrusLab\Totp\Exceptions\InvalidDigitsException;
+use CitrusLab\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Types\Digits;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 

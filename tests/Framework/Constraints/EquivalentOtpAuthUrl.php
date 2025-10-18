@@ -19,9 +19,9 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Framework\Constraints;
+namespace CitrusLab\TotpTests\Framework\Constraints;
 
-use Equit\TotpTests\Framework\Exceptions\InvalidOtpUrlException;
+use CitrusLab\TotpTests\Framework\Exceptions\InvalidOtpUrlException;
 use PHPUnit\Framework\Constraint\Constraint;
 use RuntimeException;
 
@@ -63,7 +63,7 @@ class EquivalentOtpAuthUrl extends Constraint
     /**
      * @param string $referenceUrl The URL that tested URLs are expected to match.
      *
-     * @throws \Equit\TotpTests\Framework\Exceptions\InvalidOtpUrlException
+     * @throws \CitrusLab\TotpTests\Framework\Exceptions\InvalidOtpUrlException
      */
     public function __construct(string $referenceUrl)
     {

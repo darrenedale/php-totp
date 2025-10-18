@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Framework\Constraints;
+namespace CitrusLab\TotpTests\Framework\Constraints;
 
 use PHPUnit\Framework\Constraint\Constraint;
 

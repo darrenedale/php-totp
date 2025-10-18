@@ -19,11 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Codecs;
+namespace CitrusLab\Totp\Codecs;
 
-use Equit\Totp\Contracts\Codec;
-use Equit\Totp\Exceptions\InvalidBase32DataException;
-use Equit\Totp\Traits\SecurelyErasesProperties;
+use CitrusLab\Totp\Contracts\Codec;
+use CitrusLab\Totp\Exceptions\InvalidBase32DataException;
+use CitrusLab\Totp\Traits\SecurelyErasesProperties;
 
 /**
  * Codec class for Base32 data.

@@ -19,11 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Exceptions\UrlGenerator;
+namespace CitrusLab\TotpTests\Exceptions\UrlGenerator;
 
-use Equit\Totp\Exceptions\TotpException;
-use Equit\Totp\Exceptions\UrlGenerator\InvalidUserException;
-use Equit\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Exceptions\TotpException;
+use CitrusLab\Totp\Exceptions\UrlGenerator\InvalidUserException;
+use CitrusLab\TotpTests\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Throwable;

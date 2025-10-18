@@ -19,19 +19,17 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Exceptions\UrlGenerator;
+namespace CitrusLab\TotpTests\Exceptions\UrlGenerator;
 
-use Equit\Totp\Exceptions\TotpException;
-use Equit\Totp\Exceptions\UrlGenerator\UnsupportedReferenceTimeException;
-use Equit\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Exceptions\TotpException;
+use CitrusLab\Totp\Exceptions\UrlGenerator\UnsupportedReferenceTimeException;
+use CitrusLab\TotpTests\Framework\TestCase;
 use DateTime;
 use DateTimeZone;
-use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Throwable;
 
-/** TODO normalise case of test data keys */
 #[CoversClass(UnsupportedReferenceTimeException::class)]
 final class UnsupportedReferenceTimeExceptionTest extends TestCase
 {
@@ -48,20 +46,20 @@ final class UnsupportedReferenceTimeExceptionTest extends TestCase
      */
     public static function providerTestConstructor1(): iterable
     {
-        yield "typicalTimestamp60" => [60,];
-        yield "typicalTimestamp120" => [120,];
-        yield "typicalTimestampNow" => [time(),];
-        yield "typicalDateTime60" => [new DateTime("@60", new DateTimeZone("UTC")),];
-        yield "typicalDateTime120" => [new DateTime("@120", new DateTimeZone("UTC")),];
-        yield "typicalDateTimeNow" => [new DateTime("@" . time(), new DateTimeZone("UTC")),];
-        yield "typicalTimestampAndMessage" => [60, "60 is not a valid reference time.",];
-        yield "typicalTimestampMessageAndCode" => [60, "60 is not a valid reference time.", 12,];
-        yield "typicalTimestampMessageCodeAndPrevious" => [60, "60 is not a valid reference time.", 12, new TotpException("foo"),];
-        yield "typicalDateTimeAndMessage" => [new DateTime("@60", new DateTimeZone("UTC")), "60 is not a valid reference time.",];
-        yield "typicalDateTimeMessageAndCode" => [new DateTime("@60", new DateTimeZone("UTC")), "60 is not a valid reference time.", 12,];
-        yield "typicalDateTimeMessageCodeAndPrevious" => [new DateTime("@60", new DateTimeZone("UTC")), "60 is not a valid reference time.", 12, new TotpException("foo"),];
-        yield "extremeVeryEarly" => [self::MinTimestamp,];
-        yield "extremeVeryLate" => [self::MaxTimestamp,];
+        yield "timestamp-60" => [60,];
+        yield "timestamp-120" => [120,];
+        yield "timestamp-now" => [time(),];
+        yield "date-time-60" => [new DateTime("@60", new DateTimeZone("UTC")),];
+        yield "date-time-120" => [new DateTime("@120", new DateTimeZone("UTC")),];
+        yield "date-time-now" => [new DateTime("@" . time(), new DateTimeZone("UTC")),];
+        yield "timestamp-andMessage" => [60, "60 is not a valid reference time.",];
+        yield "timestamp-message-and-code" => [60, "60 is not a valid reference time.", 12,];
+        yield "timestamp-message-code-and-previous" => [60, "60 is not a valid reference time.", 12, new TotpException("foo"),];
+        yield "dateTime-and-message" => [new DateTime("@60", new DateTimeZone("UTC")), "60 is not a valid reference time.",];
+        yield "date-time-message-and-code" => [new DateTime("@60", new DateTimeZone("UTC")), "60 is not a valid reference time.", 12,];
+        yield "date-time-message-code-and-previous" => [new DateTime("@60", new DateTimeZone("UTC")), "60 is not a valid reference time.", 12, new TotpException("foo"),];
+        yield "very-early" => [self::MinTimestamp,];
+        yield "very-late" => [self::MaxTimestamp,];
     }
 
     /** Ensure the constructor processes all arguments as expected. */
@@ -93,18 +91,18 @@ final class UnsupportedReferenceTimeExceptionTest extends TestCase
     public static function providerTestGetTimestamp1(): iterable
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with a timestamp argument. */
-        yield "typicalTimestamp60" => [60, 60,];
-        yield "extremeVeryEarly" => [self::MinTimestamp, self::MinTimestamp,];
-        yield "extremeVeryLate" => [self::MaxTimestamp, self::MaxTimestamp,];
-        yield "typicalDateTime60" => [new DateTime("@60", new DateTimeZone("UTC")), 60,];
-        yield "extremeDateTimeVeryEarly" => [new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")), self::MinTimestamp,];
-        yield "extremeDateTimeVeryLate" => [new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")), self::MaxTimestamp,];
+        yield "timestamp-60" => [60, 60,];
+        yield "very-early" => [self::MinTimestamp, self::MinTimestamp,];
+        yield "very-late" => [self::MaxTimestamp, self::MaxTimestamp,];
+        yield "date-time-60" => [new DateTime("@60", new DateTimeZone("UTC")), 60,];
+        yield "date-time-very-early" => [new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")), self::MinTimestamp,];
+        yield "date-time-very-late" => [new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")), self::MaxTimestamp,];
 
         $nowTimestamp = time();
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with a timestamp argument. */
         $nowTime = new DateTime("@{$nowTimestamp}", new DateTimeZone("UTC"));
-        yield "typicalNow" => [$nowTimestamp, $nowTimestamp,];
-        yield "typicalDateTimeNow" => [$nowTime, $nowTimestamp,];
+        yield "now" => [$nowTimestamp, $nowTimestamp,];
+        yield "date-time-now" => [$nowTime, $nowTimestamp,];
     }
 
     /** Ensure we get the correct reference timestamp from the exception. */
@@ -120,21 +118,21 @@ final class UnsupportedReferenceTimeExceptionTest extends TestCase
      *
      * @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with timestamp argument.
      */
-    public static function providerTestGetTime1(): Generator
+    public static function providerTestGetTime1(): iterable
     {
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with a timestamp argument. */
-        yield "typicalTimestamp60" => [60, new DateTime("@60", new DateTimeZone("UTC")),];
-        yield "extremeVeryEarly" => [self::MinTimestamp, new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")),];
-        yield "extremeVeryLate" => [self::MaxTimestamp, new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")),];
-        yield "typicalDateTime60" => [new DateTime("@60", new DateTimeZone("UTC")), new DateTime("@60", new DateTimeZone("UTC")),];
-        yield "extremeDateTimeVeryEarly" => [new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")), new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")),];
-        yield "extremeDateTimeVeryLate" => [new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")), new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")),];
+        yield "timestamp-60" => [60, new DateTime("@60", new DateTimeZone("UTC")),];
+        yield "very-early" => [self::MinTimestamp, new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")),];
+        yield "very-late" => [self::MaxTimestamp, new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")),];
+        yield "date-time-60" => [new DateTime("@60", new DateTimeZone("UTC")), new DateTime("@60", new DateTimeZone("UTC")),];
+        yield "date-time-very-early" => [new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")), new DateTime("@" . self::MinTimestamp, new DateTimeZone("UTC")),];
+        yield "date-time-very-late" => [new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")), new DateTime("@" . self::MaxTimestamp, new DateTimeZone("UTC")),];
 
         $nowTimestamp = time();
         /** @noinspection PhpUnhandledExceptionInspection DateTime constructor should not throw with a timestamp argument. */
         $nowTime = new DateTime("@{$nowTimestamp}", new DateTimeZone("UTC"));
-        yield "typicalNow" => [$nowTimestamp, $nowTime,];
-        yield "typicalDateTimeNow" => [$nowTime, $nowTime,];
+        yield "now" => [$nowTimestamp, $nowTime,];
+        yield "date-time-now" => [$nowTime, $nowTime,];
     }
 
     /** Ensure we get the correct reference time from the exception. */

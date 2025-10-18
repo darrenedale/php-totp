@@ -20,28 +20,29 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Tools\Totp;
+namespace CitrusLab\Totp\Tools\Totp;
 
 require_once(__DIR__ . "/bootstrap.php");
 
+use CitrusLab\Totp\Codecs\Base32;
+use CitrusLab\Totp\Codecs\Base64;
+use CitrusLab\Totp\Exceptions\InvalidBase32DataException;
+use CitrusLab\Totp\Exceptions\InvalidBase64DataException;
+use CitrusLab\Totp\Exceptions\InvalidSecretException;
+use CitrusLab\Totp\Exceptions\SecureRandomDataUnavailableException;
+use CitrusLab\Totp\Factory;
+use CitrusLab\Totp\Renderers\EightDigits;
+use CitrusLab\Totp\Renderers\SixDigits;
+use CitrusLab\Totp\Renderers\Steam;
+use CitrusLab\Totp\Types\HashAlgorithm;
+use CitrusLab\Totp\Types\Secret;
+use CitrusLab\Totp\Types\TimeStep;
 use DateTime;
 use DateTimeZone;
-use Equit\Totp\Codecs\Base32;
-use Equit\Totp\Codecs\Base64;
-use Equit\Totp\Exceptions\InvalidBase32DataException;
-use Equit\Totp\Exceptions\InvalidBase64DataException;
-use Equit\Totp\Exceptions\InvalidSecretException;
-use Equit\Totp\Exceptions\SecureRandomDataUnavailableException;
-use Equit\Totp\Factory;
-use Equit\Totp\Renderers\EightDigits;
-use Equit\Totp\Renderers\SixDigits;
-use Equit\Totp\Renderers\Steam;
-use Equit\Totp\Types\HashAlgorithm;
-use Equit\Totp\Types\Secret;
-use Equit\Totp\Types\TimeStep;
 use Exception;
 use Throwable;
-use function Equit\Totp\Tools\toPhpHexString;
+
+use function CitrusLab\Totp\Tools\toPhpHexString;
 
 /**
  * Process exit code when the script has run successfully.

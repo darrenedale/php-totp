@@ -26,16 +26,17 @@ declare(strict_types=1);
  * This most likely requires a unix-like platform
  */
 
-namespace Equit\Totp\Tools\Dev\GenerateTestData;
+namespace CitrusLab\Totp\Tools\Dev\GenerateTestData;
 
 require_once(__DIR__ . "/../bootstrap.php");
 
+use CitrusLab\Totp\Codecs\Base32;
+use CitrusLab\Totp\Codecs\Base64;
 use DateTime;
 use DateTimeZone;
-use Equit\Totp\Codecs\Base32;
-use Equit\Totp\Codecs\Base64;
 use Exception;
-use function Equit\Totp\Tools\toPhpHexString;
+
+use function CitrusLab\Totp\Tools\toPhpHexString;
 
 /**
  * Show the usage/help message.
@@ -222,14 +223,14 @@ for ($idx = 1; $idx < $argc; ++$idx) {
             exit(1);
 
         case "--secret":
-            $opts["secret"] = $argv[++$idx] ?? die("--secret requires the secret to be specified as the next argument. See ${argv[0]} --help for details.");
+            $opts["secret"] = $argv[++$idx] ?? die("--secret requires the secret to be specified as the next argument. See {$argv[0]} --help for details.");
             break;
 
         case "--reference-time":
             ++$idx;
 
             if (!isset($argv[$idx])) {
-                die("--reference-time requires the time to be specified as the next argument. See ${argv[0]} --help for details.");
+                die("--reference-time requires the time to be specified as the next argument. See {$argv[0]} --help for details.");
             }
 
             if (filter_var($argv[$idx], FILTER_VALIDATE_INT, ["options" => ["min_range" => 0,],])) {
@@ -239,7 +240,7 @@ for ($idx = 1; $idx < $argc; ++$idx) {
                     $opts["referenceTimestamp"] = (new DateTime($argv[$idx]))->getTimestamp();
                 }
                 catch (Exception $e) {
-                    die("The provided time for --reference-time was not valid. See ${argv[0]} --help for details.");
+                    die("The provided time for --reference-time was not valid. See {$argv[0]} --help for details.");
                 }
             }
             break;
@@ -248,7 +249,7 @@ for ($idx = 1; $idx < $argc; ++$idx) {
             ++$idx;
 
             if (!isset($argv[$idx])) {
-                die("--current-time requires the time to be specified as the next argument. See ${argv[0]} --help for details.");
+                die("--current-time requires the time to be specified as the next argument. See {$argv[0]} --help for details.");
             }
 
             if (filter_var($argv[$idx], FILTER_VALIDATE_INT, ["options" => ["min_range" => 0,],])) {
@@ -258,7 +259,7 @@ for ($idx = 1; $idx < $argc; ++$idx) {
                     $opts["now"] = (new DateTime($argv[$idx]))->getTimestamp();
                 }
                 catch (Exception $e) {
-                    die("The provided time for --current-time was not valid. See ${argv[0]} --help for details.");
+                    die("The provided time for --current-time was not valid. See {$argv[0]} --help for details.");
                 }
             }
             break;
@@ -267,11 +268,11 @@ for ($idx = 1; $idx < $argc; ++$idx) {
             ++$idx;
 
             if (!isset($argv[$idx])) {
-                die("--times requires the number of test data items to be specified as the next argument. See ${argv[0]} --help for details.");
+                die("--times requires the number of test data items to be specified as the next argument. See {$argv[0]} --help for details.");
             }
 
             if (!filter_var($argv[$idx], FILTER_VALIDATE_INT, ["options" => ["min_range" => 1,],])) {
-                die("The number of test data items must be a positive integer. See ${argv[0]} --help for details.");
+                die("The number of test data items must be a positive integer. See {$argv[0]} --help for details.");
             }
 
             $opts["times"] = intval($argv[$idx]);
@@ -281,11 +282,11 @@ for ($idx = 1; $idx < $argc; ++$idx) {
             ++$idx;
 
             if (!isset($argv[$idx])) {
-                die("--digits requires the number of digits to be specified as the next argument. See ${argv[0]} --help for details.");
+                die("--digits requires the number of digits to be specified as the next argument. See {$argv[0]} --help for details.");
             }
 
             if (!filter_var($argv[$idx], FILTER_VALIDATE_INT, ["options" => ["min_range" => 6, "max_range" => 10,],])) {
-                die("The number of digits items must be between 6 and 10 inclusive. See ${argv[0]} --help for details.");
+                die("The number of digits items must be between 6 and 10 inclusive. See {$argv[0]} --help for details.");
             }
 
             $opts["digits"] = intval($argv[$idx]);
@@ -295,11 +296,11 @@ for ($idx = 1; $idx < $argc; ++$idx) {
             ++$idx;
 
             if (!isset($argv[$idx])) {
-                die("--algorithm requires the algorithm to be specified as the next argument. See ${argv[0]} --help for details.");
+                die("--algorithm requires the algorithm to be specified as the next argument. See {$argv[0]} --help for details.");
             }
 
             if (!in_array($argv[$idx], validAlgorithms())) {
-                die("The algorithm must be one of [" . implode(", ", validAlgorithms()) . "]. See ${argv[0]} --help for details.");
+                die("The algorithm must be one of [" . implode(", ", validAlgorithms()) . "]. See {$argv[0]} --help for details.");
             }
 
             $opts["algorithm"] = $argv[$idx];
@@ -309,11 +310,11 @@ for ($idx = 1; $idx < $argc; ++$idx) {
             ++$idx;
 
             if (!isset($argv[$idx])) {
-                die("--time-step requires the time step to be specified as the next argument. See ${argv[0]} --help for details.");
+                die("--time-step requires the time step to be specified as the next argument. See {$argv[0]} --help for details.");
             }
 
             if (!filter_var($argv[$idx], FILTER_VALIDATE_INT, ["options" => ["min_range" => 1,],])) {
-                die("The time step must be at least 1 second. See ${argv[0]} --help for details.");
+                die("The time step must be at least 1 second. See {$argv[0]} --help for details.");
             }
 
             $opts["time-step"] = intval($argv[$idx]);
@@ -328,17 +329,17 @@ for ($idx = 1; $idx < $argc; ++$idx) {
             break;
 
         default:
-            die ("Unrecognised argument {$argv[$idx]}. See ${argv[0]} --help for details.");
+            die ("Unrecognised argument {$argv[$idx]}. See {$argv[0]} --help for details.");
     }
 }
 
 if (isset($opts["now"])) {
     if (!isset($opts["referenceTimestamp"])) {
-        die("--reference-time must be specified if --current-time is specified. See ${argv[0]} --help for details.");
+        die("--reference-time must be specified if --current-time is specified. See {$argv[0]} --help for details.");
     }
 
     if ($opts["now"] < $opts["referenceTimestamp"]) {
-        die("--current-time must be on or after if --reference-time. See ${argv[0]} --help for details.");
+        die("--current-time must be on or after if --reference-time. See {$argv[0]} --help for details.");
     }
 }
 

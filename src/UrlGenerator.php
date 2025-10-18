@@ -19,16 +19,16 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp;
+namespace CitrusLab\Totp;
 
 use BadMethodCallException;
-use Equit\Totp\Contracts\IntegerRenderer;
-use Equit\Totp\Exceptions\UrlGenerator\InvalidUserException;
-use Equit\Totp\Exceptions\UrlGenerator\UnsupportedReferenceTimeException;
-use Equit\Totp\Exceptions\UrlGenerator\UnsupportedRendererException;
-use Equit\Totp\Renderers\Integer;
-use Equit\Totp\Types\HashAlgorithm;
-use Equit\Totp\Types\TimeStep;
+use CitrusLab\Totp\Contracts\IntegerRenderer;
+use CitrusLab\Totp\Exceptions\UrlGenerator\InvalidUserException;
+use CitrusLab\Totp\Exceptions\UrlGenerator\UnsupportedReferenceTimeException;
+use CitrusLab\Totp\Exceptions\UrlGenerator\UnsupportedRendererException;
+use CitrusLab\Totp\Renderers\Integer;
+use CitrusLab\Totp\Types\HashAlgorithm;
+use CitrusLab\Totp\Types\TimeStep;
 
 /**
  * Generate provisioning URLs for services that have OTP 2FA.

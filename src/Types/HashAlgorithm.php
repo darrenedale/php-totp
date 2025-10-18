@@ -19,9 +19,9 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Types;
+namespace CitrusLab\Totp\Types;
 
-use Equit\Totp\Exceptions\InvalidHashAlgorithmException;
+use CitrusLab\Totp\Exceptions\InvalidHashAlgorithmException;
 use Stringable;
 
 /** Named type for ensuring valid hashing algorithms. */

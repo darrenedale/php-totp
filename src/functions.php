@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp;
+namespace CitrusLab\Totp;
 
 /**
  * Replace the content of a string with random data.

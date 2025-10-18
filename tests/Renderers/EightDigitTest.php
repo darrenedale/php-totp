@@ -19,10 +19,10 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Renderers;
+namespace CitrusLab\TotpTests\Renderers;
 
-use Equit\Totp\Renderers\EightDigits;
-use Equit\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Renderers\EightDigits;
+use CitrusLab\TotpTests\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -34,6 +34,12 @@ final class EightDigitTest extends TestCase
     {
         $renderer = new EightDigits();
         self::assertSame($renderer->digits()->quantity(), 8, "EightDigits renderer must return 8 from digits() at all times.");
+    }
+
+    /** Ensure the renderer is named correctly. */
+    public function testName1(): void
+    {
+        self::assertSame("8-digits", (new EightDigits())->name());
     }
 
     /** Data provider with HMACs and the 8-digit password they should render for testRender1(). */

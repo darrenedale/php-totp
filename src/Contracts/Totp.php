@@ -19,10 +19,10 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Contracts;
+namespace CitrusLab\Totp\Contracts;
 
-use Equit\Totp\Types\HashAlgorithm;
-use Equit\Totp\Types\TimeStep;
+use CitrusLab\Totp\Types\HashAlgorithm;
+use CitrusLab\Totp\Types\TimeStep;
 
 /** Contract for TOTP calculators. */
 interface Totp

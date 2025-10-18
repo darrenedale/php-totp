@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests;
+namespace CitrusLab\TotpTests;
 
 use DateTime;
 use DateTimeZone;

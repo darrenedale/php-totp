@@ -19,11 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Exceptions;
+namespace CitrusLab\TotpTests\Exceptions;
 
-use Equit\Totp\Exceptions\InvalidTimeStepException;
-use Equit\Totp\Exceptions\TotpException;
-use Equit\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Exceptions\InvalidTimeStepException;
+use CitrusLab\Totp\Exceptions\TotpException;
+use CitrusLab\TotpTests\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Throwable;

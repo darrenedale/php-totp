@@ -19,31 +19,40 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Renderers;
+namespace CitrusLab\TotpTests\Renderers;
 
-use Equit\Totp\Renderers\SixDigits;
-use Equit\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Renderers\SixDigits;
+use CitrusLab\TotpTests\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Test case for SixDigit Totp renderer.
  */
+#[CoversClass(SixDigits::class)]
 final class SixDigitTest extends TestCase
 {
 	/**
 	 * Test the renderer's constructor.
 	 */
-	public function testConstructor()
+    public function testConstructor1()
 	{
 		$renderer = new SixDigits();
         $this->assertSame($renderer->digits()->quantity(), 6, "SixDigits renderer must return 6 from digits() at all times.");
 	}
+
+    /** Ensure the renderer is named correctly. */
+    public function testName1(): void
+    {
+        self::assertSame("6-digits", (new SixDigits())->name());
+    }
 
 	/**
 	 * Data provider for testRender().
 	 *
 	 * @return array[] The test data.
 	 */
-    public static function providerTestRender(): array
+    public static function providerTestRender1(): array
 	{
 		return [
 			// max 31-bit unsigned int
@@ -109,12 +118,11 @@ final class SixDigitTest extends TestCase
 	/**
 	 * Test the integer renderer's render() method.
 	 *
-     * @dataProvider providerTestRender
-	 *
 	 * @param string $hmac The HMAC to use to render the password.
 	 * @param string $expectedPassword The password the renderer is expected to produce.
 	 */
-	public function testRender(string $hmac, string $expectedPassword)
+    #[DataProvider('providerTestRender1')]
+    public function testRender1(string $hmac, string $expectedPassword)
 	{
 		$renderer = new SixDigits();
 		$actualPassword = $renderer->render($hmac);

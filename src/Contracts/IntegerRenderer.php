@@ -19,9 +19,9 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Contracts;
+namespace CitrusLab\Totp\Contracts;
 
-use Equit\Totp\Types\Digits;
+use CitrusLab\Totp\Types\Digits;
 
 /** Interface for renderers that produce a fixed-width integer one-time password. */
 interface IntegerRenderer extends Renderer

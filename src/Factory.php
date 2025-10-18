@@ -19,20 +19,20 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp;
+namespace CitrusLab\Totp;
 
+use CitrusLab\Totp\Contracts\Renderer;
+use CitrusLab\Totp\Contracts\Factory as TotpFactoryContract;
+use CitrusLab\Totp\Exceptions\SecureRandomDataUnavailableException;
+use CitrusLab\Totp\Renderers\EightDigits;
+use CitrusLab\Totp\Renderers\Integer;
+use CitrusLab\Totp\Renderers\SixDigits;
+use CitrusLab\Totp\Types\Digits;
+use CitrusLab\Totp\Types\HashAlgorithm;
+use CitrusLab\Totp\Types\TimeStep;
+use CitrusLab\Totp\Types\Secret;
 use DateTime;
 use DateTimeZone;
-use Equit\Totp\Contracts\Renderer;
-use Equit\Totp\Contracts\Factory as TotpFactoryContract;
-use Equit\Totp\Exceptions\SecureRandomDataUnavailableException;
-use Equit\Totp\Renderers\EightDigits;
-use Equit\Totp\Renderers\Integer;
-use Equit\Totp\Renderers\SixDigits;
-use Equit\Totp\Types\Digits;
-use Equit\Totp\Types\HashAlgorithm;
-use Equit\Totp\Types\TimeStep;
-use Equit\Totp\Types\Secret;
 use Throwable;
 
 /**

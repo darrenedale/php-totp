@@ -23,17 +23,17 @@ declare(strict_types=1);
  * Create a Totp with random data and output all its details.
  */
 
-namespace Equit\Totp\Tools\Dev\RandomBinaryString;
+namespace CitrusLab\Totp\Tools\Dev\RandomBinaryString;
 
 require_once(__DIR__ . "/../bootstrap.php");
 
+use CitrusLab\Totp\Factory;
+use CitrusLab\Totp\Types\Digits;
+use CitrusLab\Totp\Types\TimeStep;
 use DateTime;
-use Equit\Totp\Factory;
-use Equit\Totp\Types\Digits;
-use Equit\Totp\Types\Secret;
-use Equit\Totp\Types\TimeStep;
 use ReflectionMethod;
-use function Equit\Totp\Tools\toPhpHexString;
+
+use function CitrusLab\Totp\Tools\toPhpHexString;
 
 /**
  * Show the usage/help message.

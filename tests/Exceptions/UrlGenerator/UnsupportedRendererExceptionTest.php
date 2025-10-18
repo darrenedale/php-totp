@@ -19,16 +19,16 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Exceptions\UrlGenerator;
+namespace CitrusLab\TotpTests\Exceptions\UrlGenerator;
 
-use Equit\Totp\Contracts\Renderer;
-use Equit\Totp\Exceptions\TotpException;
-use Equit\Totp\Exceptions\UrlGenerator\UnsupportedRendererException;
-use Equit\Totp\Renderers\EightDigits;
-use Equit\Totp\Renderers\Integer;
-use Equit\Totp\Renderers\SixDigits;
-use Equit\Totp\Types\Digits;
-use Equit\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Contracts\Renderer;
+use CitrusLab\Totp\Exceptions\TotpException;
+use CitrusLab\Totp\Exceptions\UrlGenerator\UnsupportedRendererException;
+use CitrusLab\Totp\Renderers\EightDigits;
+use CitrusLab\Totp\Renderers\Integer;
+use CitrusLab\Totp\Renderers\SixDigits;
+use CitrusLab\Totp\Types\Digits;
+use CitrusLab\TotpTests\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Throwable;
@@ -39,7 +39,7 @@ final class UnsupportedRendererExceptionTest extends TestCase
     /**
      * Create an anonymous unsupported Renderer instance.
      *
-     * @return \Equit\Totp\Contracts\Renderer The generated renderer.
+     * @return Renderer The generated renderer.
      */
     private static function createUnsupportedRenderer(): Renderer
     {

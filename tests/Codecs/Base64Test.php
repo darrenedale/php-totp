@@ -19,11 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Codecs;
+namespace CitrusLab\TotpTests\Codecs;
 
-use Equit\Totp\Codecs\Base64;
-use Equit\Totp\Exceptions\InvalidBase64DataException;
-use Equit\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Codecs\Base64;
+use CitrusLab\Totp\Exceptions\InvalidBase64DataException;
+use CitrusLab\TotpTests\Framework\TestCase;
 use Equit\XRay\XRay;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;

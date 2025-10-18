@@ -19,11 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Framework;
+namespace CitrusLab\TotpTests\Framework;
 
-use Equit\TotpTests\Framework\Constraints\AllCharactersHaveChanged;
-use Equit\TotpTests\Framework\Constraints\EquivalentOtpAuthUrl;
-use Equit\TotpTests\Framework\Constraints\StringContainsOnly;
+use CitrusLab\TotpTests\Framework\Constraints\AllCharactersHaveChanged;
+use CitrusLab\TotpTests\Framework\Constraints\EquivalentOtpAuthUrl;
+use CitrusLab\TotpTests\Framework\Constraints\StringContainsOnly;
 use PHPUnit\Framework\TestCase as BaseTestCase;
 use Stringable;
 
@@ -163,7 +163,7 @@ class TestCase extends BaseTestCase
      * @param string $actualUrl The URL to test.
      * @param string $message Optional message for use when the assertion fails.
      *
-     * @throws \Equit\TotpTests\Framework\Exceptions\InvalidOtpUrlException if the reference URL is found not to be
+     * @throws \CitrusLab\TotpTests\Framework\Exceptions\InvalidOtpUrlException if the reference URL is found not to be
      *     valid.
      */
     public static function assertOtpUrlIsEquivalentTo(string $referenceUrl, string $actualUrl, string $message = ""): void

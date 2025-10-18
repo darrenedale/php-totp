@@ -19,11 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Types;
+namespace CitrusLab\TotpTests\Types;
 
-use Equit\Totp\Exceptions\InvalidHashAlgorithmException;
-use Equit\TotpTests\Framework\TestCase;
-use Equit\Totp\Types\HashAlgorithm;
+use CitrusLab\Totp\Exceptions\InvalidHashAlgorithmException;
+use CitrusLab\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Types\HashAlgorithm;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 

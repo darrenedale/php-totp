@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Renderers\Traits;
+namespace CitrusLab\Totp\Renderers\Traits;
 
 /**
  * Trait for renderers that use the TOTP standard way of extracting a 31-bit integer from a HMAC.

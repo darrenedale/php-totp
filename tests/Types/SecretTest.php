@@ -19,15 +19,15 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Types;
+namespace CitrusLab\TotpTests\Types;
 
-use Equit\Totp\Codecs\Base32;
-use Equit\Totp\Codecs\Base64;
-use Equit\Totp\Exceptions\InvalidBase32DataException;
-use Equit\Totp\Exceptions\InvalidBase64DataException;
-use Equit\Totp\Exceptions\InvalidSecretException;
-use Equit\TotpTests\Framework\TestCase;
-use Equit\Totp\Types\Secret;
+use CitrusLab\Totp\Codecs\Base32;
+use CitrusLab\Totp\Codecs\Base64;
+use CitrusLab\Totp\Exceptions\InvalidBase32DataException;
+use CitrusLab\Totp\Exceptions\InvalidBase64DataException;
+use CitrusLab\Totp\Exceptions\InvalidSecretException;
+use CitrusLab\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Types\Secret;
 use Equit\XRay\XRay;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;

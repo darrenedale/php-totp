@@ -1,6 +1,6 @@
 <?php
 
-namespace Equit\Totp\Contracts;
+namespace CitrusLab\Totp\Contracts;
 
 /**
  * Interface for classes that convert bidirectionally between raw data and a specific encoding.

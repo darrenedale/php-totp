@@ -19,10 +19,10 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Traits;
+namespace CitrusLab\Totp\Traits;
 
 use ReflectionClass;
-use function Equit\Totp\scrubString;
+use function CitrusLab\Totp\scrubString;
 
 /** Import this trait to have your class automatically scrub all string properties on destruction. */
 trait SecurelyErasesProperties

@@ -19,11 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Exceptions;
+namespace CitrusLab\TotpTests\Exceptions;
 
-use Equit\Totp\Exceptions\InvalidTimeException;
-use Equit\Totp\Exceptions\TotpException;
-use Equit\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Exceptions\InvalidTimeException;
+use CitrusLab\Totp\Exceptions\TotpException;
+use CitrusLab\TotpTests\Framework\TestCase;
 use DateTime;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;

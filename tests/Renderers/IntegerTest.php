@@ -19,11 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Renderers;
+namespace CitrusLab\TotpTests\Renderers;
 
-use Equit\Totp\Renderers\Integer;
-use Equit\Totp\Types\Digits;
-use Equit\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Renderers\Integer;
+use CitrusLab\Totp\Types\Digits;
+use CitrusLab\TotpTests\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -45,6 +45,14 @@ final class IntegerTest extends TestCase
     {
         $renderer = new Integer(new Digits($digits));
         self::assertSame($digits, $renderer->digits()->quantity());
+    }
+
+
+    /** Ensure the renderer is named correctly. */
+    #[DataProvider("providerTestConstructor1")]
+    public function testName1(int $digits): void
+    {
+        self::assertSame("{$digits}-digits", (new Integer(new Digits($digits)))->name());
     }
 
     /** Data provider with HMACs and the password they're expected to generate. */

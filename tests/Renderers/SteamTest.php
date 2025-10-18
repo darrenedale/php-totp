@@ -19,22 +19,22 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Renderers;
+namespace CitrusLab\TotpTests\Renderers;
 
-use Equit\Totp\Renderers\Steam;
-use Equit\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Renderers\Steam;
+use CitrusLab\TotpTests\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 
-/**
- * Test the Steam password renderer.
- */
+#[CoversClass(Steam::class)]
 final class SteamTest extends TestCase
 {
     /**
-     * Data provider for testRender().
+     * Data provider for testRender1().
      *
      * @return array[] The test data.
      */
-    public static function providerTestRender(): array
+    public static function providerTestRender1(): array
     {
         return [
             // max 31-bit unsigned int
@@ -101,17 +101,22 @@ final class SteamTest extends TestCase
     /**
      * Test the Steam renderer's render() method.
      *
-     * @dataProvider providerTestRender
-     *
      * @param string $hmac The HMAC to use to render the password.
      * @param string $expectedPassword The password the renderer is expected to produce.
      */
-    public function testRender(string $hmac, string $expectedPassword)
+    #[DataProvider("providerTestRender1")]
+    public function testRender1(string $hmac, string $expectedPassword)
     {
         $renderer = new Steam();
         $actualPassword = $renderer->render($hmac);
         $this->assertEquals(5, strlen($actualPassword), "Steam renderer produced a password of " . strlen($actualPassword) . " characters.");
         $this->assertStringContainsOnly(Steam::ValidCharacters, $actualPassword, "Steam renderer produced a password with invalid characters.");
         $this->assertEquals($expectedPassword, $actualPassword, "Steam renderer produced an incorrect password.");
+    }
+
+    /** Ensure the renderer is named correctly. */
+    public function testName1(): void
+    {
+        self::assertSame("Steam", (new Steam())->name());
     }
 }

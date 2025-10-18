@@ -4,52 +4,96 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-  "content-hash": "b1c8217662521ed6f827cfc2d48a526e",
+  "content-hash": "9c1b83a7cd19ca2540fc697be792df26",
     "packages": [],
     "packages-dev": [
         {
-          "name": "equit/xray",
-          "version": "dev-main",
+          "name": "citruslab/mokkd",
+          "version": "v0.0.2",
           "source": {
             "type": "git",
-            "url": "https://github.com/darrenedale/php-xray.git",
-            "reference": "0e06c9673b86ba443d2160d3a30447e97b0ecc44"
+            "url": "https://github.com/darrenedale/Mokkd.git",
+            "reference": "aefaea843dbbde570cfca22850ac5506cf5a658a"
           },
           "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/darrenedale/php-xray/zipball/0e06c9673b86ba443d2160d3a30447e97b0ecc44",
-            "reference": "0e06c9673b86ba443d2160d3a30447e97b0ecc44",
+            "url": "https://api.github.com/repos/darrenedale/Mokkd/zipball/aefaea843dbbde570cfca22850ac5506cf5a658a",
+            "reference": "aefaea843dbbde570cfca22850ac5506cf5a658a",
             "shasum": ""
           },
           "require": {
-            "php": "^8"
+            "ext-dom": "*",
+            "ext-mbstring": "*",
+            "ext-uopz": "*",
+            "php": ">=8.2"
           },
           "require-dev": {
-            "phpunit/phpunit": "^9.5"
+            "equit/xray": "dev-main",
+            "phpunit/phpunit": "11.*"
           },
-          "default-branch": true,
           "type": "library",
           "autoload": {
+            "files": [
+              "src/Mokkd.php"
+            ],
             "psr-4": {
-              "Equit\\XRay\\": "src"
+              "Mokkd\\": "src"
             }
           },
           "notification-url": "https://packagist.org/downloads/",
           "license": [
-            "MIT"
+            "Apache-2.0"
           ],
-          "authors": [
-            {
-              "name": "Darren Edale",
-              "email": "packagist@equit.dev"
-            }
-          ],
-          "description": "A PHP testing utility for accessing protected and private class members",
+          "description": "A library for mocking free-standing functions in PHP",
           "support": {
-            "issues": "https://github.com/darrenedale/php-xray/issues",
-            "source": "https://github.com/darrenedale/php-xray/tree/main"
+            "issues": "https://github.com/darrenedale/Mokkd/issues",
+            "source": "https://github.com/darrenedale/Mokkd/tree/v0.0.2"
           },
-          "time": "2025-02-24T23:23:30+00:00"
+          "time": "2025-10-12T21:17:15+00:00"
+        },
+      {
+        "name": "equit/xray",
+        "version": "dev-main",
+        "source": {
+          "type": "git",
+          "url": "https://github.com/darrenedale/php-xray.git",
+          "reference": "0e06c9673b86ba443d2160d3a30447e97b0ecc44"
+        },
+        "dist": {
+          "type": "zip",
+          "url": "https://api.github.com/repos/darrenedale/php-xray/zipball/0e06c9673b86ba443d2160d3a30447e97b0ecc44",
+          "reference": "0e06c9673b86ba443d2160d3a30447e97b0ecc44",
+          "shasum": ""
+        },
+        "require": {
+          "php": "^8"
+        },
+        "require-dev": {
+          "phpunit/phpunit": "^9.5"
+        },
+        "default-branch": true,
+        "type": "library",
+        "autoload": {
+          "psr-4": {
+            "Equit\\XRay\\": "src"
+          }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+          "MIT"
+        ],
+        "authors": [
+          {
+            "name": "Darren Edale",
+            "email": "packagist@equit.dev"
+          }
+        ],
+        "description": "A PHP testing utility for accessing protected and private class members",
+        "support": {
+          "issues": "https://github.com/darrenedale/php-xray/issues",
+          "source": "https://github.com/darrenedale/php-xray/tree/main"
+        },
+        "time": "2025-02-24T23:23:30+00:00"
         },
       {
             "name": "myclabs/deep-copy",
@@ -610,16 +654,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "10.5.57",
+          "version": "10.5.58",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "8e7598bbb17bb5cd80728f4831d3f83223d3a6b3"
+              "reference": "e24fb46da450d8e6a5788670513c1af1424f16ca"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/8e7598bbb17bb5cd80728f4831d3f83223d3a6b3",
-                "reference": "8e7598bbb17bb5cd80728f4831d3f83223d3a6b3",
+              "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/e24fb46da450d8e6a5788670513c1af1424f16ca",
+              "reference": "e24fb46da450d8e6a5788670513c1af1424f16ca",
                 "shasum": ""
             },
             "require": {
@@ -691,7 +735,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/10.5.57"
+              "source": "https://github.com/sebastianbergmann/phpunit/tree/10.5.58"
             },
             "funding": [
                 {
@@ -715,7 +759,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-09-24T06:30:38+00:00"
+          "time": "2025-09-28T12:04:46+00:00"
         },
         {
             "name": "sebastian/cli-parser",
@@ -1729,7 +1773,7 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=8.1"
+      "php": ">=8.2"
     },
     "platform-dev": {
         "ext-mbstring": "*"

@@ -19,12 +19,12 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Types;
+namespace CitrusLab\TotpTests\Types;
 
+use CitrusLab\Totp\Exceptions\InvalidTimeStepException;
+use CitrusLab\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Types\TimeStep;
 use DateInterval;
-use Equit\Totp\Exceptions\InvalidTimeStepException;
-use Equit\TotpTests\Framework\TestCase;
-use Equit\Totp\Types\TimeStep;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 

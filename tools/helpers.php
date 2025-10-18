@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Tools;
+namespace CitrusLab\Totp\Tools;
 
 /**
  * Convert a binary string to a PHP source string literal.

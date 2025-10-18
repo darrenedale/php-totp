@@ -19,9 +19,9 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Renderers\Traits;
+namespace CitrusLab\Totp\Renderers\Traits;
 
-use Equit\Totp\Types\Digits;
+use CitrusLab\Totp\Types\Digits;
 
 /**
  * Trait for renderers that produce padded integer one-time passwords.

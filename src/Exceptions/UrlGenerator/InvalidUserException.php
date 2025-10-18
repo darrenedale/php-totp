@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Exceptions\UrlGenerator;
+namespace CitrusLab\Totp\Exceptions\UrlGenerator;
 
 use Throwable;
 

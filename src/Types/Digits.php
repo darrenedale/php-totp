@@ -19,9 +19,9 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Types;
+namespace CitrusLab\Totp\Types;
 
-use Equit\Totp\Exceptions\InvalidDigitsException;
+use CitrusLab\Totp\Exceptions\InvalidDigitsException;
 use Stringable;
 
 final class Digits implements Stringable

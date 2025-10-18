@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Contracts;
+namespace CitrusLab\Totp\Contracts;
 
 /** Contract for renderers that turn TOTP HMACs into the actual one-time passwords required. */
 interface Renderer

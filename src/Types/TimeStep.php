@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Types;
+namespace CitrusLab\Totp\Types;
 
 use DateInterval;
-use Equit\Totp\Exceptions\InvalidTimeStepException;
+use CitrusLab\Totp\Exceptions\InvalidTimeStepException;
 use Stringable;
 
 /** Named type for ensuring valid TOTP time steps. */

@@ -19,12 +19,12 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests;
+namespace CitrusLab\TotpTests;
 
 use PHPUnit\Framework\Attributes\CoversFunction;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-use function Equit\Totp\scrubString;
+use function CitrusLab\Totp\scrubString;
 
 #[CoversFunction("Equit\Totp\scrubString")]
 final class FunctionsTest extends Framework\TestCase

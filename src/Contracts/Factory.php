@@ -19,11 +19,10 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Contracts;
+namespace CitrusLab\Totp\Contracts;
 
-use Equit\Totp\Exceptions\InvalidTimeStepException;
-use Equit\Totp\Totp;
-use Equit\Totp\Types\Secret;
+use CitrusLab\Totp\Totp;
+use CitrusLab\Totp\Types\Secret;
 
 /**
  * Contract for factories that produce TOTP calculators.

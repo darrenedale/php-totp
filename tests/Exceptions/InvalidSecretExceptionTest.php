@@ -19,17 +19,16 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests\Exceptions;
+namespace CitrusLab\TotpTests\Exceptions;
 
-use Equit\Totp\Exceptions\InvalidSecretException;
-use Equit\Totp\Exceptions\TotpException;
-use Equit\TotpTests\Framework\TestCase;
+use CitrusLab\Totp\Exceptions\InvalidSecretException;
+use CitrusLab\Totp\Exceptions\TotpException;
+use CitrusLab\TotpTests\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Throwable;
 
-/**
- * Unit test for the InvalidSecretException class.
- */
+#[CoversClass(InvalidSecretException::class)]
 final class InvalidSecretExceptionTest extends TestCase
 {
     /** Data provider with constructor arguments for the exception for testConstructor1(). */

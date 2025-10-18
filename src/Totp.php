@@ -19,20 +19,20 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp;
+namespace CitrusLab\Totp;
 
+use CitrusLab\Totp\Codecs\Base32;
+use CitrusLab\Totp\Codecs\Base64;
+use CitrusLab\Totp\Contracts\Renderer;
+use CitrusLab\Totp\Contracts\Totp as TotpContract;
+use CitrusLab\Totp\Exceptions\InvalidTimeException;
+use CitrusLab\Totp\Exceptions\InvalidVerificationWindowException;
+use CitrusLab\Totp\Traits\SecurelyErasesProperties;
+use CitrusLab\Totp\Types\HashAlgorithm;
+use CitrusLab\Totp\Types\Secret;
+use CitrusLab\Totp\Types\TimeStep;
 use DateTime;
 use DateTimeZone;
-use Equit\Totp\Codecs\Base32;
-use Equit\Totp\Codecs\Base64;
-use Equit\Totp\Contracts\Renderer;
-use Equit\Totp\Contracts\Totp as TotpContract;
-use Equit\Totp\Exceptions\InvalidTimeException;
-use Equit\Totp\Exceptions\InvalidVerificationWindowException;
-use Equit\Totp\Traits\SecurelyErasesProperties;
-use Equit\Totp\Types\HashAlgorithm;
-use Equit\Totp\Types\Secret;
-use Equit\Totp\Types\TimeStep;
 
 /**
  * Generates and verifies time-based one-time passcodes.
@@ -111,7 +111,7 @@ class Totp implements TotpContract
     protected static final function currentTime(): DateTime
     {
         /** @noinspection PhpUnhandledExceptionInspection the DateTime constructor does not throw with "now". */
-        return new DateTime("now", new DateTimeZone("UTC"));
+        return new DateTime("@" . time(), new DateTimeZone("UTC"));
     }
 
     /**
@@ -224,7 +224,7 @@ class Totp implements TotpContract
         }
 
         if ($time < $this->referenceTimestamp()) {
-            throw new InvalidTimeException(($time instanceof DateTime ? $time->getTimestamp() : $time), "The time at which the counter was requested is before the reference time.");
+            throw new InvalidTimeException(($time instanceof DateTime ? $time->getTimestamp() : $time), "The time at which the counter was requested is before the reference time");
         }
 
         return (int) floor(($time - $this->referenceTimestamp()) / $this->timeStep()->seconds());

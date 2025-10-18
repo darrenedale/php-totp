@@ -19,34 +19,37 @@
 
 declare(strict_types=1);
 
-namespace Equit\TotpTests;
+namespace CitrusLab\TotpTests;
 
+use CitrusLab\Totp\Contracts\Renderer;
+use CitrusLab\Totp\Exceptions\SecureRandomDataUnavailableException;
+use CitrusLab\Totp\Factory;
+use CitrusLab\Totp\Renderers\EightDigits;
+use CitrusLab\Totp\Renderers\Integer;
+use CitrusLab\Totp\Renderers\SixDigits;
+use CitrusLab\Totp\Renderers\Steam;
+use CitrusLab\Totp\Types\Digits;
+use CitrusLab\Totp\Types\HashAlgorithm;
+use CitrusLab\Totp\Types\Secret;
+use CitrusLab\Totp\Types\TimeStep;
+use CitrusLab\TotpTests\Framework\TestCase;
 use DateTime;
 use DateTimeZone;
-use Equit\Totp\Contracts\Renderer;
-use Equit\Totp\Factory;
-use Equit\Totp\Renderers\EightDigits;
-use Equit\Totp\Renderers\Integer;
-use Equit\Totp\Renderers\SixDigits;
-use Equit\Totp\Renderers\Steam;
-use Equit\Totp\Types\Digits;
-use Equit\Totp\Types\HashAlgorithm;
-use Equit\Totp\Types\Secret;
-use Equit\Totp\Types\TimeStep;
-use Equit\TotpTests\Framework\TestCase;
 use Equit\XRay\StaticXRay;
+use Exception;
+use Mokkd;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-// TODO Use mokkd to mock random_bytes() and openssl_random_pseudo_bytes() to complete coverage
 #[CoversClass(Factory::class)]
 final class FactoryTest extends TestCase
 {
-    /**
-     * Helper to create a "vanilla" Factory test instance.
-     *
-     * @return \Equit\Totp\Factory
-     */
+    protected function tearDown(): void
+    {
+        Mokkd::close();
+    }
+
+    /** Helper to create a "vanilla" Factory test instance. */
     protected static function createFactory(): Factory
     {
         return new Factory();
@@ -505,14 +508,79 @@ final class FactoryTest extends TestCase
 
     /**
      * Test the randomSecret() method.
-     * @throws \Equit\Totp\Exceptions\SecureRandomDataUnavailableException if Totp::randomSecret() is unable to provide
+     * @throws \CitrusLab\Totp\Exceptions\SecureRandomDataUnavailableException if Totp::randomSecret() is unable to provide
      * cryptographically-secure random data.
      */
-    public function testRandomSecret(): void
+    public function testRandomSecret1(): void
     {
         // NOTE can't test case where randomSecret() throws because we can't force random_bytes() to throw
         for ($idx = 0; $idx < 100; ++$idx) {
             self::assertGreaterThanOrEqual(64, strlen(Factory::randomSecret()->raw()), "randomSecret() did not return a sufficiently large byte sequence.");
         }
+    }
+
+    /** Ensure we fall back on openssl when random_bytes can't give us a random secret. */
+    public function testRandomSecret2(): void
+    {
+        Mokkd::func("random_bytes")
+            ->expects(64)
+            ->once()
+            ->throwing(new Exception("Test exception from random_bytes()"));
+
+        Mokkd::func("openssl_random_pseudo_bytes")
+            ->expects(64, new Mokkd\Matchers\Any())
+            ->once()
+            ->returningUsing(static function (int $bytes, mixed &$isStrong): string {
+                $isStrong = true;
+                return "a-super-un-strong-random-secret-from-openssl_random_pseudo_bytes";
+            });
+
+        // we still get this exception as presently there's no way of mocking by-reference parameters so $isStrong is
+        // always false. Mokkd ensures the call is made
+        $this->expectException(SecureRandomDataUnavailableException::class);
+        $this->expectExceptionMessage("Test exception from random_bytes()");
+        Factory::randomSecret();
+    }
+
+    /** Ensure we throw when random_bytes() can't provide data and openssl_random_pseudo_bytes() isn't available. */
+    public function testRandomSecret3(): void
+    {
+        Mokkd::func("random_bytes")
+            ->expects(64)
+            ->once()
+            ->throwing(new Exception("Test exception from random_bytes()"));
+
+        Mokkd::func("function_exists")
+            ->expects("openssl_random_pseudo_bytes")
+            ->once()
+            ->returning(false);
+
+        $this->expectException(SecureRandomDataUnavailableException::class);
+        $this->expectExceptionMessage("Test exception from random_bytes()");
+        Factory::randomSecret();
+    }
+
+    /**
+     * Ensure we throw when random_bytes() can't provide data and openssl_random_pseudo_bytes() can't provide strong
+     * randomness.
+     */
+    public function testRandomSecret4(): void
+    {
+        Mokkd::func("random_bytes")
+            ->expects(64)
+            ->once()
+            ->throwing(new Exception("Test exception from random_bytes()"));
+
+        Mokkd::func("openssl_random_pseudo_bytes")
+            ->expects(64, new Mokkd\Matchers\Any())
+            ->once()
+            ->returningUsing(static function (int $bytes, mixed &$isStrong): string {
+                $isStrong = false;
+                return "a-super-un-strong-random-secret-from-openssl_random_pseudo_bytes";
+            });
+
+        $this->expectException(SecureRandomDataUnavailableException::class);
+        $this->expectExceptionMessage("Test exception from random_bytes()");
+        Factory::randomSecret();
     }
 }

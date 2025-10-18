@@ -19,10 +19,10 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Renderers;
+namespace CitrusLab\Totp\Renderers;
 
-use Equit\Totp\Contracts\Renderer;
-use Equit\Totp\Renderers\Traits\ExtractsStandard31BitInteger;
+use CitrusLab\Totp\Contracts\Renderer;
+use CitrusLab\Totp\Renderers\Traits\ExtractsStandard31BitInteger;
 
 /**
  * Renderer for Steam authenticator passwords.

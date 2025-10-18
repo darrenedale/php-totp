@@ -19,11 +19,11 @@
 
 declare(strict_types=1);
 
-namespace Equit\Totp\Renderers;
+namespace CitrusLab\Totp\Renderers;
 
-use Equit\Totp\Contracts\IntegerRenderer;
-use Equit\Totp\Renderers\Traits\RendersStandardIntegerPasswords;
-use Equit\Totp\Types\Digits;
+use CitrusLab\Totp\Contracts\IntegerRenderer;
+use CitrusLab\Totp\Renderers\Traits\RendersStandardIntegerPasswords;
+use CitrusLab\Totp\Types\Digits;
 
 /**
  * Render a TOTP with an arbitrary number of decimal digits.
