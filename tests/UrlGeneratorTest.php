@@ -168,7 +168,7 @@ final class UrlGeneratorTest extends TestCase
      * @param string|null $issuer The issuer to test with.
      */
     #[DataProvider('providerTestSetIssuer')]
-    public function testSetIssuer(mixed $issuer, string $exceptionClass = null): void
+    public function testSetIssuer(mixed $issuer, ?string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
             $this->expectException($exceptionClass);
@@ -502,7 +502,7 @@ final class UrlGeneratorTest extends TestCase
      * @throws InvalidArgumentException if the renderer in the TOTP config is not valid.
      */
     #[DataProvider('providerTestUrlFor')]
-    public function testUrlFor(array $urlConfig, array $totpConfig, string $expectedUrl, string $exceptionClass = null): void
+    public function testUrlFor(array $urlConfig, array $totpConfig, string $expectedUrl, ?string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
             $this->expectException($exceptionClass);
@@ -654,7 +654,7 @@ final class UrlGeneratorTest extends TestCase
      * @param class-string|null $exceptionClass The class of the exception that is expected to tbe thrown, if any.
      */
     #[DataProvider('providerTestOptionSwitchMethods')]
-    public function testSetIncludesPeriod(mixed $include, string $exceptionClass = null): void
+    public function testSetIncludesPeriod(mixed $include, ?string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
             $this->expectException($exceptionClass);
@@ -673,7 +673,7 @@ final class UrlGeneratorTest extends TestCase
      * @param class-string|null $exceptionClass The class of the exception that is expected to tbe thrown, if any.
      */
     #[DataProvider('providerTestOptionSwitchMethods')]
-    public function testSetIncludesDigits(mixed $include, string $exceptionClass = null): void
+    public function testSetIncludesDigits(mixed $include, ?string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
             $this->expectException($exceptionClass);
@@ -692,7 +692,7 @@ final class UrlGeneratorTest extends TestCase
      * @param class-string|null $exceptionClass The class of the exception that is expected to tbe thrown, if any.
      */
     #[DataProvider('providerTestOptionSwitchMethods')]
-    public function testSetIncludesAlgorithm(mixed $include, string $exceptionClass = null): void
+    public function testSetIncludesAlgorithm(mixed $include, ?string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
             $this->expectException($exceptionClass);
