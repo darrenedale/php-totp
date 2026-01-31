@@ -110,7 +110,7 @@ EOT;
  *
  * @return mixed One of the options.
  */
-function chooseOne(array $options, array $weights = null): mixed
+function chooseOne(array $options, ?array $weights = null): mixed
 {
     if (!isset($weights)) {
         return $options[mt_rand(0, count($options) - 1)];
@@ -175,7 +175,7 @@ function randomReferenceTimestamp(): int
  *
  * @return int
  */
-function randomNow(int $referenceTimestamp, int $maxYear = null): int
+function randomNow(int $referenceTimestamp, ?int $maxYear = null): int
 {
     if (isset($maxYear)) {
         $maxTimestamp = (DateTime::createFromFormat("Y-m-d H:i:s", "{$maxYear}-12-31 23:59:59", new DateTimeZone("UTC")))->getTimestamp();

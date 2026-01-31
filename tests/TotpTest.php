@@ -418,7 +418,7 @@ final class TotpTest extends TestCase
 
     /** Ensure we get the correct bytes from counterBytesAt(). */
     #[DataProvider("providerTestCounterBytesAt1")]
-    public function testCounterBytesAt1(int|DateTime $currentTime, string $expectedBytes, int|DateTime $referenceTime = null, ?int $timeStep = null): void
+    public function testCounterBytesAt1(int|DateTime $currentTime, string $expectedBytes, int|DateTime|null $referenceTime = null, ?int $timeStep = null): void
     {
         $totp = self::createTotp(referenceTime: $referenceTime ?? 0, timeStep: $timeStep ?? 30);
 
@@ -506,7 +506,7 @@ final class TotpTest extends TestCase
      * test data.
      */
     #[DataProvider("providerTestHmac1")]
-    public function testHmac1(string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
+    public function testHmac1(?string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
         // The logic behind this test is this: password() can't return a pre-known value because it produces a
         // password dependent on an external factor - the current system time. So we use passwordAt() as our source of
@@ -635,7 +635,7 @@ final class TotpTest extends TestCase
      * with test data. Totp::password() and Totp::passwordAt() should not throw with test data.
      */
     #[DataProvider("providerTestPassword1")]
-    public function testPassword1(string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
+    public function testPassword1(?string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
         // The logic behind this test is this: password() can't return a pre-known value because it produces a
         // password dependent on an external factor - the current system time. So we use passwordAt() as our source of
@@ -764,7 +764,7 @@ final class TotpTest extends TestCase
      * Totp::password() and Totp::verify() shouldn't throw with test data.
      */
     #[DataProvider("providerTestVerify1")]
-    public function testVerify1(string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
+    public function testVerify1(?string $secret = null, int $digits = 6, string $algorithm = HashAlgorithm::Sha1Algorithm, int|DateTime $referenceTime = 0): void
     {
         // The logic behind this test is this: verify() can't return a pre-known value because it is dependent on an
         // external factor - the current system time. So we fetch the current password, which we know should pass
@@ -973,7 +973,7 @@ final class TotpTest extends TestCase
      * won't throw unless we're expecting a test exception.
      */
     #[DataProvider("providerTestVerifyAt1")]
-    public function testVerifyAt1(array $totpSpec, int|DateTime $currentTime, int $window, string $userPassword, bool $expectedVerification, string $exceptionClass = null): void
+    public function testVerifyAt1(array $totpSpec, int|DateTime $currentTime, int $window, string $userPassword, bool $expectedVerification, ?string $exceptionClass = null): void
     {
         if (isset($exceptionClass)) {
             $this->expectException($exceptionClass);

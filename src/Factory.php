@@ -139,7 +139,7 @@ class Factory implements TotpFactoryContract
      *
      * @return Factory
      */
-    public static function sixDigits(TimeStep $timeStep = null, int|DateTime $referenceTime = self::DefaultReferenceTime, ?HashAlgorithm $hashAlgorithm = null): Factory
+    public static function sixDigits(?TimeStep $timeStep = null, int|DateTime $referenceTime = self::DefaultReferenceTime, ?HashAlgorithm $hashAlgorithm = null): Factory
     {
         /** @noinspection PhpUnhandledExceptionInspection */
         return new Factory(renderer: new SixDigits(), timeStep: $timeStep, referenceTime: $referenceTime, hashAlgorithm: $hashAlgorithm);
@@ -155,7 +155,7 @@ class Factory implements TotpFactoryContract
      *
      * @return Factory
      */
-    public static function eightDigits(TimeStep $timeStep = null, int|DateTime $referenceTime = self::DefaultReferenceTime, HashAlgorithm $hashAlgorithm = null): Factory
+    public static function eightDigits(?TimeStep $timeStep = null, int|DateTime $referenceTime = self::DefaultReferenceTime, ?HashAlgorithm $hashAlgorithm = null): Factory
     {
         /** @noinspection PhpUnhandledExceptionInspection */
         return new Factory(renderer: new EightDigits(), timeStep: $timeStep, referenceTime: $referenceTime, hashAlgorithm: $hashAlgorithm);

@@ -42,7 +42,7 @@ final class InvalidBase32DataExceptionTest extends TestCase
 
     /** Ensure the constructor initialises the exception as expected. */
     #[DataProvider("providerTestConstructor1")]
-    public function testConstructor1(string $data, string $message = "", int $code = 0, Throwable $previous = null): void
+    public function testConstructor1(string $data, string $message = "", int $code = 0, ?Throwable $previous = null): void
     {
         $exception = new InvalidBase32DataException($data, $message, $code, $previous);
         self::assertEquals($data, $exception->getData(), "Invalid Base32 data retrieved from exception was not as expected.");
