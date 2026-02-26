@@ -329,7 +329,7 @@ final class UrlGenerator
             $url .= urlencode($this->user());
         }
 
-        $url .= "/?secret={$totp->base32Secret()}";
+        $url .= "?secret={$totp->base32Secret()}";
 
         if ($this->hasIssuer()) {
             $url .= "&issuer=" . urlencode($this->issuer());
