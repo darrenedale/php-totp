@@ -31,13 +31,14 @@ jobs:
         run: |
           docker login -u ${{ secrets.DOCKERUSERNAME }} -p ${{ secrets.DOCKERTOKEN }}
           docker compose up -d php-totp-${{ matrix.php_version }}
+          docker exec -u root php-totp-${{ matrix.php_version }} rm -f /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
       - name: Install dependencies
         run: |
           rm -rf vendor
+          chmod ugo+rw .
           docker exec php-totp-${{ matrix.php_version }} composer update --no-progress
 
       - name: Run unit tests
         run: |
-          docker exec -u root php-totp-${{ matrix.php_version }} rm -f /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
           docker exec php-totp-${{ matrix.php_version }} ./vendor/bin/phpunit --configuration ./tests/phpunit.xml --testsuite 'full-suite' --do-not-cache-result ./tests
