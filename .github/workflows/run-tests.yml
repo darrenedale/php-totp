@@ -1,0 +1,44 @@
+name:  Unit Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+
+  run-tests:
+    name: Run unit tests
+    runs-on: ubuntu-24.04
+
+    strategy:
+      matrix:
+        php_version:
+          - "8.2"
+          - "8.3"
+          - "8.4"
+          - "8.5"
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v6
+
+      - name: Start PHP ${{ matrix.php_version }} docker container
+        run: |
+          docker login -u ${{ secrets.DOCKERUSERNAME }} -p ${{ secrets.DOCKERTOKEN }}
+          docker compose up -d php-totp-${{ matrix.php_version }}
+          docker exec -u root php-totp-${{ matrix.php_version }} rm -f /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+
+      - name: Install dependencies
+        run: |
+          rm -rf vendor
+          chmod ugo+rw .
+          docker exec php-totp-${{ matrix.php_version }} composer update --no-progress
+
+      - name: Run unit tests
+        run: |
+          docker exec php-totp-${{ matrix.php_version }} ./vendor/bin/phpunit --configuration ./tests/phpunit.xml --testsuite 'full-suite' --do-not-cache-result ./tests
