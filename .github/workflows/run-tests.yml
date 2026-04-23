@@ -1,4 +1,4 @@
-name: Composer Validation and Unit Tests
+name:  Unit Tests
 
 on:
   push:
