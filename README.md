@@ -1,6 +1,6 @@
 # php-totp
 
-[![Conmposer Validation and Unit Tests](https://github.com/darrenedale/php-totp/actions/workflows/php-ci.yml/badge.svg)](https://github.com/darrenedale/php-totp/actions/workflows/php-ci.yml)
+[![Unit Tests](https://github.com/darrenedale/php-totp/actions/workflows/run-tests.yml/badge.svg)](https://github.com/darrenedale/php-totp/actions/workflows/run-tests.yml)
 
 Time-based One Time Password Generator for PHP.
 
