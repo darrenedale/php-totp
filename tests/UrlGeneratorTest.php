@@ -465,8 +465,8 @@ final class UrlGeneratorTest extends TestCase
 
         // 100 random valid setups
         for ($idx = 0; $idx < 100; ++$idx) {
-            $user         = self::randomUser();
-            $issuer       = self::randomIssuer();
+            $user   = self::randomUser();
+            $issuer = self::randomIssuer();
             $secret = Factory::randomSecret()->raw();
             $base32Secret = Base32::encode($secret);
 
