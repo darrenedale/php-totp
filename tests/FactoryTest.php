@@ -513,7 +513,6 @@ final class FactoryTest extends TestCase
      */
     public function testRandomSecret1(): void
     {
-        // NOTE can't test case where randomSecret() throws because we can't force random_bytes() to throw
         for ($idx = 0; $idx < 100; ++$idx) {
             self::assertGreaterThanOrEqual(64, strlen(Factory::randomSecret()->raw()), "randomSecret() did not return a sufficiently large byte sequence.");
         }
